@@ -16,7 +16,7 @@ format:
     height: 720
     title-slide-attributes: 
       data-background-image: "images/stat100-logo-rectangle.png"
-      data-background-size: 5%
+      data-background-size: 10%
       data-background-position: 50% 85%
       data-aria-label: "STAT 100 course logo"
 ---

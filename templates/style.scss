@@ -224,3 +224,16 @@ color: #D61A3C;
 padding: 3px 6px;
 border-radius: 4px;
 }
+
+// Dynamically hide only the logo and slide number when the title slide is active (.present)
+.reveal:has(section.title-slide.present) .slide-logo,
+.reveal:has(section#title-slide.present) .slide-logo,
+.reveal:has(section.quarto-title-block.present) .slide-logo {
+  display: none !important;
+}
+
+.reveal:has(section.title-slide.present) .slide-number,
+.reveal:has(section#title-slide.present) .slide-number,
+.reveal:has(section.quarto-title-block.present) .slide-number {
+  display: none !important;
+}
