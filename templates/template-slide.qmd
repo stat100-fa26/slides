@@ -5,7 +5,7 @@ author: "Mine Doğucu"
 format:
   revealjs:
     footer: |
-      <span id="menu-toggle-box"></span> [stat100.com](https://stat-100.com)
+      <span id="menu-toggle-box"></span> [stat-100.com](https://stat-100.com)
     code-line-numbers: false 
     slide-number: true
     incremental: false
@@ -26,7 +26,7 @@ format:
 Hello 
 :::
 
-# Title 1
+# Title 1 {.inverse background-color="#A51C30"}
 
 ## Quarto
 
@@ -190,22 +190,26 @@ Breathe!
 
 ## Customized callouts
 
-::: {.callout-note icon=false}
-## Exercise
+<!-- CALLOUT EXAMPLE: Note/Tip -->
+::: {.stat-callout .note-tip}
+**Tip: Visualizing Distributions**
 
-Exercise text goes here
+Always plot your raw data before running tests. 
 
+A quick visualization is your best diagnostic asset.
 :::
 
-::: {.callout-warning icon=false}
-## Discussion question
 
-Question to discuss
+## Working with Data
+
+<!-- CALLOUT EXAMPLE: Exercise -->
+::: {.stat-callout .exercise}
+**Exercise**
+Find the probability of obtaining exactly 3 heads in 5 independent tosses of a fair coin. Work through this with your neighbor.
 :::
 
-::: {.callout-tip icon=false}
-## Example
-
-Here is an example
-with some math symbols $\alpha, \beta$
+<!-- CALLOUT EXAMPLE: Discussion -->
+::: {.stat-callout .discussion}
+**Discussion**
+Which is more important in a medical test? Sensitivity or specificity?
 :::
