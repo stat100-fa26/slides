@@ -1,6 +1,6 @@
 ---
-title: "STAT 100: Introduction to Statistics"
-subtitle: "Template"
+title: "Lecture Title"
+subtitle: "Subitle"
 author: "Mine Doğucu"
 format:
   revealjs:
@@ -10,7 +10,7 @@ format:
     slide-number: true
     incremental: false
     theme: [default, style.scss]
-    logo: images/stat100-logo-rectangle.png  
+    logo: images/stat100-logo-square.png
     transition: fade
     width: 1280
     height: 720
