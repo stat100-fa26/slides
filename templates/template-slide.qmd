@@ -1,6 +1,6 @@
 ---
 title: "Lecture Title"
-subtitle: "Subitle"
+subtitle: "Subtitle"
 author: "Mine Doğucu"
 format:
   revealjs:
@@ -137,13 +137,15 @@ Right column
 
 ```{r}
 #| output-location: column
+#| echo: true
 summary(mtcars)
 ```
 
 
-## Code and Output in Deparate Slides
+## Code and Output in Separate Slides
 
 ```{r}
+#| echo: true
 #| output-location: slide
 summary(mtcars)
 ```

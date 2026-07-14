@@ -197,7 +197,7 @@
 
 <section id="title-slide" data-aria-label="STAT 100 course logo" data-background-image="images/stat100-logo-rectangle.png" data-background-position="50% 85%" data-background-size="10%" class="quarto-title-block center">
   <h1 class="title">Lecture Title</h1>
-  <p class="subtitle">Subitle</p>
+  <p class="subtitle">Subtitle</p>
 
 <div class="quarto-title-authors">
 <div class="quarto-title-author">
@@ -324,7 +324,10 @@ Mine Doğucu
 </section>
 <section id="code-and-output-in-two-columns" class="slide level2">
 <h2>Code and Output in Two Columns</h2>
-<div class="cell">
+<div class="cell columns column-output-location">
+<div class="column">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(mtcars)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div><div class="column">
 <div class="cell-output cell-output-stdout">
 <pre><code>      mpg             cyl             disp             hp       
  Min.   :10.40   Min.   :4.000   Min.   : 71.1   Min.   : 52.0  
@@ -348,11 +351,16 @@ Mine Doğucu
  3rd Qu.:1.0000   3rd Qu.:4.000   3rd Qu.:4.000  
  Max.   :1.0000   Max.   :5.000   Max.   :8.000  </code></pre>
 </div>
-</div>
+</div></div>
 </section>
-<section id="code-and-output-in-deparate-slides" class="slide level2">
-<h2>Code and Output in Deparate Slides</h2>
+<section id="code-and-output-in-separate-slides" class="slide level2">
+<h2>Code and Output in Separate Slides</h2>
 <div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(mtcars)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+
+</section>
+<section id="code-and-output-in-separate-slides-output" class="slide level2 output-location-slide"><h2>Code and Output in Separate Slides</h2><div class="cell output-location-slide">
 <div class="cell-output cell-output-stdout">
 <pre><code>      mpg             cyl             disp             hp       
  Min.   :10.40   Min.   :4.000   Min.   : 71.1   Min.   : 52.0  
@@ -376,9 +384,7 @@ Mine Doğucu
  3rd Qu.:1.0000   3rd Qu.:4.000   3rd Qu.:4.000  
  Max.   :1.0000   Max.   :5.000   Max.   :8.000  </code></pre>
 </div>
-</div>
-</section>
-<section id="tabsets-as-shown-on-quarto-website" class="slide level2">
+</div></section><section id="tabsets-as-shown-on-quarto-website" class="slide level2">
 <h2>Tabsets as Shown on Quarto Website</h2>
 <div class="panel-tabset">
 <ul id="tabset-1" class="panel-tabset-tabby"><li><a data-tabby-default="" href="#tabset-1-1">Tab A</a></li><li><a href="#tabset-1-2">Tab B</a></li></ul>
