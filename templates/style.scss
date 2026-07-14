@@ -1,0 +1,211 @@
+/*-- scss:defaults --*/
+
+// ==========================================
+// 1. Google Font Imports for Accessibility
+// ==========================================
+// Using Atkinson Hyperlegible for ultimate distinction of similar characters (great for stats!)
+// and Source Code Pro for clean monospace formatting.
+@import url('https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400;1,700&family=Source+Code+Pro:ital,wght@0,400;0,600;1,400&display=swap');
+
+// Font variables
+$font-family-sans-serif: 'Atkinson Hyperlegible', sans-serif !default;
+$font-family-monospace: 'Source Code Pro', monospace !default;
+
+// Color Palette (WCAG AA & AAA Compliant)
+$harvard-crimson: #A51C30;
+$body-bg: #F9F9FB !default;           // Soft off-white to reduce ocular fatigue
+$body-color: #1E1E1E !default;        // High contrast charcoal (WCAG AAA compliant)
+$text-muted: #595959 !default;
+
+$presentation-heading-font: 'Atkinson Hyperlegible', sans-serif !default;
+$presentation-heading-color:$harvard-crimson !default;
+$presentation-slide-text-align: left !default;
+
+// Structure & Transitions
+$border-color: #E2E8F0 !default;
+
+/*-- scss:rules --*/
+
+// ==========================================
+// 2. Full-Bleed Crimson H1 Section Slides
+// ==========================================
+// Any H1 slide (created with a single '#' in Quarto) will automatically
+// convert to a full-bleed Crimson background with massive white text.
+.reveal .slides section.level1 {
+background-color: $harvard-crimson !important;
+color: #FFFFFF !important;
+display: flex !important;
+flex-direction: column !important;
+justify-content: center !important;
+align-items: center !important;
+text-align: center !important;
+height: 100% !important;
+
+h1 {
+color: #FFFFFF !important;
+font-size: 3.2em !important; // Massive, mimics r-fit-text
+font-weight: 700 !important;
+line-height: 1.1 !important;
+margin: 0 !important;
+text-shadow: none !important;
+width: 100%;
+}
+
+p, span, li, a {
+color: #F8D7DA !important; // Accessible light-pink/cream secondary text on Crimson
+font-size: 1.2em;
+margin-top: 1.5rem;
+}
+}
+
+// ==========================================
+// 3. Main Title Slide & Logo Styling
+// ==========================================
+// Hide the small global corner logo only on the main title slide
+.reveal.slide-1 .slide-logo {
+display: none !important;
+}
+
+// Center and scale a massive logo specifically for the Title Slide
+.reveal .title-slide {
+text-align: center !important;
+display: flex !important;
+flex-direction: column !important;
+justify-content: center !important;
+align-items: center !important;
+
+// Custom logo wrapper to be placed in your Quarto YAML/Markdown
+.title-brand-logo {
+display: block;
+max-height: 140px;
+width: auto;
+margin: 0 auto 2.5rem auto;
+filter: drop-shadow(0px 4px 6px rgba(0, 0, 0, 0.08));
+}
+
+h1.title {
+color: $harvard-crimson !important;
+font-size: 2.5em !important;
+margin-bottom: 0.5rem !important;
+}
+
+p.subtitle {
+color: $text-muted !important;
+font-size: 1.2em !important;
+margin-top: 0 !important;
+}
+}
+
+// ==========================================
+// 4. Accessible Callout Boxes (with SVGs)
+// ==========================================
+// Base style for our modern, box-shadowed callout cards
+.stat-callout {
+display: flex;
+gap: 15px;
+border-radius: 8px;
+padding: 20px;
+margin: 1.5rem 0;
+border: 1px solid transparent;
+align-items: flex-start;
+box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+
+// Accessible Icon element using inline vector masks
+.callout-icon {
+width: 28px;
+height: 28px;
+flex-shrink: 0;
+background-size: contain;
+background-repeat: no-repeat;
+background-position: center;
+}
+
+.callout-content {
+flex-grow: 1;
+
+p {
+  margin: 0;
+  font-size: 0.95em;
+  line-height: 1.5;
+}
+
+strong {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 1.05em;
+}
+
+
+}
+}
+
+// Callout Variation: Note/Tip (Deep Teal/Blue)
+.stat-callout.note-tip {
+background-color: #F0F7F9;
+border-left: 5px solid #006677;
+border-color: #E2EFF2 #E2EFF2 #E2EFF2 #006677;
+.callout-icon {
+background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23006677' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M9.663 17h4.673M12 3v1m6.364 .364l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 113.536 0V21h2v-3.414a5 5 0 011.071-1.071z'/%3E%3C/svg%3E");
+}
+strong { color: #006677; }
+p { color: #0C3E48; }
+}
+
+// Callout Variation: Example (Slate / Navy)
+.stat-callout.example {
+background-color: #F4F5F8;
+border-left: 5px solid #3B4B61;
+border-color: #E9EBF1 #E9EBF1 #E9EBF1 #3B4B61;
+.callout-icon {
+background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%233B4B61' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M9 17v-2m3 2v-4m3 2V9m-9 3h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z'/%3E%3C/svg%3E");
+}
+strong { color: #2B3A4F; }
+p { color: #1E293B; }
+}
+
+// Callout Variation: Exercise (Emerald Green)
+.stat-callout.exercise {
+background-color: #F1F9F4;
+border-left: 5px solid #1E6B3F;
+border-color: #E2F2E9 #E2F2E9 #E2F2E9 #1E6B3F;
+.callout-icon {
+background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%231E6B3F' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z'/%3E%3C/svg%3E");
+}
+strong { color: #1E6B3F; }
+p { color: #0F4022; }
+}
+
+// Callout Variation: Discussion Question (Harvard Crimson)
+.stat-callout.discussion {
+background-color: #FDF3F4;
+border-left: 5px solid $harvard-crimson;
+border-color: #FCE1E4 #FCE1E4 #FCE1E4 $harvard-crimson;
+.callout-icon {
+background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23A51C30' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z'/%3E%3C/svg%3E");
+}
+strong { color: $harvard-crimson; }
+p { color: #4F0A12; }
+}
+
+// ==========================================
+// 5. Code & Syntax Highlight Aesthetics
+// ==========================================
+.reveal pre.code-wrapper {
+border-radius: 8px;
+border: 1px solid #E2E8F0;
+box-shadow: 0 4px 6px rgba(0, 0, 0, 0.01);
+
+code {
+font-family: $font-family-monospace;
+font-size: 0.85em;
+line-height: 1.5;
+}
+}
+
+.reveal code {
+font-family: $font-family-monospace;
+background-color: #F1F1F4;
+color: #D61A3C;
+padding: 3px 6px;
+border-radius: 4px;
+}
