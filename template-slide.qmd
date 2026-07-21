@@ -21,8 +21,16 @@ format:
       data-background-size: 10%
       data-background-position: 50% 85%
       data-aria-label: "STAT 100 course logo"
-    filters:
-      - filters/fix-empty-links.lua
+    include-after-body:
+      text: |
+        <script>
+          window.addEventListener('DOMContentLoaded', function() {
+            var menuToggle = document.querySelector('.slide-menu-button, a[href="#"]');
+            if (menuToggle) {
+              menuToggle.setAttribute('aria-label', 'Toggle Navigation Menu');
+            }
+          });
+        </script
 ---
 
 
