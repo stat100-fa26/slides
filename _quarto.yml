@@ -3,4 +3,4 @@ project:
   output-dir: _site
 
 execute:
-  freeze: auto  # Or 'true' to re-use cached computations
+  freeze: true
