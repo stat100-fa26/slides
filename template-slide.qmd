@@ -10,7 +10,9 @@ format:
     slide-number: true
     incremental: false
     theme: [default, style.scss]
-    logo: images/stat100-logo-square.png
+    logo: 
+      path: images/stat100-logo-square.png
+      alt: "STAT 100 course square logo"
     transition: fade
     width: 1280
     height: 720
