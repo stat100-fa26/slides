@@ -62,15 +62,18 @@ lm(mpg ~ am, data = mtcars) %>%
   broom::tidy()
 ```
 
+<!-- not passing accessibility checks
 ## Highlight Specific Lines of Code
 
 ```{r}
 #| echo: true
-#| code-line-numbers: "1"
+#| code-line-numbers: "1|3"
 a <- 1
 b <- 1
 a + b
 ```
+
+-->
 
 ## Code Annotation
 
