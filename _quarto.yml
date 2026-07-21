@@ -1,0 +1,8 @@
+project:
+  type: default
+  output-dir: _site   # Tells Quarto where to put rendered HTML files
+
+format:
+  html:
+    theme: cosmo
+    toc: true
