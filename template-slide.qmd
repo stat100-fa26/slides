@@ -21,6 +21,8 @@ format:
       data-background-size: 10%
       data-background-position: 50% 85%
       data-aria-label: "STAT 100 course logo"
+    filters:
+      - filters/fix-empty-links.lua
 ---
 
 
