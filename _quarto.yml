@@ -1,8 +1,6 @@
 project:
   type: default
-  output-dir: _site   # Tells Quarto where to put rendered HTML files
+  output-dir: _site
 
-format:
-  html:
-    theme: cosmo
-    toc: true
+execute:
+  freeze: auto  # Or 'true' to re-use cached computations
