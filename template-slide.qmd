@@ -4,6 +4,8 @@ subtitle: "Subtitle"
 author: "Mine Doğucu"
 format:
   revealjs:
+    menu:
+      openButton: false
     footer: |
       <span id="menu-toggle-box"></span> [stat-100.com](https://stat-100.com)
     code-line-numbers: false 
@@ -21,16 +23,6 @@ format:
       data-background-size: 10%
       data-background-position: 50% 85%
       data-aria-label: "STAT 100 course logo"
-    include-after-body:
-      text: |
-        <script>
-          window.addEventListener('DOMContentLoaded', function() {
-            var menuToggle = document.querySelector('.slide-menu-button, a[href="#"]');
-            if (menuToggle) {
-              menuToggle.setAttribute('aria-label', 'Toggle Navigation Menu');
-            }
-          });
-        </script
 ---
 
 
