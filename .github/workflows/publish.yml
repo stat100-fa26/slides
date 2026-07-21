@@ -15,7 +15,7 @@ jobs:
       id-token: write
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.2.2  # Using the latest release tag avoids Node 20 notices
 
       - name: Set up Quarto
         uses: quarto-dev/quarto-actions/setup@v2
