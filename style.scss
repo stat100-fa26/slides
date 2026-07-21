@@ -64,7 +64,9 @@ $border-color: #E2E8F0 !default;
   .slide-number {
     display: none !important;
   }
- 
+  .footer {
+    display: none !important;
+  }
 }
 
 // ==========================================
@@ -72,39 +74,38 @@ $border-color: #E2E8F0 !default;
 // ==========================================
 // Hide the small global corner logo only on the main title slide
 .reveal.slide-1 .slide-logo {
-display: none !important;
+  display: none !important;
 }
 
 // Center and scale a massive logo specifically for the Title Slide
 .reveal .title-slide {
-text-align: center !important;
-display: flex !important;
-flex-direction: column !important;
-justify-content: center !important;
-align-items: center !important;
+  text-align: center !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  align-items: center !important;
 
-// Custom logo wrapper to be placed in your Quarto YAML/Markdown
-.title-brand-logo {
-display: block;
-max-height: 140px;
-width: auto;
-margin: 0 auto 2.5rem auto;
-filter: drop-shadow(0px 4px 6px rgba(0, 0, 0, 0.08));
-}
+  // Custom logo wrapper to be placed in your Quarto YAML/Markdown
+  .title-brand-logo {
+    display: block;
+    max-height: 140px;
+    width: auto;
+    margin: 0 auto 2.5rem auto;
+    filter: drop-shadow(0px 4px 6px rgba(0, 0, 0, 0.08));
+  }
 
-h1.title {
-color: $harvard-crimson !important;
-font-size: 2.5em !important;
-margin-bottom: 0.5rem !important;
-}
+  h1.title {
+    color: $harvard-crimson !important;
+    font-size: 2.5em !important;
+    margin-bottom: 0.5rem !important;
+  }
 
-p.subtitle {
-color: $text-muted !important;
-font-size: 1.2em !important;
-margin-top: 0 !important;
+  p.subtitle {
+    color: $text-muted !important;
+    font-size: 1.2em !important;
+    margin-top: 0 !important;
+  }
 }
-}
-
 
 // ==========================================
 // 4. Accessible Callout Boxes (with SVGs)
@@ -206,23 +207,23 @@ margin-top: 0 !important;
 // 5. Code & Syntax Highlight Aesthetics
 // ==========================================
 .reveal pre.code-wrapper {
-border-radius: 8px;
-border: 1px solid #E2E8F0;
-box-shadow: 0 4px 6px rgba(0, 0, 0, 0.01);
+  border-radius: 8px;
+  border: 1px solid #E2E8F0;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.01);
 
-code {
-font-family: $font-family-monospace;
-font-size: 0.85em;
-line-height: 1.5;
-}
+  code {
+    font-family: $font-family-monospace;
+    font-size: 0.85em;
+    line-height: 1.5;
+  }
 }
 
 .reveal code {
-font-family: $font-family-monospace;
-background-color: #F1F1F4;
-color: #D61A3C;
-padding: 3px 6px;
-border-radius: 4px;
+  font-family: $font-family-monospace;
+  background-color: #F1F1F4;
+  color: #D61A3C;
+  padding: 3px 6px;
+  border-radius: 4px;
 }
 
 // Dynamically hide only the logo and slide number when the title slide is active (.present)
@@ -236,4 +237,22 @@ border-radius: 4px;
 .reveal:has(section#title-slide.present) .slide-number,
 .reveal:has(section.quarto-title-block.present) .slide-number {
   display: none !important;
+}
+
+// ==========================================
+// 6. Accessible High-Contrast Footer
+// ==========================================
+.reveal .footer {
+  color: $body-color !important; // High contrast dark charcoal (#1E1E1E)
+  font-weight: 500;
+  
+  a {
+    color: $harvard-crimson !important; // Harvard Crimson link (#A51C30)
+    text-decoration: underline !important; // Distinct link underline for accessibility
+    
+    &:hover,
+    &:focus {
+      color: #70101F !important; // Darker Crimson shade on hover/focus
+    }
+  }
 }
