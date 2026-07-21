@@ -7,3 +7,10 @@
 **/*.quarto_ipynb
 _site
 *.html
+
+# Quarto execution freeze cache
+/_freeze/
+
+# Local rendered supporting files
+*_files/
+*_cache/
