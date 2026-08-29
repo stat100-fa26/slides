@@ -582,7 +582,7 @@ Read the abstract of the following study and decide with your neighbors what kin
 
 ## Some types of questions that can be answered using statistics
 
-**Descriptive** 
+**Descriptive**  
 
 **Comparative** 
 
@@ -590,7 +590,35 @@ Read the abstract of the following study and decide with your neighbors what kin
 
 **Predictive** 
 
-## Some findings from the manuscript
+## Some findings from the manuscript - Descriptive
+
+> ...at the time of our survey (June 2025), around 80 percent of the
+students report using generative AI. The most popular tools were Doubao, DeepSeek,
+ChatGLM, Ernie Bot, and Qwen. Generative AI was reported to be most frequently
+used in mathematics (66 percent) and English (55 percent), while between 30 and 40
+percent of the students report AI use in other subjects.
+
+## Some findings from the manuscript - Comparative
+
+
+Students who used generative AI for homework completed assignments 30% faster.
+
+## Some findings from the manuscript - Relational
+
+
+>For AI-using students, the pattern is quite different. More than half of AI students
+spend 20-50 minutes completing homework, less time than even the fastest non-AI
+students. This group receives very high homework scores. Their median score is
+consistent with the performance of generative AI tools on similar problems (Hou et al.,
+2024). At the same time, they receive extremely low exam scores. This pattern- low
+time on task, high homework scores, and low exam scores- is entirely consistent with
+homework outsourcing.
+
+## Some findings from the manuscript - Predictive
+
+> In traditional educational settings, homework performance
+reliably predicts exam performance, reflecting the practice and consolidation effects of
+completing learning tasks. Figure A11 illustrates this relationship for non-AI students.
 
 
 ## Mini Syllabus
@@ -1164,5 +1192,6 @@ In order for us to see your commits and your final submission on any file, you h
 - Plenty of office hours to submit your section activity before 1:30 pm on Friday.
 - Homework 1 due Monday at 1:25 pm on GitHub.
 - If you have not completed the three onboarding quizzes, complete them by 5 pm today on Gradescope.
+- If you are not part of GitHub organization, you cannot complete section activity. Make sure to accept the invitation sent to your email.
 
 :::
