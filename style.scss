@@ -256,3 +256,32 @@ $border-color: #E2E8F0 !default;
     }
   }
 }
+
+// ==========================================
+// Blockquotes & Inline Code Adjustments
+// ==========================================
+.reveal blockquote {
+  width: 90%;
+  margin: 1.5rem auto;
+  padding: 1rem 1.5rem;
+  background-color: #FFFFFF;
+  border-left: 5px solid $harvard-crimson;
+  border-radius: 0 8px 8px 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+
+  p {
+    color: $body-color !important; // Forces high-contrast charcoal (#1E1E1E)
+    font-style: italic;
+    line-height: 1.6;
+    margin: 0;
+  }
+}
+
+// Update your existing inline code styling to improve contrast
+.reveal code {
+  font-family: $font-family-monospace;
+  background-color: #E2E8F0;    // Darker, clear background
+  color: #8C1D40;               // Darker, high-contrast crimson (WCAG AAA)
+  padding: 3px 6px;
+  border-radius: 4px;
+}

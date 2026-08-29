@@ -2,6 +2,8 @@
 title: "Introduction to STAT 100 and the Toolkit"
 subtitle: "Hello R, Quarto, and Git/GitHub"
 author: "Mine Doğucu"
+execute:
+  echo: true
 format:
   revealjs:
     menu:
@@ -13,7 +15,7 @@ format:
     incremental: false
     theme: [default, style.scss]
     logo: 
-      path: images/stat100-logo-square.png
+      path: images/00-stat100-logo-square.png
       alt: "STAT 100 course square logo"
     transition: fade
     width: 1280
@@ -61,6 +63,7 @@ I joined Harvard in July.
 ```{r}
 #| fig-alt: World Map with title that reads Mersin, Turkiye and location south of Turkey on the Mediterranean cost is highlighted
 #| fig-align: center
+#| echo: false
 # ------------------------------------------------------------------------------
 # 1. Typography & Theme Constants
 # ------------------------------------------------------------------------------
@@ -154,6 +157,7 @@ Fun fact: My native language (Turkish) does not have gendered pronouns. In Engli
 ```{r}
 #| fig-alt: World Map with title that reads Los Angeles, California and location on the West Coast of the United States on the Pacific coast is highlighted
 #| fig-align: center
+#| echo: false
 
 world_sf <- ne_countries(scale = "small", returnclass = "sf")
 
@@ -231,6 +235,7 @@ I was Associate Professor of Teaching in the Department of Statistics at Univers
 
 ```{r}
 #| fig-alt: An orange cat and a tabby cat laying down and looking in the same direction.
+#| echo: false
 knitr::include_graphics("images/lec01b-cats.jpeg")
 ```
 
@@ -260,14 +265,12 @@ THANKFULLY, I am NOT teaching this class by myself.
 ::: {.stat-callout .discussion}
 **Discussion**
 In groups of three or four meet and greet each other.
-You may consider sharing some or all of the following:
-
-- Your name
+You may consider sharing some or all of the following:  
+- Your name  
 - Your pronouns  
 - Your year  
 - Where you live   
-- What excites you about this semester 
-- Best memory from your summer holiday  
+- What excites you about this semester  
 :::
 
 ## Meet Your Peers - Location
@@ -394,6 +397,7 @@ These tools from Ice Age from 12,800-12,200 years ago are said to be dice used b
 ```{r}
 #| fig-alt: two sided bone structures in varying sizes and shapes with some carvings on some sides. two sides are visible.
 #| fig-align: center
+#| echo: false
 knitr::include_graphics("images/lec01b-early-dice.png")
 ```
 [Image from Colorado State University, College of Liberal Arts](https://libarts.source.colostate.edu/how-native-americans-shaped-gambling-and-probability/)
@@ -406,6 +410,7 @@ People gambled but they did not yet ask "What are the odds?"
 ## Then came probability theory
 
 ```{r}
+#| echo: false
 nodes <- data.frame(
   x = c(2, 8),
   y = c(5, 5),
@@ -483,6 +488,7 @@ plot_inference <- ggplot() +
 ```{r}
 #| fig-align: center
 #| fig-alt: 'Diagram showing two equal-sized oval nodes connected by a curved arrow on top pointing left-to-right labeled "Probability". The left oval is titled "Design of the Coin" with a known probability pi equals 0.5. The right oval is titled "Observed Data" containing a question mark, illustrating how probability moves from a known coin model to predicting outcome.'
+#| echo: false
 plot_probability
 ```
 
@@ -495,6 +501,7 @@ If I flip a coin 5 times what is the probability of getting 2 heads?
 ```{r}
 #| fig-align: center
 #| fig-alt: 'Diagram showing two equal-sized oval nodes connected by a curved arrow on the bottom pointing right-to-left labeled "Statistical Inference". The right oval is titled "Observed Data" containing five coin toss results: H, H, H, H, T. The left oval is titled "Design of the Coin" with an unknown probability pi equals question mark, illustrating how statistical inference works backward from observed data to infer the underlying coin design.'
+#| echo: false
 plot_inference
 ```
 
@@ -607,25 +614,544 @@ If you would like to print or save pdf version of the slides then press M in you
 # Introduction to the Toolkit {.inverse background-color="#A51C30"}
 
 
-## Introduction to R
+## hello woRld
 
-::: r-fit-text
-Demo 
+
+I will demo live in class but [a video](https://harvard.hosted.panopto.com/Panopto/Pages/Viewer.aspx?id=a253d36c-4dab-4796-a864-b4b50140bb85) is provided to you to review after class.
+Our lecture hall does not have recording software. 😭
+
+## Code from demo
+
+
+```{r}
+#| error: true
+print("hello woRld")
+my_apples <- 4
+my_apples
+my_apples - 1
+My_apples
+n_apples <- c(7, my_apples, 13)
+my_apples
+my_apples <- my_apples - 1
+n_apples
+
+```
+
+## Code from demo 
+
+```{r}
+names <- c("Menglin", "Gloria", "Robert")
+data.frame(friends = names, apples = n_apples)
+people <- data.frame(friends = names, apples = n_apples)
+people[2, 1]
+people[3, ]
+people[ , 2]
+```
+
+
+## Object assignment operator
+
+```{r}
+my_apples <- 4
+```
+
+
+. . .
+
+Keyboard Shortcut
+
+Windows:  Alt + -
+
+Mac: Option + - 
+
+
+## R is case-sensitive
+
+
+```{r}
+#| error: true
+My_apples
+```
+
+## Characters
+
+If something comes in quotes, it is not defined in R. Later in the quarter we will call these as characters. More on that later.
+
+
+```{r}
+
+n_apples <- c(7, my_apples, 3)
+
+names <- c("Menglin", "Gloria", "Robert")
+
+data.frame(person = names, apple_count = n_apples)
+```
+
+
+## Vocabulary
+
+```{r eval=FALSE}
+do(something)
+```
+
+`do()` is a function;   
+`something` is the argument of the function.
+
+. . .
+
+```{r eval=FALSE}
+do(something, colorful)
+```
+
+`do()` is a function;   
+`something` is the first argument of the function;   
+`colorful` is the second argument of the function.
+
+
+
+## Getting Help
+
+In order to get any help we can use `?` followed by function (or object) name. 
+
+```{r eval=FALSE}
+?c
+```
+
+## Do not copy paste
+
+::: {.stat-callout .note-tip}
+
+You should not copy paste code from my slides or from the internet. 
+Part of learning to code is building up your muscle memory. 
 :::
 
-## Quick check in
+## tidyverse style guide
 
-## Introduction to Quarto
+>canyoureadthissentence?
 
-::: r-fit-text
-Demo 
+## tidyverse style guide
+
+:::: {.columns}
+
+::: {.column width="40%"}
+```{r eval = FALSE}
+n_apples <- c(7, my_apples, 3)
+
+names <- c("Menglin", "Gloria", "Robert")
+
+data.frame(
+  person = names, 
+  apple_count = n_apples
+  )
+```
 :::
 
-## Introduction to Git/GitHub 
+::: {.column width="60%"}
+- After function names do not leave any spaces.
 
-::: r-fit-text
-Demo 
+- Before and after operators (e.g. <-, =) leave spaces. 
+
+- Put a space after a comma, **not** before. 
+
+- Object names are all lower case, with words separated by an underscore.
+
 :::
+
+::::
+
+## Indentation
+
+::: {.stat-callout .note-tip}
+
+You can let RStudio do the indentation for your code.
+
+:::
+    
+## Literate Programming - Quarto
+
+I will demo live in class but [a video](https://harvard.hosted.panopto.com/Panopto/Pages/Viewer.aspx?id=8251c25b-c42b-4ea4-babc-b4b50140bbc2) is provided to you to review after class.
+
+The file I create in the video similar to the [my-first-report.qmd](my-first-report.qmd) file provided here.
+
+## markdown `r fontawesome::fa(name = "markdown")`
+
+markdown is a markup language. Markup languages instruct software on how to display or interpret text and data. We use markdown within a Quarto document.
+
+:::: {.columns}
+
+::: {.column width="40%"}
+
+```
+
+_Hello world_ 
+
+__Hello world__
+
+~~Hello world~~ 
+```
+:::
+
+::: {.column width="60%"}
+_Hello world_ 
+
+__Hello world__
+
+~~Hello world~~ 
+:::
+
+::::
+
+[markdown cheatsheet](https://www.markdownguide.org/cheat-sheet/)
+
+## Quarto parts
+
+
+```{r}
+#| echo: false
+#| fig-align: center
+#| fig-alt: 'A screenshot of the RStudio IDE displaying a Quarto document. The screen is divided into multiple panes. The left pane shows the Quarto source code, which includes YAML metadata (title, author, format: html), a text paragraph, and an R code chunk (`my_apples <- 2`). The bottom-left pane shows the R console and "Background Jobs" tab. The right pane displays the rendered output of the Quarto document, showing "My First Quarto File", the author, the descriptive text, and the result "my_apples <- 2" leading to "I have 2 apples in total". Pink labels and arrows highlight key RStudio features: top toolbar buttons for "Save", "Render", "Options", and "Insert a code chunk"; buttons next to a code chunk for "Run code chunk" and "Run all chunks above"; and the "Background Jobs" tab in the console.'
+
+knitr::include_graphics("images/lec01b-quarto-example-full.png")
+```
+
+Quarto source file can be accessed here [my-first-report.qmd](my-first-report.qmd).
+
+
+## Slides for this course
+
+Slides that you are currently looking at are also written in Quarto. 
+You can take a look at them on our course's [GitHub organization](https://github.com/stat100-fa26) in the slides repo.
+
+## Phone apps vs. R packages
+
+:::: {.columns}
+
+::: {.column width="50%"}
+When you buy a new phone it comes with some apps pre-installed.
+
+- Calendar
+- Email
+- Messages
+:::
+
+::: {.column width="50%"}
+If you want to use a different app you can install it.
+
+- Instagram
+- GMail
+- BlueSky
+:::
+
+::::
+
+When you download R for the first time to your computer. It comes with some packages already installed. You can also install many other R packages.
+
+## R packages
+
+What do R packages have? All sorts of things but mainly
+
+- functions 
+
+- datasets
+
+## R packages
+
+Try running the following code:
+
+```{r error = TRUE}
+beep()
+```
+
+Why are we seeing this error? 
+
+
+
+
+
+## Installing packages
+
+In your **Console**, install the beepr package
+
+```{r eval = FALSE}
+install.packages("beepr")
+```
+
+We do this in the Console because we only need to do it once. If we add this code in Quarto, we will be installing the package again and again each time we render the document.
+
+
+
+## Using beep() from beepr
+
+
+Option 1
+```{r warning = FALSE, eval = FALSE}
+library(beepr)
+beep()
+```
+
+More common usage. 
+
+Useful if you are going to use multiple functions from the same package.
+E.g. we have used many functions (ggplot, aes, geom_...) from the ggplot2 package. In such cases, usual practice is to put the library name in the first R chunk in the .qmd file.
+
+
+
+## Using beep() from beepr
+
+Option 2
+
+```{r eval = FALSE}
+beepr::beep()
+```
+Useful when you are going to use a function once or few times. Also useful if there are any conflicts. For instance if there is some other package in your environment that has a beep() function that prints the word beep, you would want to distinguish the beep function from the beepr package and the beep function from the other imaginary package. 
+
+## Reading the documentation 
+
+```{r}
+#| eval: false
+?beep
+```
+
+Running `?beep` in the Console opens the Help pane with the package documentation. We run this in the Console and not in Quarto so that we won't get the help every time we render the Quarto document.
+
+. . .
+
+beep {beepr} - indicates that the beep package is in the beepr package
+
+. . .
+
+Pay attention to parts of documentation: Description, Usage, Arguments, Details, Examples. At your stage Examples are a great resource.
+
+. . .
+
+## Reading the documentation 
+
+
+`beep(sound = 1, expr = NULL)` indicates that the default sound is set to be 1. 
+
+. . .
+
+Pay attention to argument options.
+
+## Usage example
+
+```{r}
+beepr::beep(sound = 8)
+```
+
+This should play the mariokart sound.
+
+
+
+
+## Open Source
+
+- Any one around the world can create R packages. 
+
+
+
+- Good part: We are able to do pretty much anything R because someone from around the world has developed the package and shared it. 
+
+
+- Bad part: The language can be inconsistent. 
+
+
+- Good news: We have tidyverse. 
+
+
+
+## Tidyverse
+
+
+>The tidyverse is an opinionated collection of R packages designed for data science. All packages share an underlying design philosophy, grammar, and data structures. 
+                  tidyverse.org
+
+
+## Tidyverse
+
+In short, tidyverse is a family of packages. From practical stand point, you can install many tidyverse packages at once (and you did this). 
+
+
+## Load tidyverse packages
+
+We can also load multiple tidyverse packages all at the same time.
+
+```{r message = TRUE}
+library(tidyverse)
+```
+
+## Bad version control
+
+::: {.incremental}
+
+Does this look familiar?
+
+- hw1
+
+- hw1_final
+
+- hw1_final2
+
+- hw1_final3
+
+- hw1_finalwithfinalimages
+
+- hw1_finalestfinal
+
+:::
+
+
+## Good version control
+
+
+What if we tracked our file with better names for each version and have only 1 file **hw1**?
+
+::: {.incremental}
+
+- hw1 ***added questions 1 through 5***
+
+- hw1 ***changed question 1 image***
+
+- hw1 ***fixed typos***
+
+:::
+
+. . .
+
+We will call the descriptions in italic **commit** messages.
+
+
+
+## git vs. GitHub
+
+- git allows us to keep track of different versions of a file(s).
+
+- GitHub is a website where we can store (and share) different versions of the files. 
+
+## GitHub repo
+
+```{r}
+#| out.width: '40%'
+#| fig-align: 'center' 
+#| echo: false
+#| fig-alt: 'An orange box labeled "GitHub repo" next to a black document icon.'
+knitr::include_graphics('images/lec01b-github-illustration.002.jpeg')
+```
+
+## Cloning a repo
+
+```{r}
+#| out.width: '55%'
+#| fig-align: 'center'
+#| echo: false
+#| fig-alt: 'Diagram showing a GitHub repo with a document icon at the top, connected by a downward arrow labeled "Clone a repo" to a local repo with a document icon at the bottom.'
+
+knitr::include_graphics('images/lec01b-github-illustration.003.jpeg')
+```
+
+## Commiting a change 1
+
+```{r}
+#| out.width: '55%'
+#| fig-align: 'center'
+#| echo: false
+#| fig-alt: 'A diagram with "GitHub repo" and a black document icon at the top. Below it, "Local repo" is shown with a blue document icon, implying a change  has been made locally. Text below reads "Commit: changed font color to blue".'
+
+knitr::include_graphics('images/lec01b-github-illustration.004.jpeg')
+```
+
+## Commiting a change 2
+
+```{r}
+#| out.width: '55%'
+#| fig-align: 'center'
+#| echo: false
+#| fig-alt: 'A diagram showing a "GitHub repo" with a black document icon at the top. Below it, a "Local repo" is shown with a blue document icon, indicating a change. Text below the local repo says, "Commit: changed font size to 24".'
+
+knitr::include_graphics('images/lec01b-github-illustration.005.jpeg')
+```
+
+## Commiting a change 3
+
+```{r}
+#| out.width: '55%'
+#| fig-align: 'center'
+#| echo: false
+#| fig-alt: 'A diagram depicting a "GitHub repo" with a black document icon at the top. Below it, a "Local repo" is shown with a sequence of three document icons representing commits: a gray icon, followed by a light blue icon with an arrow pointing to "changed font color to blue", and finally a larger, bright blue icon with an arrow pointing to "changed font size to 24".'
+
+knitr::include_graphics('images/lec01b-github-illustration.006.jpeg')
+```
+
+## Push
+
+```{r}
+#| out.width: '55%'
+#| fig-align: 'center'
+#| echo: false
+#| fig-alt: 'A diagram illustrating the "Push" action in Git. A "Local repo" at the bottom shows a sequence of three commits represented by document icons: a gray one, a light blue one with text "changed font color to blue", and a bright blue one with text "changed font size to 24". An upward arrow labeled "Push" connects the "Local repo" to a "GitHub repo" at the top. The "GitHub repo" also displays the same sequence of three document icons representing the pushed commits.'
+
+knitr::include_graphics('images/lec01b-github-illustration.007.jpeg')
+```
+
+##  Git and GitHub demo
+
+
+
+I will demo live in class but [this video](https://harvard.hosted.panopto.com/Panopto/Pages/Viewer.aspx?id=3184b02a-45c7-40c0-a67c-b4b50140bc85) is provided to you to review after class.
+
+## R Project files
+
+
+::: {.stat-callout .note-tip}
+Always use `.Rproj` file to open projects. Then open the appropriate `.qmd` / `.R` file from the Files pane. If you don't open `.Rproj` file you will not be able to see the Git pane.
+
+:::
+
+
+## Cloning a repo
+
+A **repo** is a short form of repository. Repositories contain all of your project's files as well as each file's revision history.
+
+For this course our weekly repos (lecture code, activity etc.) are hosted on Github. 
+
+To **clone** a GitHub repo to our computer, we first copy the cloning link as shown in screencast then start an RStudio project using that link.  
+
+**Cloning** a repo pulls (downloads) all the elements of a repo available at that specific time. 
+
+
+
+## Commits
+
+Once you make changes to your repo (e.g. take notes after lecture, answer an activity question) you can take a snapshot of your changes with a commit.
+
+This way if you ever have to go back in version history you have your older commits to get back to. 
+
+This is especially useful, for instance, if you want to go back to an earlier solution you have committed.
+
+
+
+## Push
+
+All the commits you make will initially be local (i.e. on your own computer). 
+
+In order for us to see your commits and your final submission on any file, you have to **push** your commits. In other words upload your files at the stage in that specific time.
+
+
+
+
+## (An incomplete) Git/GitHub glossary
+
+**Git:** is software for tracking changes in any set of files
+
+**GitHub:** is an internet host for Git projects.
+
+**repo:** is a short form of repository. Repositories contain all of your project's files as well as each file's revision history.
+
+**clone:** Cloning a repo **pulls** (downloads) all the elements of a repo available at that specific time. 
+
+**commit:** A snapshot of your repo at a specific point in time. We distinguish each commit with a **commit message**. 
+
+**push:** Uploads the latest "committed" state of your repo to GitHub.
 
 
 
