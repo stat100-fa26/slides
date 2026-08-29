@@ -58,7 +58,7 @@ When you click the **Render** button a presentation will be generated that inclu
 ```{r}
 #| echo: true
 library(magrittr)
-lm(mpg ~ am, data = mtcars) %>% 
+lm(mpg ~ am, data = mtcars) |> 
   broom::tidy()
 ```
 
@@ -108,7 +108,7 @@ We can add an a figure with a caption and an alternate text
 #| fig-align: center
 #| fig-cap: STAT 100 logo
 #| fig-alt: A hex logo with a heavy black border, split horizontally by a white zigzag line chart featuring four hollow crimson data points. The top half is solid black with the bold white text "STAT 100", and the bottom half is solid crimson with the white text "Introduction to Statistics and Data Science". 
-knitr::include_graphics('images/stat100-logo-rectangle.png')
+knitr::include_graphics('images/00-stat100-logo-rectangle.png')
 ```
 
 ## Incremental Text

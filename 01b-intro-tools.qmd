@@ -1,0 +1,642 @@
+---
+title: "Introduction to STAT 100 and the Toolkit"
+subtitle: "Hello R, Quarto, and Git/GitHub"
+author: "Mine Doğucu"
+format:
+  revealjs:
+    menu:
+      openButton: false
+    footer: |
+      <span id="menu-toggle-box"></span> [stat-100.com](https://stat-100.com)
+    code-line-numbers: false 
+    slide-number: true
+    incremental: false
+    theme: [default, style.scss]
+    logo: 
+      path: images/stat100-logo-square.png
+      alt: "STAT 100 course square logo"
+    transition: fade
+    width: 1280
+    height: 720
+    title-slide-attributes: 
+      data-background-image: "images/stat100-logo-rectangle.png"
+      data-background-size: 10%
+      data-background-position: 50% 85%
+      data-aria-label: "STAT 100 course logo"
+---
+
+
+```{r}
+library(ggplot2)
+library(dplyr)
+library(sf)
+library(rnaturalearth)
+library(showtext)
+library(ggforce)
+```
+
+## Welcome to STATS 100
+
+- Introduction to People
+- Introduction to the Course
+- Introduction to the Toolkit
+
+# Introduction to People {.inverse background-color="#A51C30"}
+
+## Hello 👋
+
+Mine Dogucu
+
+pronounciation: Mi-neh Doe-uu-joo
+
+Senior Lecturer on Statistics
+
+. . .
+
+I joined Harvard in July.
+
+## My First Home
+
+
+```{r}
+#| fig-alt: World Map with title that reads Mersin, Turkiye and location south of Turkey on the Mediterranean cost is highlighted
+#| fig-align: center
+# ------------------------------------------------------------------------------
+# 1. Typography & Theme Constants
+# ------------------------------------------------------------------------------
+font_add_google(name = "Atkinson Hyperlegible", family = "atkinson")
+showtext_auto()
+
+color_crimson    <- "#A51C30" # $harvard-crimson
+color_bg         <- "#F9F9FB" # $body-bg
+color_text_main  <- "#1E1E1E" # $body-color
+color_text_muted <- "#2D2D2D" # $text-muted
+color_land       <- "#E2E8F0" # Mild gray for landmasses
+color_ocean      <- "#FFFFFF" # Clean white ocean background
+
+# ------------------------------------------------------------------------------
+# 2. Data Preparation
+# ------------------------------------------------------------------------------
+world_sf <- ne_countries(scale = "small", returnclass = "sf")
+
+mersin_sf <- tibble(
+  name = "Mersin, Türkiye",
+  lon  = 34.6415,
+  lat  = 36.8121
+) %>% 
+  st_as_sf(coords = c("lon", "lat"), crs = 4326)
+
+# ------------------------------------------------------------------------------
+# 3. World Map Visualization
+# ------------------------------------------------------------------------------
+mersin_world_map <- ggplot() +
+  # World Landmasses
+  geom_sf(
+    data = world_sf,
+    fill = color_land,
+    color = "#FFFFFF",
+    linewidth = 0.15
+  ) +
+  # Map Pin: Subtle background pulse ring + precise pinpoint
+  geom_sf(
+    data = mersin_sf,
+    color = color_crimson,
+    alpha = 0.35,
+    size = 4.5
+  ) +
+  geom_sf(
+    data = mersin_sf,
+    color = color_crimson,
+    shape = 21,
+    fill = "#FFFFFF",
+    stroke = 1.5,
+    size = 2.2
+  ) +
+  # Robinson Projection
+  coord_sf(crs = "+proj=robin") +
+  # Header Titles
+  labs(
+    title = "Mersin, Türkiye"
+  ) +
+  # Clean Presentation Theme
+  theme_minimal(base_family = "atkinson") +
+  theme(
+    plot.background  = element_rect(fill = color_bg, color = NA),
+    panel.background = element_rect(fill = color_ocean, color = NA),
+    panel.grid.major = element_line(color = "#F1F1F4", linewidth = 0.2),
+    plot.title = element_text(
+      size = 18,
+      face = "bold",
+      color = color_crimson,
+      margin = margin(b = 4)
+    ),
+    plot.subtitle = element_text(
+      size = 11,
+      color = color_text_muted,
+      margin = margin(b = 10)
+    ),
+    axis.title  = element_blank(),
+    axis.text   = element_blank(),
+    axis.ticks  = element_blank(),
+    plot.margin = margin(t = 15, r = 15, b = 15, l = 15)
+  )
+
+mersin_world_map
+
+```
+
+. . .
+
+Fun fact: My native language (Turkish) does not have gendered pronouns. In English, I use she/they as my pronouns.
+
+## Most Recent Home
+
+```{r}
+#| fig-alt: World Map with title that reads Los Angeles, California and location on the West Coast of the United States on the Pacific coast is highlighted
+#| fig-align: center
+
+world_sf <- ne_countries(scale = "small", returnclass = "sf")
+
+la_sf <- tibble(
+  name = "Los Angeles, California",
+  lon  = -118.2437,
+  lat  = 34.0522
+) %>% 
+  st_as_sf(coords = c("lon", "lat"), crs = 4326)
+
+
+la_world_map <- ggplot() +
+  # World Landmasses
+  geom_sf(
+    data = world_sf,
+    fill = color_land,
+    color = "#FFFFFF",
+    linewidth = 0.15
+  ) +
+  # Map Pin: Subtle background pulse ring + precise pinpoint
+  geom_sf(
+    data = la_sf,
+    color = color_crimson,
+    alpha = 0.35,
+    size = 4.5
+  ) +
+  geom_sf(
+    data = la_sf,
+    color = color_crimson,
+    shape = 21,
+    fill = "#FFFFFF",
+    stroke = 1.5,
+    size = 2.2
+  ) +
+  # Robinson Projection
+  coord_sf(crs = "+proj=robin") +
+  # Header Titles
+  labs(
+    title = "Los Angeles, California"
+  ) +
+  # Clean Presentation Theme
+  theme_minimal(base_family = "atkinson") +
+  theme(
+    plot.background  = element_rect(fill = color_bg, color = NA),
+    panel.background = element_rect(fill = color_ocean, color = NA),
+    panel.grid.major = element_line(color = "#F1F1F4", linewidth = 0.2),
+    plot.title = element_text(
+      size = 18,
+      face = "bold",
+      color = color_crimson,
+      margin = margin(b = 4)
+    ),
+    plot.subtitle = element_text(
+      size = 11,
+      color = color_text_muted,
+      margin = margin(b = 10)
+    ),
+    axis.title  = element_blank(),
+    axis.text   = element_blank(),
+    axis.ticks  = element_blank(),
+    plot.margin = margin(t = 15, r = 15, b = 15, l = 15)
+  )
+
+la_world_map
+```
+
+I was Associate Professor of Teaching in the Department of Statistics at University of California Irvine.
+
+
+## Fun facts about me
+
+
+::: columns
+::: {.column width="40%"}
+
+```{r}
+#| fig-alt: An orange cat and a tabby cat laying down and looking in the same direction.
+knitr::include_graphics("images/lec01b-cats.jpeg")
+```
+
+:::
+
+::: {.column width="60%"}
+::: incremental
+
+- I have two cats: Mohsen (left) and Mojdeh (right).
+- I lived in the 20th century.
+- I love languages (and linguistics), movies, and books.
+- Not so fun fact: I was a first generation, low income college student. 
+
+:::
+:::
+:::
+
+## Meet the Teaching Team
+
+
+THANKFULLY, I am NOT teaching this class by myself. 
+
+[Meet the Teaching Team](https://stat-100.com/people.html) on the course website. 
+
+## Meet Your Peers
+
+::: {.stat-callout .discussion}
+**Discussion**
+In groups of three or four meet and greet each other.
+You may consider sharing some or all of the following:
+
+- Your name
+- Your pronouns  
+- Your year  
+- Where you live   
+- What excites you about this semester 
+- Best memory from your summer holiday  
+:::
+
+## Meet Your Peers - Location
+
+
+## Help from the Teaching Team
+
+- We are here to help you throughout the semester on your BEST days and WORST days when it comes to STAT 100.
+- Make sure to use the calendar feature on the [Home page](https://stat-100.com/) to find office hours. 
+
+## Concerns - Math
+
+<center>
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/uwCH-G83wvc?start=0&end=75" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen> </iframe>
+
+</center>
+
+. . .
+
+Some good news: 
+
+Statistics is not math but it does use math - like physics.   
+We do not have problem sets - we have homework assignments. 😊
+
+## Other Concerns
+
+- No programming background - that's ok programming is not a prerequisite
+
+. . .
+
+- Time management - [ARC has great tips](https://academicresourcecenter.harvard.edu/2023/09/27/time-management/) and accountability hours.
+
+. . .
+
+- I might need help - Great, we are here to help you! [Office Hours](https://stat-100.com/policies.html#office-hours).
+
+
+
+# Introduction to the Course {.inverse background-color="#A51C30"}
+
+## Learning Approaches Compared - Pros
+
+:::: {.columns}
+
+::: {.column width="50%"}
+### Easy Learning
+*(Passive / Fluency)*
+
+**Pros**
+
+* High initial engagement & confidence
+* Low cognitive load and fatigue
+* Great for quick initial exposure
+* Fast completion of materials
+
+:::
+
+::: {.column width="50%"}
+### Effortful Learning
+*(Active / Desirable Difficulties)*
+
+**Pros**
+
+* Stronger long-term memory retention
+* Deeper conceptual understanding
+* Prevents the illusion of competence
+* Better transfer of skills to new contexts
+
+:::
+
+::::
+
+
+## Learning Approaches Compared - Cons
+
+::: {.columns}
+
+::: {.column width="50%"}
+### Easy Learning
+*(Passive / Fluency)*
+
+**Cons**
+
+* Creates a false sense of mastery
+* Rapid forgetting over time
+* Surface-level recognition, not recall
+* Fails to build deep neural pathways
+:::
+
+::: {.column width="50%"}
+### Effortful Learning
+*(Active / Desirable Difficulties)*
+
+**Cons**
+
+* Demands high mental energy & focus
+* Can cause short-term frustration
+* Slower initial progress
+* Higher risk of drop-off if unguided
+:::
+
+:::
+
+::: {.notes}
+* Key Takeaway: Easy learning feels productive in the moment, but effortful learning drives long-term retention.
+:::
+
+
+
+
+
+
+
+
+
+
+## A brief history lesson
+
+People have been playing chance games for a long time. 
+These tools from Ice Age from 12,800-12,200 years ago are said to be dice used by Native Americans of the Great Plains region. 
+
+
+```{r}
+#| fig-alt: two sided bone structures in varying sizes and shapes with some carvings on some sides. two sides are visible.
+#| fig-align: center
+knitr::include_graphics("images/lec01b-early-dice.png")
+```
+[Image from Colorado State University, College of Liberal Arts](https://libarts.source.colostate.edu/how-native-americans-shaped-gambling-and-probability/)
+
+. . . 
+
+People gambled but they did not yet ask "What are the odds?"
+
+
+## Then came probability theory
+
+```{r}
+nodes <- data.frame(
+  x = c(2, 8),
+  y = c(5, 5),
+  r_x = c(1.8, 1.8),
+  r_y = c(1.1, 1.1)
+)
+
+# Base theme
+theme_slide_diagram <- function() {
+  theme_void() +
+    theme(
+      plot.background = element_rect(fill = color_bg, color = NA),
+      panel.background = element_rect(fill = color_bg, color = NA)
+    )
+}
+
+# ==========================================
+# DIAGRAM 1: PROBABILITY
+# ==========================================
+plot_probability <- ggplot() +
+  # Draw nodes
+  geom_ellipse(data = nodes, aes(x0 = x, y0 = y, a = r_x, b = r_y, angle = 0),
+               color = color_crimson, fill = "white", linewidth = 1.5) +
+  
+  # Curved arrow (Top)
+  geom_curve(aes(x = 3.6, y = 5.5, xend = 6.4, yend = 5.5),
+             curvature = -0.35, arrow = arrow(length = unit(0.35, "cm"), type = "closed"),
+             color = color_text_main, linewidth = 1.0) +
+  
+  # Text labels
+  annotate("text", x = 5, y = 6.6, label = "Probability", 
+           color = color_text_main, size = 7, fontface = "bold") +
+  annotate("text", x = 2, y = 5.35, label = "Design of the Coin", 
+           color = color_text_main, size = 6, fontface = "bold") +
+  annotate("text", x = 2, y = 4.55, label = expression(pi == 0.5), 
+           color = color_text_muted, size = 5.5, fontface = "bold") +
+  annotate("text", x = 8, y = 5.35, label = "Observed Data", 
+           color = color_text_main, size = 6, fontface = "bold") +
+  annotate("text", x = 8, y = 4.55, label = "?", 
+           color = color_text_muted, size = 5.5, fontface = "bold") +
+  
+  coord_fixed(xlim = c(0, 10), ylim = c(2, 8)) +
+  theme_slide_diagram()
+
+# ==========================================
+# DIAGRAM 2: STATISTICAL INFERENCE
+# ==========================================
+plot_inference <- ggplot() +
+  # Draw nodes
+  geom_ellipse(data = nodes, aes(x0 = x, y0 = y, a = r_x, b = r_y, angle = 0),
+               color = color_crimson, fill = "white", linewidth = 1.5) +
+  
+  # Curved arrow (Bottom)
+  geom_curve(aes(x = 6.4, y = 4.5, xend = 3.6, yend = 4.5),
+             curvature = -0.35, arrow = arrow(length = unit(0.35, "cm"), type = "closed"),
+             color = color_text_main, linewidth = 1.0) +
+  
+  # Text labels
+  annotate("text", x = 5, y = 3.3, label = "Statistical Inference", 
+           color = color_text_main, size = 7, fontface = "bold") +
+  annotate("text", x = 2, y = 5.35, label = "Design of the Coin", 
+           color = color_text_main, size = 6, fontface = "bold") +
+  annotate("text", x = 2, y = 4.55, label = expression(pi == "?"), 
+           color = color_text_muted, size = 5.5, fontface = "bold") +
+  annotate("text", x = 8, y = 5.35, label = "Observed Data", 
+           color = color_text_main, size = 6, fontface = "bold") +
+  annotate("text", x = 8, y = 4.55, label = "H, H, H, H, T", 
+           color = color_text_muted, size = 5.5, fontface = "bold") +
+  
+  coord_fixed(xlim = c(0, 10), ylim = c(2, 8)) +
+  theme_slide_diagram()
+```
+
+
+```{r}
+#| fig-align: center
+#| fig-alt: 'Diagram showing two equal-sized oval nodes connected by a curved arrow on top pointing left-to-right labeled "Probability". The left oval is titled "Design of the Coin" with a known probability pi equals 0.5. The right oval is titled "Observed Data" containing a question mark, illustrating how probability moves from a known coin model to predicting outcome.'
+plot_probability
+```
+
+A fair coin is designed to land on heads half the time. 
+
+If I flip a coin 5 times what is the probability of getting 2 heads? 
+
+## Then came statistical inference
+
+```{r}
+#| fig-align: center
+#| fig-alt: 'Diagram showing two equal-sized oval nodes connected by a curved arrow on the bottom pointing right-to-left labeled "Statistical Inference". The right oval is titled "Observed Data" containing five coin toss results: H, H, H, H, T. The left oval is titled "Design of the Coin" with an unknown probability pi equals question mark, illustrating how statistical inference works backward from observed data to infer the underlying coin design.'
+plot_inference
+```
+
+In many instances, we do not design of the coin and we are wondering if it is a fair coin. 
+For instance if we observe H, H, H, H, T on five coin flips, what is the likelihood that this is a fair coin?
+
+## More questions
+
+These days statisticians and scientists who use statistics ask more interesting questions than just gambling!
+
+[How do companies benefit when employees work remotely?](https://www.library.hbs.edu/working-knowledge/how-companies-benefit-when-employees-work-remotely)
+
+[Can social isolation, loneliness shorten life?](https://news.harvard.edu/gazette/story/2023/10/how-social-isolation-loneliness-can-shorten-your-life/)
+
+[Who wrote the Beatles song "In My Life?" John Lennon or Paul McCartney?](https://news.harvard.edu/gazette/story/2018/09/harvard-statistician-examines-beatles-mystery/)
+
+
+## Then came data science
+
+Modern times brought 
+
+- big data, high dimensional data (dataset with lots of information)
+- different types of data (e.g., text and images at larger scale and precision)
+- a lot of user data
+- computational advances
+- complex algorithms
+
+## Even more questions
+
+[How does Netflix predict which thumbnail image will make you click a movie?](https://blogs.cornell.edu/info2040/2022/09/28/how-netflix-uses-matching-to-pick-the-best-thumbnail-for-you/)
+
+. . .
+
+
+
+
+## The 4 Workflow Phases We'll Learn
+
+:::: {.columns}
+
+::: {.column width="25%"}
+1. Preparation
+- Defining the problem
+- Formulating research questions
+- Data acquisition
+- Data cleaning 
+:::
+
+::: {.column width="25%"}
+2. Analysis
+- Descriptive statistics
+- Data Visualization
+- Statistical Modeling
+:::
+
+::: {.column width="25%"}
+3. Interpretation
+- Model evaluation
+- Inference
+:::
+
+::: {.column width="25%"}
+4. Dissemination
+- Communicating findings
+- Writing reports online
+- Writing papers
+:::
+
+::::
+
+## Example Study
+
+::: {.stat-callout .discussion}
+Read the abstract of the following study and decide with your neighbors what kind of data had to be collected about students to make the claims that the researchers are making.
+:::
+
+[ Stromberg, David and Lei, Victor and Wu, Yanhui, The Generative AI Learning Penalty: Evidence from Chinese Secondary Education (June 02, 2026). Available at SSRN: https://ssrn.com/abstract=6868618 or http://dx.doi.org/10.2139/ssrn.6868618](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6868618)
+
+## Some types of questions that can be answered using statistics
+
+**Descriptive** 
+
+**Comparative** 
+
+**Relational** 
+
+**Predictive** 
+
+## Some findings from the manuscript
+
+
+## Mini Syllabus
+
+- AI policy
+- No-tech policy (except for quiz time)
+- In class quizzes
+- Homework assignments
+- Section activities
+- Exams
+- Project
+
+
+## Slides - how to pdf
+
+::: {.stat-callout .note-tip}
+
+If you would like to print or save pdf version of the slides then press M in your web browser Click `Tools > PDF Export Mode`.
+:::
+
+# Introduction to the Toolkit {.inverse background-color="#A51C30"}
+
+
+## Introduction to R
+
+::: r-fit-text
+Demo 
+:::
+
+## Quick check in
+
+## Introduction to Quarto
+
+::: r-fit-text
+Demo 
+:::
+
+## Introduction to Git/GitHub 
+
+::: r-fit-text
+Demo 
+:::
+
+
+
+## Reminders
+
+::: {.incremental}
+
+- Make sure that you are registered for a section.
+- No in-person sections this week. Everything is online. Find the videos under [Schedule](https://stat-100.com/schedule.html) on the course website. 
+- Plenty of office hours to submit your section activity before 1:30 pm on Friday.
+- Homework 1 due Monday at 1:25 pm on GitHub.
+- If you have not completed the three onboarding quizzes, complete them by 5 pm today on Gradescope.
+
+:::
