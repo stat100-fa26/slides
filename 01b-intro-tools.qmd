@@ -29,6 +29,7 @@ format:
 
 
 ```{r}
+#| echo: false
 library(ggplot2)
 library(dplyr)
 library(sf)
