@@ -559,6 +559,8 @@ Interquartile Range (IQR) = Q3 - Q1 which represents the middle 50% of the data.
 
 ```{r}
 #| echo: false
+#| fig-align: center
+#| fig-alt: A dot plot with 40 points, essentially dots on a number stacked on top of one another depending on the observed value on the number line are shown. Towards the left side of the plot a veritcal arrow line is drawn to place the median between twenty points on the left and twenty points on the right. Median is labeled as 50th percentile.
 set.seed(42)
 
 library(ggplot2)
@@ -612,6 +614,8 @@ ggplot() +
 
 ```{r}
 #| echo: false
+#| fig-align: center
+#| fig-alt: The dot plot is now divided into four. Median still splitting in half. Q1 labeled as the 25th percentile has 10 points lower and 30 points higher. Q3 labeled as 75th percentile has 30 points lower and 10 points higher.
 ggplot() +
   # Baseline number line
   geom_segment(aes(x = 2, xend = 98, y = 0, yend = 0), 
@@ -648,7 +652,8 @@ ggplot() +
 
 ```{r}
 #| echo: false
-
+#| fig-align: center
+#| fig-alt: The same dot plot now has the middle 20 points going from Q1 and Q3 boundaries labeled as the middle 50%.
 ggplot() +
   # Baseline number line
   geom_segment(aes(x = 2, xend = 98, y = 0, yend = 0), 
