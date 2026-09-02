@@ -36,6 +36,7 @@ library(sf)
 library(rnaturalearth)
 library(showtext)
 library(ggforce)
+library(stringr)
 ```
 
 ## Welcome to STATS 100
@@ -313,81 +314,89 @@ We do not have problem sets - we have homework assignments. 😊
 
 # Introduction to the Course {.inverse background-color="#A51C30"}
 
-## Learning Approaches Compared - Pros
 
-:::: {.columns}
+## Learning Effort
 
-::: {.column width="50%"}
-### Easy Learning
-*(Passive / Fluency)*
+```{r}
+#| echo: false
+#| fig-alt: "Four rectangles on a spectrum going from low effort on the left to excessive effort/overload on the right. The rectangles read 'Zone 1: Illusion of Competence', 'Zone 2: Shallow Learning', 'Zone 3: Desirable Difficulty, high effort, delayed gratification, durable knowledge' and 'Zone 4: Frustration and Overload' "
+#| fig-align: center
 
-**Pros**
+# Define zone labels and wrap text automatically
+zone_titles <- c(
+  "Zone 1: Illusion of Competence",
+  "Zone 2: Shallow Learning",
+  "Zone 3: Desirable Difficulty",
+  "Zone 4: Frustration and Overload"
+)
 
-* High initial engagement & confidence
-* Low cognitive load and fatigue
-* Great for quick initial exposure
-* Fast completion of materials
+# Apply str_wrap to title text (wraps after ~15 characters)
+wrapped_titles <- str_wrap(zone_titles, width = 15)
 
-:::
+# Wrap Zone 3 attributes text
+z3_details <- str_wrap("• High Effort\n• Delayed Gratification\n• Durable Knowledge", width = 20)
 
-::: {.column width="50%"}
-### Effortful Learning
-*(Active / Desirable Difficulties)*
+# Define data frame
+zones <- data.frame(
+  xmin = c(0, 25, 50, 80),
+  xmax = c(25, 50, 80, 100),
+  ymin = 1,
+  ymax = 4,
+  title = wrapped_titles,
+  # Harvard Crimson (#A51C30) exclusively for Zone 3 highlight
+  fill_color = c("#F8F9FA", "#F8F9FA", "#A51C30", "#F8F9FA"), 
+  text_color = c("#1E1E1E", "#1E1E1E", "#FFFFFF", "#1E1E1E"),
+  border_color = c("#CBD5E1", "#CBD5E1", "#1E1E1E", "#CBD5E1"),
+  border_size = c(0.5, 0.5, 1.5, 0.5)
+)
 
-**Pros**
+# Render plot
+p <- ggplot(zones) +
+  # Spectrum zone blocks
+  geom_rect(
+    aes(xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax, 
+        fill = fill_color, color = border_color, size = border_size),
+    show.legend = FALSE
+  ) +
+  scale_fill_identity() +
+  scale_color_identity() +
+  scale_size_identity() +
+  
+  # Zone titles (Auto-wrapped)
+  geom_text(
+    aes(x = (xmin + xmax) / 2, y = 3.1, label = title, color = text_color),
+    fontface = "bold", size = 4.2, lineheight = 0.9, show.legend = FALSE
+  ) +
+  
+  # Wrapped key attributes in Zone 3
+  annotate(
+    "text", x = 65, y = 1.8, 
+    label = z3_details,
+    color = "#FFFFFF", fontface = "bold", size = 3.8, lineheight = 1.1
+  ) +
+  
+  # Bottom axis line
+  geom_segment(
+    aes(x = 0, xend = 100, y = 0.3, yend = 0.3),
+    arrow = arrow(length = unit(0.35, "cm"), type = "closed"),
+    color = "#1E1E1E", size = 1.1
+  ) +
+  
+  # Axis endpoint labels
+  annotate("text", x = 0, y = -0.15, label = "Low Effort", fontface = "bold", size = 4, hjust = 0, color = "#1E1E1E") +
+  annotate("text", x = 100, y = -0.15, label = "Excessive Effort / Overload", fontface = "bold", size = 4, hjust = 1, color = "#1E1E1E") +
+  
+  # Canvas settings
+  coord_cartesian(xlim = c(-2, 102), ylim = c(-0.5, 4.5)) +
+  theme_void() +
+  theme(plot.margin = margin(20, 20, 20, 20))
 
-* Stronger long-term memory retention
-* Deeper conceptual understanding
-* Prevents the illusion of competence
-* Better transfer of skills to new contexts
-
-:::
-
-::::
-
-
-## Learning Approaches Compared - Cons
-
-::: {.columns}
-
-::: {.column width="50%"}
-### Easy Learning
-*(Passive / Fluency)*
-
-**Cons**
-
-* Creates a false sense of mastery
-* Rapid forgetting over time
-* Surface-level recognition, not recall
-* Fails to build deep neural pathways
-:::
-
-::: {.column width="50%"}
-### Effortful Learning
-*(Active / Desirable Difficulties)*
-
-**Cons**
-
-* Demands high mental energy & focus
-* Can cause short-term frustration
-* Slower initial progress
-* Higher risk of drop-off if unguided
-:::
-
-:::
-
-::: {.notes}
-* Key Takeaway: Easy learning feels productive in the moment, but effortful learning drives long-term retention.
-:::
+print(p)
+```
 
 
-
-
-
-
-
-
-
+[Making Things Hard on Yourself, But in a Good Way:
+Creating Desirable Difficulties to Enhance Learning](https://bjorklab.psych.ucla.edu/wp-content/uploads/sites/13/2016/04/EBjork_RBjork_2011.pdf)
 
 ## A brief history lesson
 
