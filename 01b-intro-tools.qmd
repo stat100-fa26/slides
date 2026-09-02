@@ -325,6 +325,9 @@ We do not have problem sets - we have homework assignments. 😊
 #| echo: false
 #| fig-alt: "Four rectangles on a spectrum going from low effort on the left to excessive effort/overload on the right. The rectangles read 'Zone 1: Illusion of Competence', 'Zone 2: Shallow Learning', 'Zone 3: Desirable Difficulty, high effort, delayed gratification, durable knowledge' and 'Zone 4: Frustration and Overload' "
 #| fig-align: center
+#| fig-width: 10
+#| fig-height: 4.5
+#| dpi: 300
 
 # Define zone labels and wrap text automatically
 zone_titles <- c(
@@ -347,7 +350,6 @@ zones <- data.frame(
   ymin = 1,
   ymax = 4,
   title = wrapped_titles,
-  # Harvard Crimson (#A51C30) exclusively for Zone 3 highlight
   fill_color = c("#F8F9FA", "#F8F9FA", "#A51C30", "#F8F9FA"), 
   text_color = c("#1E1E1E", "#1E1E1E", "#FFFFFF", "#1E1E1E"),
   border_color = c("#CBD5E1", "#CBD5E1", "#1E1E1E", "#CBD5E1"),
@@ -359,36 +361,36 @@ p <- ggplot(zones) +
   # Spectrum zone blocks
   geom_rect(
     aes(xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax, 
-        fill = fill_color, color = border_color, size = border_size),
+        fill = fill_color, color = border_color, linewidth = border_size),
     show.legend = FALSE
   ) +
   scale_fill_identity() +
   scale_color_identity() +
-  scale_size_identity() +
+  scale_linewidth_identity() +
   
-  # Zone titles (Auto-wrapped)
+  # Zone titles (Scaled to 20pt)
   geom_text(
     aes(x = (xmin + xmax) / 2, y = 3.1, label = title, color = text_color),
-    fontface = "bold", size = 4.2, lineheight = 0.9, show.legend = FALSE
+    fontface = "bold", size = 20 / .pt, lineheight = 0.9, show.legend = FALSE
   ) +
   
-  # Wrapped key attributes in Zone 3
+  # Wrapped key attributes in Zone 3 (Scaled to 15pt)
   annotate(
     "text", x = 65, y = 1.8, 
     label = z3_details,
-    color = "#FFFFFF", fontface = "bold", size = 3.8, lineheight = 1.1
+    color = "#FFFFFF", fontface = "bold", size = 15 / .pt, lineheight = 1.1
   ) +
   
   # Bottom axis line
   geom_segment(
     aes(x = 0, xend = 100, y = 0.3, yend = 0.3),
     arrow = arrow(length = unit(0.35, "cm"), type = "closed"),
-    color = "#1E1E1E", size = 1.1
+    color = "#1E1E1E", linewidth = 1.1
   ) +
   
-  # Axis endpoint labels
-  annotate("text", x = 0, y = -0.15, label = "Low Effort", fontface = "bold", size = 4, hjust = 0, color = "#1E1E1E") +
-  annotate("text", x = 100, y = -0.15, label = "Excessive Effort / Overload", fontface = "bold", size = 4, hjust = 1, color = "#1E1E1E") +
+  # Axis endpoint labels (Scaled to 18pt)
+  annotate("text", x = 0, y = -0.15, label = "Low Effort", fontface = "bold", size = 18 / .pt, hjust = 0, color = "#1E1E1E") +
+  annotate("text", x = 100, y = -0.15, label = "Excessive Effort / Overload", fontface = "bold", size = 18 / .pt, hjust = 1, color = "#1E1E1E") +
   
   # Canvas settings
   coord_cartesian(xlim = c(-2, 102), ylim = c(-0.5, 4.5)) +
@@ -396,8 +398,8 @@ p <- ggplot(zones) +
   theme(plot.margin = margin(20, 20, 20, 20))
 
 print(p)
-```
 
+```
 
 [Making Things Hard on Yourself, But in a Good Way:
 Creating Desirable Difficulties to Enhance Learning](https://bjorklab.psych.ucla.edu/wp-content/uploads/sites/13/2016/04/EBjork_RBjork_2011.pdf)
