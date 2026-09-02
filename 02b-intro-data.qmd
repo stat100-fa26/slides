@@ -46,7 +46,10 @@ data(hotel_bookings)
 ```
 
 
-## Getting to Know Data
+# Getting to Know Data Frames {.inverse background-color="#A51C30"}
+
+
+## Data Context 
 
 Data from: [Dear Mona, Which State Has the Worst Drivers?](https://fivethirtyeight.com/features/which-state-has-the-worst-drivers/)
 
@@ -170,6 +173,8 @@ glimpse(bob_ross)
 glimpse(mariokart)
 ```
 
+# Variables {.inverse background-color="#A51C30"}
+
 ## Variables
 
 ```{r}
@@ -262,6 +267,13 @@ False - 0
 True - 1
 :::
 
+## Note 
+
+::: {.stat-callout .note-tip}
+
+In some datasets you might come across sex or gender being treated as binary variables. However, neither of these variables are binary. You can read more on how these variables were recommended to be handled in [Federal Statistical Surveys](https://bidenwhitehouse.archives.gov/wp-content/uploads/2023/01/SOGI-Best-Practices.pdf).
+
+:::
 
 ## Numeric Variables
 
@@ -378,7 +390,7 @@ glimpse(mariokart)
 
 As a data scientist it is **YOUR** job to check the type(s) of data that you are working with. Do **NOT**  assume you will work with clean data frames, with clean names, labels, and types.
 
-## Describing Data with Numbers
+# Describing Data with Numbers {.inverse background-color="#A51C30"}
 
 ## Data
 
