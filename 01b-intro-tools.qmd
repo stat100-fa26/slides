@@ -663,7 +663,7 @@ knitr::include_graphics("images/lec01b-eraser.jpg")
 
 :::
 
-::: {.column width="40%"}
+::: {.column width="53%"}
 
 
 - Mistakes are part of the learning process. "Good mistakes" help you learn. 
@@ -672,7 +672,7 @@ knitr::include_graphics("images/lec01b-eraser.jpg")
 
 - Be kind to yourself and to others.
 
-- Be honest in your communication. 
+- Maintain complete honesty and transparency in every form of communication (e.g., daily conversations with me and teammates, formal data reporting in assignments). 
 
 :::
 
