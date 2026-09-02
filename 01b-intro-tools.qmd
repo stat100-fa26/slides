@@ -259,7 +259,11 @@ knitr::include_graphics("images/lec01b-cats.jpeg")
 
 THANKFULLY, I am NOT teaching this class by myself. 
 
-[Meet the Teaching Team](https://stat-100.com/people.html) on the course website. 
+Meet your preceptor, Julie.
+
+. . .
+
+[Meet the rest of the Teaching Team](https://stat-100.com/people.html) on the course website. 
 
 ## Meet Your Peers
 
@@ -299,7 +303,7 @@ We do not have problem sets - we have homework assignments. 😊
 
 ## Other Concerns
 
-- No programming background - that's ok programming is not a prerequisite
+- No programming background - That's OK. Programming is not a prerequisite
 
 . . .
 
@@ -405,7 +409,7 @@ knitr::include_graphics("images/lec01b-early-dice.png")
 
 . . . 
 
-People gambled but they did not yet ask "What are the odds?"
+People played chance games but they "probably" did not yet ask "What are the odds?"
 
 
 ## Then came probability theory
@@ -506,7 +510,7 @@ If I flip a coin 5 times what is the probability of getting 2 heads?
 plot_inference
 ```
 
-In many instances, we do not design of the coin and we are wondering if it is a fair coin. 
+In many instances, we do not know the design of the coin and we are wondering if it is a fair coin. 
 For instance if we observe H, H, H, H, T on five coin flips, what is the likelihood that this is a fair coin?
 
 ## More questions
