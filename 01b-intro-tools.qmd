@@ -641,6 +641,38 @@ completing learning tasks. Figure A11 illustrates this relationship for non-AI s
 - Exams
 - Project
 
+## Classroom Vibes
+
+:::: {.columns}
+
+::: {.column width="40%"}
+
+```{r}
+#| echo: false
+#| fig-alt: a black eraser with white font that reads errare humanum est
+knitr::include_graphics("images/lec01b-eraser.jpg")
+```
+
+:::
+
+::: {.column width="5%"}
+
+:::
+
+::: {.column width="40%"}
+
+
+- Mistakes are part of the learning process. "Good mistakes" help you learn. 
+
+- There are no stupid questions.
+
+- Be kind to yourself and to others.
+
+- Be honest in your communication. 
+
+:::
+
+:::: 
 
 ## Slides - how to pdf
 
