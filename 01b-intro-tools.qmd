@@ -460,13 +460,13 @@ plot_probability <- ggplot() +
   annotate("text", x = 5, y = 6.6, label = "Probability", 
            color = color_text_main, size = 7, fontface = "bold") +
   annotate("text", x = 2, y = 5.35, label = "Design of the Coin", 
-           color = color_text_main, size = 6, fontface = "bold") +
+           color = color_text_main, size = 7, fontface = "bold") +
   annotate("text", x = 2, y = 4.55, label = expression(pi == 0.5), 
-           color = color_text_muted, size = 5.5, fontface = "bold") +
+           color = color_text_muted, size = 7, fontface = "bold") +
   annotate("text", x = 8, y = 5.35, label = "Observed Data", 
-           color = color_text_main, size = 6, fontface = "bold") +
+           color = color_text_main, size = 7, fontface = "bold") +
   annotate("text", x = 8, y = 4.55, label = "?", 
-           color = color_text_muted, size = 5.5, fontface = "bold") +
+           color = color_text_muted, size = 7, fontface = "bold") +
   
   coord_fixed(xlim = c(0, 10), ylim = c(2, 8)) +
   theme_slide_diagram()
@@ -488,13 +488,13 @@ plot_inference <- ggplot() +
   annotate("text", x = 5, y = 3.3, label = "Statistical Inference", 
            color = color_text_main, size = 7, fontface = "bold") +
   annotate("text", x = 2, y = 5.35, label = "Design of the Coin", 
-           color = color_text_main, size = 6, fontface = "bold") +
+           color = color_text_main, size = 7, fontface = "bold") +
   annotate("text", x = 2, y = 4.55, label = expression(pi == "?"), 
-           color = color_text_muted, size = 5.5, fontface = "bold") +
+           color = color_text_muted, size = 7, fontface = "bold") +
   annotate("text", x = 8, y = 5.35, label = "Observed Data", 
-           color = color_text_main, size = 6, fontface = "bold") +
+           color = color_text_main, size = 7, fontface = "bold") +
   annotate("text", x = 8, y = 4.55, label = "H, H, H, H, T", 
-           color = color_text_muted, size = 5.5, fontface = "bold") +
+           color = color_text_muted, size = 7, fontface = "bold") +
   
   coord_fixed(xlim = c(0, 10), ylim = c(2, 8)) +
   theme_slide_diagram()
