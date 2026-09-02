@@ -325,11 +325,12 @@ We do not have problem sets - we have homework assignments. 😊
 #| echo: false
 #| fig-alt: "Four rectangles on a spectrum going from low effort on the left to excessive effort/overload on the right. The rectangles read 'Zone 1: Illusion of Competence', 'Zone 2: Shallow Learning', 'Zone 3: Desirable Difficulty, high effort, delayed gratification, durable knowledge' and 'Zone 4: Frustration and Overload' "
 #| fig-align: center
-#| fig-width: 10
-#| fig-height: 4.5
+#| fig-width: 6.5
+#| fig-height: 2.8
+#| out-width: "100%"
+#| dev: "png"
 #| dpi: 300
 
-# Define zone labels and wrap text automatically
 zone_titles <- c(
   "Zone 1: Illusion of Competence",
   "Zone 2: Shallow Learning",
@@ -337,13 +338,9 @@ zone_titles <- c(
   "Zone 4: Frustration and Overload"
 )
 
-# Apply str_wrap to title text (wraps after ~15 characters)
-wrapped_titles <- str_wrap(zone_titles, width = 15)
+wrapped_titles <- str_wrap(zone_titles, width = 14)
+z3_details <- str_wrap("• High Effort\n• Delayed Gratification\n• Durable Knowledge", width = 18)
 
-# Wrap Zone 3 attributes text
-z3_details <- str_wrap("• High Effort\n• Delayed Gratification\n• Durable Knowledge", width = 20)
-
-# Define data frame
 zones <- data.frame(
   xmin = c(0, 25, 50, 80),
   xmax = c(25, 50, 80, 100),
@@ -356,9 +353,7 @@ zones <- data.frame(
   border_size = c(0.5, 0.5, 1.5, 0.5)
 )
 
-# Render plot
-p <- ggplot(zones) +
-  # Spectrum zone blocks
+ggplot(zones) +
   geom_rect(
     aes(xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax, 
         fill = fill_color, color = border_color, linewidth = border_size),
@@ -368,36 +363,30 @@ p <- ggplot(zones) +
   scale_color_identity() +
   scale_linewidth_identity() +
   
-  # Zone titles (Scaled to 20pt)
+  # Larger relative text size on a 6.5-inch canvas
   geom_text(
     aes(x = (xmin + xmax) / 2, y = 3.1, label = title, color = text_color),
-    fontface = "bold", size = 20 / .pt, lineheight = 0.9, show.legend = FALSE
+    fontface = "bold", size = 15 / .pt, lineheight = 0.9, show.legend = FALSE
   ) +
   
-  # Wrapped key attributes in Zone 3 (Scaled to 15pt)
   annotate(
     "text", x = 65, y = 1.8, 
     label = z3_details,
-    color = "#FFFFFF", fontface = "bold", size = 15 / .pt, lineheight = 1.1
+    color = "#FFFFFF", fontface = "bold", size = 11 / .pt, lineheight = 1.1
   ) +
   
-  # Bottom axis line
   geom_segment(
     aes(x = 0, xend = 100, y = 0.3, yend = 0.3),
-    arrow = arrow(length = unit(0.35, "cm"), type = "closed"),
-    color = "#1E1E1E", linewidth = 1.1
+    arrow = arrow(length = unit(0.3, "cm"), type = "closed"),
+    color = "#1E1E1E", linewidth = 1
   ) +
   
-  # Axis endpoint labels (Scaled to 18pt)
-  annotate("text", x = 0, y = -0.15, label = "Low Effort", fontface = "bold", size = 18 / .pt, hjust = 0, color = "#1E1E1E") +
-  annotate("text", x = 100, y = -0.15, label = "Excessive Effort / Overload", fontface = "bold", size = 18 / .pt, hjust = 1, color = "#1E1E1E") +
+  annotate("text", x = 0, y = -0.15, label = "Low Effort", fontface = "bold", size = 13 / .pt, hjust = 0, color = "#1E1E1E") +
+  annotate("text", x = 100, y = -0.15, label = "Excessive Effort / Overload", fontface = "bold", size = 13 / .pt, hjust = 1, color = "#1E1E1E") +
   
-  # Canvas settings
   coord_cartesian(xlim = c(-2, 102), ylim = c(-0.5, 4.5)) +
   theme_void() +
-  theme(plot.margin = margin(20, 20, 20, 20))
-
-print(p)
+  theme(plot.margin = margin(10, 10, 10, 10))
 
 ```
 
