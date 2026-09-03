@@ -325,11 +325,10 @@ We do not have problem sets - we have homework assignments. 😊
 #| echo: false
 #| fig-alt: "Four rectangles on a spectrum going from low effort on the left to excessive effort/overload on the right. The rectangles read 'Zone 1: Illusion of Competence', 'Zone 2: Shallow Learning', 'Zone 3: Desirable Difficulty, high effort, delayed gratification, durable knowledge' and 'Zone 4: Frustration and Overload' "
 #| fig-align: center
-#| fig-width: 6.5
-#| fig-height: 2.8
+#| fig-width: 8
+#| fig-height: 3.2
 #| out-width: "100%"
-#| dev: "png"
-#| dpi: 300
+#| fig-dpi: 300
 
 zone_titles <- c(
   "Zone 1: Illusion of Competence",
@@ -338,8 +337,8 @@ zone_titles <- c(
   "Zone 4: Frustration and Overload"
 )
 
-wrapped_titles <- str_wrap(zone_titles, width = 14)
-z3_details <- str_wrap("• High Effort\n• Delayed Gratification\n• Durable Knowledge", width = 18)
+wrapped_titles <- str_wrap(zone_titles, width = 15)
+z3_details <- str_wrap("• High Effort\n• Delayed Gratification\n• Durable Knowledge", width = 22)
 
 zones <- data.frame(
   xmin = c(0, 25, 50, 80),
@@ -353,7 +352,9 @@ zones <- data.frame(
   border_size = c(0.5, 0.5, 1.5, 0.5)
 )
 
-ggplot(zones) +
+
+p_zones <- 
+  ggplot(zones) +
   geom_rect(
     aes(xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax, 
         fill = fill_color, color = border_color, linewidth = border_size),
@@ -363,31 +364,37 @@ ggplot(zones) +
   scale_color_identity() +
   scale_linewidth_identity() +
   
-  # Larger relative text size on a 6.5-inch canvas
+  # Zone titles (Balanced at 12pt)
   geom_text(
-    aes(x = (xmin + xmax) / 2, y = 3.1, label = title, color = text_color),
-    fontface = "bold", size = 15 / .pt, lineheight = 0.9, show.legend = FALSE
+    aes(x = (xmin + xmax) / 2, y = 3.15, label = title, color = text_color),
+    fontface = "bold", size = 12 / .pt, lineheight = 0.95, show.legend = FALSE
   ) +
   
+  # Bulleted details (Scaled to 9.5pt)
   annotate(
-    "text", x = 65, y = 1.8, 
+    "text", x = 65, y = 1.85, 
     label = z3_details,
-    color = "#FFFFFF", fontface = "bold", size = 11 / .pt, lineheight = 1.1
+    color = "#FFFFFF", fontface = "bold", size = 9.5 / .pt, lineheight = 1.15
   ) +
   
+  # Axis line
   geom_segment(
-    aes(x = 0, xend = 100, y = 0.3, yend = 0.3),
-    arrow = arrow(length = unit(0.3, "cm"), type = "closed"),
-    color = "#1E1E1E", linewidth = 1
+    aes(x = 0, xend = 100, y = 0.35, yend = 0.35),
+    arrow = arrow(length = unit(0.25, "cm"), type = "closed"),
+    color = "#1E1E1E", linewidth = 0.8
   ) +
   
-  annotate("text", x = 0, y = -0.15, label = "Low Effort", fontface = "bold", size = 13 / .pt, hjust = 0, color = "#1E1E1E") +
-  annotate("text", x = 100, y = -0.15, label = "Excessive Effort / Overload", fontface = "bold", size = 13 / .pt, hjust = 1, color = "#1E1E1E") +
+  # Axis endpoint labels (Scaled to 11pt)
+  annotate("text", x = 0, y = -0.1, label = "Low Effort", fontface = "bold", size = 11 / .pt, hjust = 0, color = "#1E1E1E") +
+  annotate("text", x = 100, y = -0.1, label = "Excessive Effort / Overload", fontface = "bold", size = 11 / .pt, hjust = 1, color = "#1E1E1E") +
   
-  coord_cartesian(xlim = c(-2, 102), ylim = c(-0.5, 4.5)) +
+  coord_cartesian(xlim = c(-2, 102), ylim = c(-0.4, 4.4), clip = "off") +
   theme_void() +
   theme(plot.margin = margin(10, 10, 10, 10))
 
+# ggsave(here::here("images/lec01b-learning-zones.png"))
+
+knitr::include_graphics(here::here("images/lec01b-learning-zones.png"))
 ```
 
 [Making Things Hard on Yourself, But in a Good Way:
