@@ -117,7 +117,7 @@ tail(bad_drivers) |>
 
 `Source` National Highway Traffic Safety Administration 2012, National Highway Traffic Safety Administration 2009 & 2012, National Association of Insurance Commissioners 2010 & 2011.
 
-# Functions for Data Frames
+# Functions for Data Frames {.inverse background-color="#A51C30"}
 
 ## `head()`
 
