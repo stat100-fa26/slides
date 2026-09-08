@@ -1,0 +1,496 @@
+---
+title: "Accessible Data Representations"
+author: "Mine Doğucu"
+execute:
+  echo: true
+format:
+  revealjs:
+    menu:
+      openButton: false
+    footer: |
+      <span id="menu-toggle-box"></span> [stat-100.com](https://stat-100.com)
+    code-line-numbers: false 
+    slide-number: true
+    incremental: false
+    theme: [default, style.scss]
+    logo: 
+      path: images/00-stat100-logo-square.png
+      alt: "STAT 100 course square logo"
+    transition: fade
+    width: 1280
+    height: 720
+    title-slide-attributes: 
+      data-background-image: "images/stat100-logo-rectangle.png"
+      data-background-size: 10%
+      data-background-position: 50% 85%
+      data-aria-label: "STAT 100 course logo"
+---
+
+
+# Improving Data Visualizations {.inverse background-color="#A51C30"}
+
+```{r}
+#| echo: false
+library(ggplot2)
+theme_set(theme_grey(base_size = 18))
+
+```
+
+
+## Packages for Today
+
+```{r}
+library(hellodatascience)
+library(tidyverse)
+```
+
+
+## Saving a Plot
+
+```{r}
+#| label: fig-base-bar-plot
+#| output-location: column
+#| fig-alt: "Grouped bar chart showing student counts by employment status and enrollment. The x-axis, labeled 'employment', lists employment categories (Full Time, Part Time, NA) and the y-axis, labeled 'count' shows count. Bars are colored by enrollment status (Full Time vs Part Time), allowing comparison of enrollment within each employment group."
+#| fig-cap: Side-by-side bar plot of employment broken down by enrollment status
+base_bar_plot <-
+  ggplot(
+    data = atus_college, 
+    aes(
+      x = employment, 
+      fill = enrollment
+    )
+  ) +
+  geom_bar(position = "dodge")
+
+base_bar_plot 
+```
+
+## Labels
+
+```{r}
+#| label: fig-bar-plot-labs
+#| output-location: column
+#| fig-alt: "Same bar chart as previous with better labels. The main title is Student Count by Employment and Enrollment and the subtitle says that most students work part-time while enrolled full-time. Labels for the x-axis, y-axis, and legend are 'Employment Status', 'Number of Students' and 'Course Enrollment' respectively. Caption notes Data source: American Time Use Survey 2024 (n = 321 students). There are more students enrolled full time than part time for each level of employment status. The full time enrolled students with unknown employment status have the highest count at about 80 students. "
+#| fig-cap: Bar plot of employment broken down by enrollment status with added labels
+improved_bar_plot <- 
+  base_bar_plot +
+  labs( # <1>
+    title = "Student Count by Employment and Enrollment Status", # <2> 
+    subtitle = "Most students work part-time while enrolled full-time", # <3>
+    x = "Employment Status",  # <4> 
+    y = "Number of Students", # <5> 
+    fill = "Course Enrollment", # <6> 
+    caption = "Data source: American Time Use Survey 2024 (n = 312 students)" # <7> 
+  )
+
+improved_bar_plot
+```
+
+## Themes
+
+
+```{r}
+#| label: fig-bar-plot-themes
+#| output-location: column
+#| fig-alt: "Same bar chart as previous, with a white background instead of gray."
+#| fig-cap: Bar plot of employment broken down by enrollment status with using `theme_minimal`
+improved_bar_plot <-
+  improved_bar_plot +
+  theme_minimal() 
+
+improved_bar_plot
+```
+
+Other themes include but not limited to: `theme_bw()`, `theme_light()`, `theme_dark()`, `theme_classic()`.
+
+## Using `theme()` function
+
+```{r}
+#| label: fig-bar-plot-font-size
+#| output-location: column
+#| fig-alt: "Same bar plot as previous with larger font size and title broken across two lines."
+#| fig-cap: Bar plot of employment broken down by enrollment status with bigger font sizes
+improved_bar_plot <-
+  improved_bar_plot + 
+  theme( # <1>
+    plot.title = element_text(size = 18), # <2>
+    plot.subtitle = element_text(size = 14),
+    axis.title = element_text(size = 12), 
+    axis.text = element_text(size = 10), 
+    legend.title = element_text(size = 11),
+    legend.text = element_text(size = 9), 
+    plot.caption = element_text(size = 8)
+  ) +
+  labs(title = "Student Count by Employment and \n Enrollment Status") # <3>
+
+improved_bar_plot
+```
+
+## Changing legend location
+
+```{r}
+#| output-location: column
+#| label: fig-bar-plot-legend
+#| fig-alt: Same plot as previous with legend horizontally listed at bottom of plot instead of vertically listed on right side of plot.
+#| fig-cap: Bar plot of employment broken down by enrollment status with legend at the bottom
+improved_bar_plot <-
+  improved_bar_plot +
+  theme(legend.position = "bottom") # <1>
+
+improved_bar_plot
+```
+
+## Colors
+
+```{r}
+#| echo: false
+#| label: fig-colors
+#| fig-alt: "Color palette display arranged in a 3-by-3 grid of colored squares. Each square is labeled with a named color, including lightcyan3, grey25, peachpuff, chartreuse3, khaki1, hotpink, cornsilk2, lavenderblush, and purple3."
+#| fig-cap: "Nine colors randomly selected from R colors as listed by the `colors()` function"
+# Code mostly from Gemini
+
+set.seed(26534) 
+
+random_colors <- sample(colors(), 9)
+
+get_contrast_color <- 
+  function(bg_color){
+    rgb_val <- col2rgb(bg_color)
+    brightness <- (0.299 * rgb_val[1] + 0.587 * rgb_val[2] + 0.114 * rgb_val[3])
+    return(ifelse(brightness > 128, "black", "white"))
+  }
+
+
+color_grid_data <- expand.grid(x = 1:3, y = 1:3)
+
+color_grid_data$fill_color <- random_colors
+color_grid_data$text_color <- sapply(random_colors, get_contrast_color)
+
+
+ggplot(color_grid_data, aes(x = x, y = y)) +
+  geom_tile(
+    aes(fill = fill_color), 
+    color = "white", 
+    linewidth = 2
+  ) +
+  geom_text(
+    aes(
+      label = fill_color, 
+      color = text_color
+    ), 
+    size = 5
+  ) +
+  scale_fill_identity() +
+  scale_color_identity() +
+  coord_fixed() +
+  theme_void() +
+  theme(legend.position = "none")
+```
+
+## Hex Codes
+
+```{r}
+#| echo: false
+#| label: fig-hex
+#| fig-alt: "Color palette grid showing nine colored squares, each labeled with its hexadecimal color code, including #B4CDCD, #404040, #FFDAB9, #66CD00, #FFF68F, #FF69B4, #EEE8CD, #FFF0F5, and #7D26CD."
+#| fig-cap: "Hex codes for the randomly selected nine colors"
+name_to_hex <- 
+  function(color_name){
+    rgb_matrix <- col2rgb(color_name)
+    hex_code <- 
+      rgb(
+        rgb_matrix[1,], 
+        rgb_matrix[2,], 
+        rgb_matrix[3,], 
+        maxColorValue = 255
+      )
+    
+    return(hex_code)
+  }
+
+color_grid_data <- expand.grid(x = 1:3, y = 1:3)
+
+color_grid_data$fill_color <- random_colors
+color_grid_data$text_color <- sapply(random_colors, get_contrast_color)
+
+color_grid_data$hex_label  <- sapply(random_colors, name_to_hex)
+
+
+ggplot(color_grid_data, aes(x = x, y = y)) +
+  geom_tile(
+    aes(fill = fill_color), 
+    color = "white", 
+    linewidth = 2
+  ) +
+  geom_text(
+    aes(
+      label = hex_label, 
+      color = text_color
+    ), 
+    size = 5
+  ) +
+  scale_fill_identity() +
+  scale_color_identity() +
+  coord_fixed() +
+  theme_void() +
+  theme(legend.position = "none")
+```
+
+## Okabe-Ito Color Palette
+
+```{r}
+#| echo: true
+#| label: okabe-ito-codes
+palette.colors(palette = "Okabe-Ito")
+```
+
+## Okabe-Ito Color Palette
+
+```{r}
+#| echo: false
+#| label: fig-okabe-ito
+#| fig-alt: "Three-by-three grid of color swatches labeled with hexadecimal codes, including #000000 (black), #E69F00 (gold), #56B4E9 (light blue), #009E73 (teal), #F0E442 (yellow), #0072B2 (dark blue), #D55E00 (orange), #CC79A7 (pink), and #999999 (gray), intended as a reference color palette."
+#| fig-cap: Hex codes of colors in the Okabe-Ito palette
+scales:::show_col(palette.colors(palette = "Okabe-Ito"))
+```
+
+## Changing Colors
+
+```{r}
+#| label: fig-bar-plot-okabe-colors
+#| output-location: column
+#| fig-alt: "Most recent bar plot with different colors chosen for the bars."
+#| fig-cap: Bar plot of employment broken down by enrollment status using Okabe-Ito colors
+improved_bar_plot <-
+  improved_bar_plot +
+  scale_fill_manual( # <1>
+    values = c( # <2>
+      "Full Time" = "#009E73", # <3>
+      "Part Time" = "#CC79A7" # <4>
+    )
+  )
+
+improved_bar_plot
+```
+
+## Look at how far we have come - Default plot
+
+
+
+```{r}
+#| echo: false
+#| label: fig-recall-base-bar-plot
+#| fig-alt: "Original first bar plot from beginning of the chapter."
+#| fig-cap: Default Bar Plot
+base_bar_plot
+```
+
+## Look at how far we have come - Improved plot
+
+
+```{r}
+#| label: fig-bar-plot-okabe-colors-again
+#| echo: false
+#| output-location: column
+#| fig-alt: "Most recent bar plot with different colors chosen for the bars."
+#| fig-cap: Improved Bar plot
+improved_bar_plot <-
+  improved_bar_plot +
+  scale_fill_manual( # <1>
+    values = c( # <2>
+      "Full Time" = "#009E73", # <3>
+      "Part Time" = "#CC79A7" # <4>
+    )
+  )
+
+improved_bar_plot
+```
+
+
+## Customizing Scatterplots
+
+```{r}
+#| label: fig-scatterplot
+#| output-location: column
+#| fig-alt: "Scatter plot showing the relationship between time spent alone and weekly earnings. Each point represents an individual. Time alone (in minutes) is on the x-axis and weekly earnings are on the y-axis. Earnings vary widely at all levels of time alone, with no strong linear trend."
+#| fig-cap: Scatterplot of time spent alone and weekly earnings
+simple_scatterplot <- 
+  ggplot(
+    data = atus_college,
+    aes(
+      x = time_alone,
+      y = weekly_earnings
+    )
+  ) +
+  geom_point() +
+  labs(
+    x = "Time Alone (minutes)",
+    y = "Weekly Earnings ($)"
+  ) +
+  theme_bw()
+
+simple_scatterplot
+```
+
+## Customizing Scatterplots
+
+
+```{r}
+#| label: fig-scatterplot-look
+#| output-location: column
+#| fig-alt: "Same scatterplot as previous with points as green squares instead of black circles."
+#| fig-cap: Scatterplot with customized appearance of points
+
+colored_scatterplot <- 
+  simple_scatterplot +
+  geom_point(
+    color = "aquamarine4", # <1>
+    size = 4, # <2>
+    shape = "square" # <3>
+  )
+
+colored_scatterplot
+```
+
+## Facets
+
+```{r}
+#| label: fig-scatterplot-facet
+#| fig-alt: "Faceted version of same scatter plot of weekly earnings versus time alone, split by employment status (Full Time, Part Time, and NA). Each panel shows individual data points, allowing comparison of earnings patterns within each employment group. There are no obvious trends in either Full Time Enrollment plot. The part time employment plots are mostly weekly earnings between 0 and 1000$. The NA employment plots are empty."
+#| fig-cap: Time spent alone versus weekly earnings broken by employment and enrollment status using facets
+simple_scatterplot +
+  facet_grid(rows = vars(employment), cols = vars(enrollment)) # <1>
+```
+
+## Facets - Rows only
+
+```{r}
+#| label: fig-scatterplot-facet-employ
+#| fig-alt: "Vertical faceted scatter plot of same data showing weekly earnings versus time alone for three employment categories: Full Time, Part Time, and NA. Full-time workers tend to have higher earnings overall, while part-time workers cluster at lower earnings levels."
+#| fig-cap: Time spent alone versus weekly earnings broken by employment status
+simple_scatterplot +
+  facet_grid(rows = vars(employment)) # <1>
+```
+
+
+# Data Verbalization {.inverse background-color="#A51C30"}
+
+## Screen Readers
+
+
+An assistive technology is any form of technology (software, device) that helps people with disabilities perform certain activities (e.g. walking sticks, wheel chairs). 
+
+. . .
+
+A screen reader is a form of assistive technology that allows blind and visually impaired users, and people with other disabilities (e.g., dyslexia) to read what is on their computer screen. 
+
+. . .
+
+If you have never heard of a screen reader reading a text, you can listen to [this audio](https://www.youtube.com/watch?v=l-G4kKTuDHI&t=2s).
+
+## Alternate (alt) Text
+
+A screen reader can read text, but non-text elements such as images cannot be read. 
+
+. . .
+
+Instead a screen reader would say something along the lines of "Image.png".
+
+. . .
+
+In order to make an image visually accessible, we can rely on alternate text.
+
+Alternate text or alt text describes contents of an image and can be read by screen readers.
+
+## Alt text in ggplot
+
+```{r}
+#| label: fig-bar-plot-alt
+#| fig-alt: "Same well polished bar plot of employment status by course enrollment."
+#| fig-cap: Bar plot of employment broken down by enrollment status with added alternative text in the background
+#| code-overflow: wrap
+improved_bar_plot +
+  labs(
+    alt = "Barplot showing student count by employment and enrollment status. The y-axis shows number of students from 0 to 80, and the x-axis shows employment status (Full Time, Part Time, NA). Each employment status is broken down by full time or part time enrollment status. The plot displays six bars: students enrolled full time with full time employment (approximately 70 students), part time employment (apprximately 75 students), and unknown employment (approximately 80 students) as well as students enrolled part time with full time employment (approxmately 60 students), part time employment (approximately 18 students), and unknown employment (approximately 15 students). Data source: American Time Use Survey 2024 (n = 312 students)."
+  )
+```
+
+## Alt text is invisible
+
+The alt text is never displayed in the front end. 
+
+. . .
+
+The alt text is stored on the back end of a web page and is legible by screen readers.
+
+. . .
+
+If you are reading these slides using a screen reader, you should hear the alt text for the plot in the previous slide.
+
+
+## Good alt text practice
+
+You should always write alt text for all images (ggplot or not), whether you use R or Quarto or not, whether you are doing work for STATS 6 or any other courses or any non-course work.
+
+. . .
+
+An effective alt text communicates the labels of the axes, the variables represented, ranges and values for each variable and group as seen in the visualization.
+
+## Good alt text practice
+
+
+Most importantly alt text should convey the overall message of the visualization.
+
+. . .
+
+Writing the overall message of the visualization is crucial and practicing this skill will help you take the time to understand the visualizations you work with in depth.
+
+# Data Sonification {.inverse background-color="#A51C30"}
+
+## Saving Simple Plot
+
+```{r}
+#| label: fig-simple-scatterplot
+#| output-location: column
+#| fig-alt: "Simple scatter plot showing a perfectly positive linear relationship between x and y. Points increase steadily from lower left to upper right, indicating that y increases as x increases."
+#| fig-cap: Simple scatterplot to show how `sonify()` function works
+x <- 1:10
+y <- 1:10
+
+simple_plot <-
+  ggplot(
+    data = data.frame(x = x, y = y),
+    aes(x = x,  y = y)) +
+  geom_point()
+
+simple_plot
+```
+
+## Sonification
+
+```{r}
+#| eval: false
+#| label: sonify-simple-scatterplot
+sonify::sonify(x, y)
+```
+
+If you were to listen to the output of the `sonify()` function, you would hear a series of ten tones, each one slightly higher in pitch than the last.
+The rising pitch directly corresponds to the rising `y` values as `x` increases.
+
+
+
+# Data Tactualization {.inverse background-color="#A51C30"}
+
+## Data Tactualization
+
+Data tactualization refers to making data visualization in a form so that it can be touchable. 
+The video shows printing of a tactile boxplot that one can touch using a Swell machine.
+
+<center>
+
+<iframe  width="560" height="315" src="https://www.youtube.com/embed/ClI555l4Z1M" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+</center>
+
+
+
