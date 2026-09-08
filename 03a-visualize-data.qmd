@@ -1,0 +1,955 @@
+---
+title: "Data Visualization"
+author: "Mine Doğucu"
+execute:
+  echo: true
+format:
+  revealjs:
+    menu:
+      openButton: false
+    footer: |
+      <span id="menu-toggle-box"></span> [stat-100.com](https://stat-100.com)
+    code-line-numbers: false 
+    slide-number: true
+    incremental: false
+    theme: [default, style.scss]
+    logo: 
+      path: images/00-stat100-logo-square.png
+      alt: "STAT 100 course square logo"
+    transition: fade
+    width: 1280
+    height: 720
+    title-slide-attributes: 
+      data-background-image: "images/stat100-logo-rectangle.png"
+      data-background-size: 10%
+      data-background-position: 50% 85%
+      data-aria-label: "STAT 100 course logo"
+---
+
+## Examples
+
+[How Common Is Your Birthday?](https://chart-studio.plotly.com/~Dreamshot/354/how-common-is-your-birthday/#plot)
+
+[One Dataset Visualized 25 Ways](https://flowingdata.com/2017/01/24/one-dataset-visualized-25-ways)
+
+[Mandatory Paid Vacation](https://www.instagram.com/p/CE1kpM5FhWR/?utm_source=ig_web_copy_link)
+
+[Why are K-pop groups so big?](https://pudding.cool/2020/10/kpop/)
+
+. . .
+
+We will only touch the surface of data visualization in this class. 
+Visualization is a rich field on its own, in case some of you would consider it as a career option.
+It sits at the intersection of art, design, statistics, data science, psychology, cognitive science.
+
+## Data Visualizations
+
+- are graphical representations of data
+
+- use different colors, shapes, and the coordinate system to summarize data
+
+- can tell a story or can be useful for exploring data
+
+## Packages for Today
+
+```{r}
+library(hellodatascience)
+library(tidyverse)
+```
+
+```{r}
+#| echo: false
+theme_set(theme_grey(base_size = 18))
+```
+
+Note that most of the functions we will be using today comes from the {ggplot2} package within tidyverse.
+
+## Example from NYT
+
+```{r}
+#| fig-align: center
+#| echo: false
+#| fig-alt: The title of the plot reads change in kindergarten measles vaccination rates. On the x axis the values range from 80% to 100%. Each state has two values reporesented. For instance for Idaho prepandemic vaccination rate is around 89% but vaccination rate in 2023-2024 is about 80%. There is a line labeled as Idaho with an arrow showing the direction from 89% to 80%. Other statements some in the direction of increases as well as US average is visible.
+knitr::include_graphics("images/lec03a-nyt.png")
+```
+
+:::{.imagelink}
+
+[Image source](https://www.nytimes.com/2025/02/27/learning/whats-going-on-in-this-graph-march-5-2025.html)
+
+:::
+
+```{r}
+#| echo: false
+countdown::countdown(minutes = 1, seconds = 00)
+```
+
+
+## Data Context
+
+```{r}
+data(atus_college)
+glimpse(atus_college)
+```
+
+## Documentation for Data
+
+```{r}
+#| eval: false
+?atus_college
+```
+
+# Visualizing a Single Variable {.inverse background-color="#A51C30"}
+
+
+## Visualizing a ___ Variable
+
+```{r}
+#| label: fig-bar-example
+#| echo: false
+#| fig-align: center
+#| fig-cap: A bar plot of employment status
+#| fig-alt: "A bar plot of employment status. The x-axis is labeled 'employment status' with categories Full Time, Part Time, and NA. The y-axis is labeled 'count' and ranges from 0 to 140. Full Time has the tallest bar at about 130, Part Time is around 80, and NA is close to 100."
+
+ggplot(
+  data = atus_college, 
+  aes(x = employment)
+) +
+  geom_bar()
+```
+
+
+::: .callout-note
+
+1. What do you notice about this graph?
+2. If you could talk in English to R, how would you tell R to make this plot?
+:::
+
+## Pick your data
+
+```{r}
+#| label: fig-bar-step1
+#| fig-cap: Blank coordinate system
+#| fig-alt: "A blank rectangular space"
+
+ggplot(data = atus_college)
+```
+
+## Map your variable
+
+```{r}
+#| label: fig-bar-step2
+#| fig-cap: Mapping `employment` variable to the x-axis
+#| fig-alt: "A blank rectangular space with only the x axis labeled emplyment with three categories Full Time, Part Time, and NA"
+
+ggplot(data = atus_college, aes(x = employment))
+```
+
+## Pick your plot type
+
+```{r}
+#| label: fig-bar-step3
+#| fig-cap: Creating the bars by adding the geometric layer of a barplot
+#| fig-alt: "A bar plot of employment status. The x-axis is labeled 'employment status' with categories Full Time, Part Time, and NA. The y-axis is labeled 'count' and ranges from 0 to 140. Full Time has the tallest bar at about 130, Part Time is around 80, and NA is close to 100."
+
+ggplot(data = atus_college, aes(x = employment)) +
+  geom_bar()
+```
+
+## Summary
+
+The three main steps to make a plot are:
+
+1. Call the `ggplot()` function on the data we want to plot.
+2. Map variables to plot aesthetics using the `aes()` function.
+3. Add a layer to specify the plot type.
+
+## code style
+
+[The tidyverse style guide](https://style.tidyverse.org/ggplot2.html) has the following convention for writing ggplot2 code.
+
+1. The plus sign for adding layers `+` always has a space before it and is followed by a new line.
+
+1. The new line is indented by two spaces. RStudio does this automatically for you.
+
+
+
+
+## code style
+
+
+```{r}
+#| eval: false
+ggplot(data = atus_college, aes(x = employment)) +
+  geom_bar()
+```
+
+Both the above and below code are correct styles of writing ggplot code.
+
+```{r}
+#| eval: false
+ggplot(
+  data = atus_college, 
+  aes(x = employment)
+) +
+  geom_bar()
+```
+
+## Visualizing a Numeric Variable - Histogram
+
+```{r}
+#| label: fig-hist-example
+#| fig-cap: A histogram of weekly earnings
+#| message: true
+#| fig-alt: "A histogram of 'weekly earnings. The x-axis is labeled 'Weekly Earnings' and ranges from 0 to 3000 in increments of 1000. The y-axis is labeled 'Count' and ranges from 0 to 20 in increments of 5. There are about 30 bars with a width of about 100. The bars height represents the frequency of weekly earnings in different ranges, with most counts concentrated at lower earnings and gradually decreasing toward higher earnings."
+ggplot(data = atus_college, aes(x = weekly_earnings)) +
+  geom_histogram() 
+```
+
+## Comparing binwidth
+
+::: {.panel-tabset}
+
+### `binwidth = 20`
+
+```{r}
+#| out-width: 90%
+#| fig-align: center
+#| fig-alt: the same weekly earnings histogram with thinner bin widths set at 20
+ggplot(data = atus_college, aes(x = weekly_earnings)) +
+  geom_histogram(binwidth = 20) 
+```
+
+### `binwidth = 100`
+
+```{r}
+#| out-width: 90%
+#| fig-align: center
+#| fig-alt: the same weekly earnings histogram with medium bin widths set at 100
+ggplot(data = atus_college, aes(x = weekly_earnings)) +
+  geom_histogram(binwidth = 100) 
+```
+
+### `binwidth = 500`
+
+```{r}
+#| out-width: 90%
+#| fig-align: center
+#| fig-alt: the same weekly earnings histogram with thick bin widths set at 500
+ggplot(data = atus_college, aes(x = weekly_earnings)) +
+  geom_histogram(binwidth = 500) 
+```
+
+
+:::
+
+## Describing histograms
+
+```{r}
+#| label: data-skewness
+#| echo: false
+#| message: false
+#| warning: false
+#| fig.height: 6
+#| cache: true
+set.seed(12345)
+
+bell <- rnorm(n = 10000, mean = 0, sd = 1)
+
+uniform <- runif(n = 10000, min = -4, max = 4)
+
+right_skewed <- fGarch::rsnorm(n = 10000, mean = 0, sd = 1, xi = 20)
+
+left_skewed <- fGarch::rsnorm(n = 10000, mean = 0, sd = 1, xi = -20)
+
+type <- 
+  c(
+    rep("left-skewed", 10000),
+    rep("bell", 10000),
+    rep("uniform", 10000),
+    rep("right-skewed", 10000)
+  )
+
+x <- 
+  c(
+    left_skewed,
+    bell,
+    uniform,
+    right_skewed
+  )
+
+data <- tibble(x = x, type = type)
+
+```
+
+
+```{r}
+#| label: fig-skewness
+#| echo: false
+#| message: false
+#| fig-cap: Understanding skewness of a histogram
+#| fig-alt: "A figure showing four histograms illustrating different distribution shapes. Each histogram has the x-axis labeled x and the y-axis labeled count. The first histogram, labeled Left-skewed, with the tail on the left side is longer meaning that it has most high-count bars concentrated on the right side, and low counts towards the left. The second histogram, labeled Bell-shaped, shows a symmetric distribution with most bars centered in the middle and equal length tails on both sides. The third histogram, labeled Uniform, has bars of roughly equal height across the range.  The fourth histogram, labeled Right-skewed, with the tail on the right side is longer meaning that it has most high-count bars concentrated on the left side, and low counts towards the right."
+
+left <- 
+  data |> 
+  filter(type == "left-skewed") |>
+  ggplot(
+    aes(x = x)
+  ) +
+  geom_histogram(
+    color = "white",
+    fill = "#009E73"
+  ) +
+  labs(title = "Left-skewed") +
+  theme_bw()
+
+bell <- 
+  data |>
+  filter(type == "bell") |>
+  ggplot(
+    aes(x = x)
+  ) +
+  geom_histogram(
+    color = "white", 
+    fill = "#009E73"
+  )  +
+  labs(title = "Bell-shaped") +
+  theme_bw()
+
+uniform <- 
+  data |>
+  filter(type == "uniform") |>
+  ggplot(
+    aes(x = x)
+  ) +
+  geom_histogram(
+    color = "white",
+    fill = "#009E73",
+    binwidth = 0.3
+  )  +
+  labs(title = "Uniform") +
+  theme_bw()
+  
+  
+right <- 
+  data |>
+  filter(type == "right-skewed") |>
+  ggplot(
+    aes(x = x)
+  ) +
+  geom_histogram(
+    color = "white", 
+    fill = "#009E73"
+  )  +
+  labs(title = "Right-skewed") +
+  theme_bw()
+ 
+
+gridExtra::grid.arrange(left, bell, uniform, right, nrow = 2)
+```
+
+## Think 💭 - Pair 👫🏽 - Share 💬
+
+
+::: {.nonincremental}
+
+1. The distribution of `weekly_earnings` is   
+
+
+a. left-skewed
+b. symmetric
+c. right-skewed
+
+
+2. Looking at the distribution of the `weekly_earnings` which of the following can be concluded?
+
+a. mean > median
+b. mean = median
+c. mean < median
+
+:::
+
+## Visualizing a Numeric Variable - Boxplot
+
+```{r}
+#| label: fig-boxplot-example
+#| fig-cap: Boxplot of weekly earnings
+#| fig-alt: "A vertical boxplot showing weekly earnings distribution. The x-axis has no label and its range from -0.4 to 0.4 has no real meaning. The y-axis is labeled weekly_earnings, ranging from 0 to 3000. The box spans approximately from 500 to 1250, with a median line near 750. The lower whisker extends from the lower end of the box down to 0, and the upper whisker extends from the upper end of the box up to about 2500. Several outliers appear above the upper whisker, ranging from about 2500 to 3000."
+
+ggplot(data = atus_college, aes(y = weekly_earnings)) +
+  geom_boxplot() 
+```
+
+
+## Understanding Boxplots
+
+
+```{r}
+#| label: summary-stats-earnings
+#| echo: false
+
+# Calculate summary stats
+stats <- boxplot.stats(atus_college$weekly_earnings)
+
+q1 <- quantile(atus_college$weekly_earnings, 0.25, na.rm = TRUE)
+q3 <- quantile(atus_college$weekly_earnings, 0.75, na.rm = TRUE)
+median <- median(atus_college$weekly_earnings, na.rm = TRUE)
+iqr <- IQR(atus_college$weekly_earnings, na.rm = TRUE)
+min_val <- min(atus_college$weekly_earnings, na.rm = TRUE)
+max_val <- max(atus_college$weekly_earnings, na.rm = TRUE)
+outliers <- stats$out
+upper_whisker <- 
+  max(
+    atus_college$weekly_earnings[atus_college$weekly_earnings <= stats$stats[5]],
+    na.rm = TRUE
+  )
+lower_whisker <- 
+  max(
+    atus_college$weekly_earnings[atus_college$weekly_earnings <= stats$stats[1]],
+    na.rm = TRUE
+  )
+upper_whisker_limit <- q3 + (1.5 * iqr)
+lower_whisker_limit <- q1 - (1.5 * iqr)
+```
+
+```{r}
+#| label: fig-boxplot
+#| echo: false
+#| warning: false
+#| fig-cap: Annotated boxplot
+#| fig-alt: "A detailed boxplot illustrating weekly earnings distribution with annotations. The y-axis is labeled 'Weekly Earnings ($)' and ranges from -1000 to 3000. The box spans from Q1 = 394 to Q3 = 1250, with a median at 706. The minimum value is 12, and the maximum is 3040. The upper whisker limit is 2534, and the lower whisker limit is -890. Several green points above the upper whisker represent potential outliers between 2534 and 3040. The interquartile range (IQR) is highlighted between Q1 and Q3. Text annotations indicate key values: Min = 12, Median = 706, Q1 = 394, Q3 = 1250, Upper whisker limit = 2534, Lower whisker limit = -890, and Max = 3040."
+
+
+# Base plot
+p <- 
+  ggplot(
+    atus_college, 
+    aes(x = "", y = weekly_earnings)
+  ) +
+  geom_boxplot(outlier.colour = "#009E73", outlier.shape = 16) +
+  labs(x = NULL, y = "time_alone") +
+  labs(y = "Weekly Earnings ($)") +
+  theme_bw()
+  
+
+# Annotate
+p +
+  coord_cartesian(ylim = c(-1000, 3100), xlim = c(0.4, 1.7)) +
+  # Q1
+  annotate(
+    "text", 
+    x = 1.52, 
+    y = q1, 
+    label = paste0("Q1 = ", round(q1,2)), 
+    hjust = 0
+  ) +
+  annotate(
+    "segment", 
+    x = 1.5, 
+    xend = 1.39, 
+    y = q1, 
+    yend = q1,
+    arrow = arrow(length = unit(0.15, "inches"))
+  ) +
+  # Q3
+  annotate(
+    "text", 
+    x = 1.52, y = q3, 
+    label = paste0("Q3 = ", round(q3,2)),
+    hjust = 0
+  ) +
+  annotate(
+    "segment", 
+    x = 1.5, 
+    xend = 1.39, 
+    y = q3, 
+    yend = q3,
+    arrow = arrow(length = unit(0.15, "inches"))
+  ) +
+  # Median
+  annotate(
+    "text", 
+    x = 1.52, 
+    y = median, 
+    label = paste0("Median = ", round(median,2)),
+    hjust = 0
+  ) +
+  annotate(
+    "segment", 
+    x = 1.50, xend = 1.39,
+    y = median, yend = median,
+    arrow = arrow(length = unit(0.15, "inches"))
+  ) +
+  # Min
+  annotate(
+    "text", 
+    x = 1.22, 
+    y = min_val, 
+    label = paste0("Min = ", round(min_val,2)), 
+    hjust = 0
+  ) +
+  annotate(
+    "segment", 
+    x = 1.2, 
+    xend = 1.05, 
+    y = min_val, 
+    yend = min_val,
+    arrow = arrow(length = unit(0.15, "inches"))
+  ) +
+  # Max
+  annotate(
+    "text", 
+    x = 1.22, 
+    y = max_val,
+    label = paste0("Max = ", round(max_val,2)), 
+    hjust = 0
+  ) +
+  annotate(
+    "segment", 
+    x = 1.2, 
+    xend = 1.05, 
+    y = max_val, 
+    yend = max_val,
+    arrow = arrow(length = unit(0.15, "inches"))
+  ) +
+  
+  # Lower whisker limit
+  geom_segment(
+    aes(
+      x = 0.8, 
+      y = lower_whisker_limit,
+      xend = 1.2, 
+      yend = lower_whisker_limit
+    ),
+    linetype = "dashed", 
+    color = "#CC79A7", 
+    size = 0.8
+  ) +
+  annotate(
+    "text", 
+    x = -0.1, 
+    y = lower_whisker_limit, 
+    label = paste0("Lower whisker limit = ", lower_whisker_limit),
+    hjust = 0
+  ) +
+  annotate(
+    "segment", 
+    x = 0.65, 
+    xend = 0.78, 
+    y = lower_whisker_limit, 
+    yend = lower_whisker_limit,
+    arrow = arrow(length = unit(0.15, "inches"))
+  ) +
+  # Upper whisker limit
+  geom_segment(
+    aes(
+      x = 0.8, 
+      y = upper_whisker_limit, 
+      xend = 1.2, 
+      yend = upper_whisker_limit
+    ),
+    linetype = "dashed", 
+    color = "#CC79A7", 
+    size = 0.8
+  ) +
+  annotate(
+    "text", 
+    x = -0.1, 
+    y = upper_whisker_limit, 
+    label = paste0("Upper whisker limit = ", upper_whisker_limit), 
+    hjust = 0
+  ) +
+  annotate(
+    "segment", 
+    x = 0.65, 
+    xend = 0.78, 
+    y = upper_whisker_limit, 
+    yend = upper_whisker_limit,
+    arrow = arrow(length = unit(0.15, "inches"))
+  ) +
+  # 1. Curly bracket for Interquartile Range (IQR) using annotate
+  # Top of IQR bracket 
+  annotate(
+    "segment", 
+    x = 0.25, 
+    y = q3, 
+    xend = 0.55, 
+    yend = q3,
+    color = "#009E73", 
+    size = 0.8
+  ) +
+  annotate(
+    "segment", 
+    x = 0.25, 
+    y = q3, 
+    xend = 0.25, 
+    yend = 1200,
+    color = "#009E73", 
+    size = 0.8
+  ) +
+  # Bottom of IQR bracket 
+  annotate(
+    "segment", 
+    x = 0.25, 
+    y = q1, 
+    xend = 0.55, 
+    yend = q1,
+    color = "#009E73", 
+    size = 0.8
+  ) +
+  annotate(
+    "segment", 
+    x = 0.25, 
+    y = q1, 
+    xend = 0.25, 
+    yend = 444,
+    color = "#009E73", 
+    size = 0.8
+  ) +
+  # Vertical line connecting the brackets
+  annotate(
+    "segment", 
+    x = 0.55, 
+    y = q1, 
+    xend = 0.55, 
+    yend = q3,
+    color = "#009E73", 
+    size = 0.8
+  ) +
+  # IQR label
+  annotate(
+    "text", 
+    x = 0, 
+    y = 822,
+    label = "Interquartile\nRange (IQR)", 
+    hjust = 0, 
+    color = "#009E73"
+  ) +
+  # Arrow pointing from "Potential Outliers" text to the outlier points
+  annotate(
+    "segment", 
+    x = 0.65, 
+    y = 2800, 
+    xend = 0.95,
+    yend = outliers[1],
+    arrow = arrow(length = unit(0.2, "cm"), type = "closed"),
+    color = "#009E73", 
+    size = 0.6
+  ) +
+  annotate(
+    "segment", 
+    x = 0.65, 
+    y = 2800, 
+    xend = 0.95, 
+    yend = outliers[2],
+    arrow = arrow(length = unit(0.2, "cm"), type = "closed"),
+    color = "#009E73", 
+    size = 0.6
+  ) +
+  annotate(
+    "segment", 
+    x = 0.65, 
+    y = 2800, 
+    xend = 0.95,
+    yend = outliers[3],
+    arrow = arrow(length = unit(0.2, "cm"), type = "closed"),
+    color = "#009E73", 
+    size = 0.6
+  ) +
+  annotate(
+    "segment", 
+    x = 0.65, 
+    y = 2800, 
+    xend = 0.95, 
+    yend = outliers[4],
+    arrow = arrow(length = unit(0.2, "cm"), type = "closed"),
+    color = "#009E73",
+    size = 0.6
+  ) +
+  annotate(
+    "segment", 
+    x = 0.65, 
+    y = 2800,
+    xend = 0.95, 
+    yend = outliers[5],
+    arrow = arrow(length = unit(0.2, "cm"), type = "closed"),
+    color = "#009E73", 
+    size = 0.6
+  ) +
+  annotate(
+    "segment", 
+    x = 0.65, 
+    y = 2800, 
+    xend = 0.95, 
+    yend = outliers[6],
+    arrow = arrow(length = unit(0.2, "cm"), type = "closed"),
+    color = "#009E73", 
+    size = 0.6
+  ) +
+  annotate(
+    "segment", 
+    x = 0.65, 
+    y = 2800, 
+    xend = 0.95, 
+    yend = outliers[7],
+    arrow = arrow(length = unit(0.2, "cm"), type = "closed"),
+    color = "#009E73", 
+    size = 0.6
+    ) +
+  annotate(
+    "segment",
+    x = 0.65, 
+    y = 2800, 
+    xend = 0.95,
+    yend = outliers[8],
+    arrow = arrow(length = unit(0.2, "cm"), type = "closed"),
+    color = "#009E73",
+    size = 0.6
+  ) +
+  annotate(
+    "segment", 
+    x = 0.65, 
+    y = 2800, 
+    xend = 0.95, 
+    yend = outliers[9],
+    arrow = arrow(length = unit(0.2, "cm"), type = "closed"),
+    color = "#009E73", 
+    size = 0.6
+  ) +
+  annotate(
+    "segment", 
+    x = 0.65, 
+    y = 2800, 
+    xend = 0.95, 
+    yend = outliers[10],
+    arrow = arrow(length = unit(0.2, "cm"), type = "closed"),
+    color = "#009E73", 
+    size = 0.6
+  ) +
+  # "Potential Outliers" text
+  annotate(
+    "text", 
+    x = 0.15, 
+    y = 2800, 
+    label = "Potential Outliers", 
+    hjust = 0, 
+    color = "#009E73"
+  )
+  
+```
+
+## Understanding Boxplots
+
+```{r}
+#| label: fig-geom-jitter
+#| echo: false
+#| warning: false
+#| fig-cap: Boxplot overlayed with individual observation points
+#| fig-alt: "A vertical boxplot combined with jittered points showing weekly earnings distribution. The x-axis is labeled 'x' and the y-axis is labeled weekly_earnings, ranging from 0 to 3000. The box spans approximately from 500 to 1250, with a median line near 750. The lower whisker extends from the lower end of the box down to 0, and the upper whisker extends from the upper end of the box up to about 2500. Several outliers appear above the upper whisker, ranging from about 2500 to 3000. The boxplot is also overlayed with pink jittered points representing individual data values, scattered around the boxplot, with most points concentrated between 0 and 1500 and fewer points at higher earnings."
+
+ggplot(
+  atus_college, 
+  aes(
+    x = "", 
+    y = weekly_earnings
+  )
+) +
+  geom_boxplot() +
+  labs(x = NULL) +
+  labs(y = "Weekly Earnings ($)") +
+  theme_bw() +
+  geom_jitter(width = 0.2, alpha = 0.6, size = 1.5, color = "#CC79A7")
+```
+
+# Visualizing Two Variables {.inverse background-color="#A51C30"}
+
+## Stacked Bar Plot
+
+```{r}
+#| label: fig-stacked-bar-example
+#| output-location: column
+#| fig-cap: Stacked barplot of employment and enrollment status
+#| fig-alt: "A stacked bar chart showing counts of enrollment status within employment categories. The x-axis is labeled employment with three categories: Full Time, Part Time, and NA. The y-axis is labeled 'count' and ranges from 0 to 150. Each bar is divided into two segments: red for Full Time enrollment and teal for Part Time enrollment. For Full Time employment, the total height is about 140, with roughly 60 teal and 80 red. For Part Time employment, the total is about 85, mostly red with a small teal segment near 10. For NA, the total is about 100, with a larger red segment around 80 and teal around 20. A legend on the right identifies colors for enrollment status: red for Full Time enrollment and teal for Part Time enrollment."
+
+ggplot(
+  data = atus_college, 
+  aes(
+    x = employment,
+    fill = enrollment 
+  )
+) +
+  geom_bar()
+```
+
+## Standardardized stacked barplot
+
+
+```{r}
+#| label: fig-standardized-bar-example
+#| output-location: column
+#| fig-cap: Standardardized stacked barplot of employment and enrollment
+#| fig-alt: "A stacked bar chart showing the proportion of enrollment status within employment categories. The x-axis is labeled 'employment' with three categories: Full Time, Part Time, and NA. The y-axis is labeled 'count' and ranges from 0 to 1, representing proportions. Each bar is divided into two segments: red for Full Time enrollment and teal for Part Time enrollment. For Full Time employment, the bar is about 45% teal and 55% red. For Part Time employment, the bar is mostly red (around 90%) with a small teal segment (about 10%). For NA, the bar is about 80% red and 20% teal. A legend on the right identifies colors for enrollment status: red for Full Time enrollment and teal for Part Time enrollment."
+
+ggplot(
+  data = atus_college, 
+  aes(
+    x = employment,
+    fill = enrollment
+  )
+) +
+  geom_bar(position = "fill") # <1>
+```
+
+## Dodged barplot
+
+```{r}
+#| label: fig-dodge-bar-example
+#| output-location: column
+#| fig-cap: Side-by-side (dodge) barplot of employment and enrollment status
+#| fig-alt: "A grouped side-by-side bar plot showing counts of employment categories broken into enrollment status. The x-axis is labeled 'employment' with three categories: Full Time, Part Time, and NA. The y-axis is labeled 'count' and ranges from 0 to 90. Each emplyment category has two bars: red for Full Time enrollment and teal for Part Time enrollment. For Full Time employment, the red bar is about 70 and the teal bar about 60. For Part Time employment, the red bar is about 75 and the teal bar about 10. For NA, the red bar is about 85 and the teal bar about 15. A legend on the right identifies colors for enrollment status: red for Full Time enrollment and teal for Part Time enrollment."
+
+ggplot(
+  data = atus_college, 
+  aes(
+    x = employment,
+    fill = enrollment
+  )
+) +
+  geom_bar(position = "dodge") 
+```
+
+## Scatterplot
+
+
+```{r}
+#| label: fig-scatterplot-example
+#| output-location: column
+#| fig-cap: Scatterplot of time spent alone and weekly earnings
+#| fig-alt: "A scatterplot showing the relationship between time alone and weekly earnings. The x-axis is labeled time_alone and ranges from 0 to 1000. The y-axis is labeled weekly_earnings and ranges from 0 to 3000. Each point represents an observation. Most points are concentrated in the lower left quadrant, with time alone between 0 and 500 and weekly earnings below 1500. A few points extend toward higher earnings up to 3000 and higher time alone values up to 1000, but they are sparse. The overall pattern suggests no strong linear relationship, with data widely scattered."
+
+ggplot(
+  data = atus_college,
+  aes(
+    x = time_alone, 
+    y = weekly_earnings
+  )
+) +
+  geom_point() 
+```
+
+
+## Side-by-side Boxplot
+
+```{r}
+#| label: fig-sidebyside-boxplot-example
+#| output-location: column
+#| fig-cap: Side-by-side boxplots based on employment status
+#| fig-alt: "A side-by-side boxplot comparing weekly earnings across employment categories. The x-axis is labeled employment with three categories: Full Time, Part Time, and NA. The y-axis is labeled weekly_earnings and ranges from 0 to 3000. The Full Time boxplot shows a median near 1000, an interquartile range roughly from 750 to 1500, whiskers extending from the box down to about 25 and up to about 2500, and some outliers above 2500 up to 3000. The Part Time boxplot has a median around 400, an interquartile range from about 250 to 500, whiskers extending from the box down to 0 and up to about 1000, and a few outliers above 1000. The NA category has no visible box or data points"
+
+ggplot(
+  data = atus_college, 
+  aes(
+    x = employment, # <1>
+    y = weekly_earnings
+  )
+) +
+  geom_boxplot()
+```
+
+# Visualizing More Than Two Variables {.inverse background-color="#A51C30"}
+
+## Use of color
+
+```{r}
+#| label: fig-scatterplot-color
+#| output-location: column
+#| fig-cap: Grouping points by color based on employment status
+#| fig-alt: "A scatterplot showing the relationship between time alone and weekly earnings, with points colored by employment category. The x-axis is labeled time_alone and ranges from 0 to 1000. The y-axis is labeled weekly_earnings and ranges from 0 to 3000. Each point represents an observation, with red for Full Time, teal for Part Time, and gray for NA. Most points are concentrated in the lower left quadrant, where time alone is below 500 and weekly earnings are below 1500. Full Time points (red) dominate across the range, including higher earnings up to 3000. Part Time points (teal) cluster mostly at lower earnings below 1000. NA points (gray) are sparse. A legend on the right identifies colors for employment categories: red for Full Time, teal for Part Time, and gray for NA."
+
+ggplot(
+  data = atus_college,
+  aes(
+    x = time_alone,
+    y = weekly_earnings,
+    color = employment 
+  )
+) +
+  geom_point()
+```
+
+. . .
+
+If you are color-blind, depending on the type, you may possibly not be able to distinguish these colors so the next slide will make much more sense.
+
+## Use of shape
+
+```{r}
+#| label: fig-scatterplot-shape
+#| output-location: column
+#| fig-cap: Grouping points by shape based on employment status
+#| fig-alt: "A scatterplot showing the relationship between time alone and weekly earnings, with point shapes indicating employment category. The x-axis is labeled time_alone and ranges from 0 to 1000. The y-axis is labeled weekly_earnings and ranges from 0 to 3000. Each point represents an observation: circles for Full Time, triangles for Part Time, and no shape for NA because there are no points with income and NA status for employment. Most points cluster in the lower left quadrant, where time alone is below 500 and weekly earnings are below 1500. Full Time points (circles) are spread across the range, including higher earnings up to 3000. Part Time points (triangles) are concentrated at lower earnings below 1000. There are no NA points. A legend on the right identifies shapes for employment categories: circles for Full Time, triangles for Part Time, and no shapte for NA."
+
+ggplot(
+  data = atus_college,
+  aes(
+    x = time_alone,
+    y = weekly_earnings,
+    shape = employment # <1>
+  ) 
+) +
+  geom_point()
+```
+
+## Use of color and shape
+
+```{r}
+#| label: fig-scatterplot-color-shape
+#| output-location: column
+#| fig-cap: Using both color and shape to group points
+#| fig-alt: "A scatterplot showing the relationship between time alone and weekly earnings, with point shapes indicating employment category. The x-axis is labeled time_alone and ranges from 0 to 1000. The y-axis is labeled weekly_earnings and ranges from 0 to 3000. Each point represents an observation: red circles for Full Time, teal triangles for Part Time, and no shape or color for NA because there are no points with income and NA status for employment. Most points cluster in the lower left quadrant, where time alone is below 500 and weekly earnings are below 1500. Full Time points (red circles) are spread across the range, including higher earnings up to 3000. Part Time points (teal triangles) are concentrated at lower earnings below 1000. There are no NA points. A legend on the right identifies shapes for employment categories: red circles for Full Time, teal triangles for Part Time, and no shapte or color for NA."
+
+ggplot(
+  data = atus_college,
+  aes(
+    x = time_alone,
+    y = weekly_earnings,
+    color = employment,
+    shape = employment
+  )
+) +
+  geom_point()
+```
+
+## Use of size
+
+
+```{r}
+#| label: fig-scatterplot-color-size
+#| output-location: column
+#| fig-cap: Adding a numerical variable to differentiate points based on size
+#| fig-alt: "A scatterplot showing the relationship between time alone and weekly earnings, with points varying in color and size to represent employment category and work time. The x-axis is labeled time_alone and ranges from 0 to 1000. The y-axis is labeled weekly_earnings and ranges from 0 to 3000. Each point represents an observation: red circles for Full Time, teal circles for Part Time, and gray circles for NA. Point size indicates work time, with larger circles representing more work time (up to 800) and smaller circles representing less. Most points cluster in the lower left quadrant, where time alone is below 500 and weekly earnings are below 1500. Full Time points (red) dominate across the range, including higher earnings up to 3000, while Part Time points (teal) are concentrated at lower earnings below 1000. A legend on the right shows color for employment and size scale for work time."
+
+ggplot(
+  data = atus_college,
+  aes(
+    x = time_alone,
+    y = weekly_earnings,
+    color = employment,
+    size = work_time # <1>
+  ) 
+) +
+  geom_point()
+```
+
+## Summary
+
+```{r}
+#| label: fig-ggplot-summary
+#| echo: false
+#| fig-cap: A summary of aesthetics and geom objects covered in this lecture
+#| fig-alt: "A reference chart summarizing ggplot2 aesthetics and geoms. The chart is divided into two columns. The left column lists aesthetic mappings under 'aes = (...........)'  correspoinding arguments: x and y representing horizontal vertical arrows, respectively. Color groups points using color, such as black, pink, and green. Fill breaks bars based on groups assigning a color to each group, such as a barplot with three rectangles in pink and green. Shape groups points using shapes, such as circle, triangle, and square. Size maps a numerical variable to distinguish the amount of it based on the size of the point, such as pink circles of increasing size. The right column lists geoms under 'geom_.........()' with corresponding icons: bar with three vertical bars with space betweeen them, histogram with a series of small bars touching each other forming a distribution, boxplot with a horizontal box and whiskers, point with a scatterplot of small green dots. The chart visually connects aesthetic options on the left to common geom types on the right."
+
+
+knitr::include_graphics("images/lec03a-ggplot-summary.png")
+```
+
