@@ -999,3 +999,9 @@ If you were sure that deleting a row with missing data would not introduce bias 
 summarize(hotel_bookings, mean_lead_time = mean(lead_time, na.rm = TRUE))
 ```
 
+## Announcements
+
+- It is best to look at weekly homework assignment early on. Do not try to answer all questions as you have not learned Wednesday's lecture.
+- If you have not completed the three onboarding quizzes (Week 0) on Gradescope, you have to complete them.
+
+
