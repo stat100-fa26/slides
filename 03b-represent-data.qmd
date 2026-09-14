@@ -187,6 +187,8 @@ ggplot(color_grid_data, aes(x = x, y = y)) +
   theme(legend.position = "none")
 ```
 
+[Colors in R full list](https://r-charts.com/colors/)
+
 ## Hex Codes
 
 ```{r}
@@ -430,7 +432,7 @@ If you are reading these slides using a screen reader, you should hear the alt t
 
 ## Good alt text practice
 
-You should always write alt text for all images (ggplot or not), whether you use R or Quarto or not, whether you are doing work for STATS 6 or any other courses or any non-course work.
+You should always write alt text for all images (ggplot or not), whether you use R or Quarto or not, whether you are doing work for STAT 100 or any other courses or any non-course work.
 
 . . .
 
