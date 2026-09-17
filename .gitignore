@@ -10,6 +10,7 @@ _site
 
 # Quarto execution freeze cache
 /_freeze/
+!_freeze/04a-wrangle-variables/
 
 # Local rendered supporting files
 *_files/
