@@ -14,3 +14,5 @@ _site
 # Local rendered supporting files
 *_files/
 *_cache/
+
+data/games_detailed_info2025.csv
