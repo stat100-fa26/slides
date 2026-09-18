@@ -151,6 +151,12 @@ glimpse(board_games)
 # Changing Variable Names {.inverse background-color="#A51C30"}
 
 
+## Tidy style variable names
+
+```{r}
+janitor::clean_names(board_games)
+```
+
 ## Rename variables
 
 ```{r}
@@ -161,11 +167,7 @@ board_games |>
 The `rename()` function changes the name of the variable. 
 The `new_variable_name` has to be set to equal to the `old_variable_name`.
 
-## Tidy style variable names
 
-```{r}
-janitor::clean_names(board_games)
-```
 
 The `clean_names()` function changes all variable names to tidyverse style. 
 
@@ -176,14 +178,7 @@ I will go ahead and rename only those that will come up in subsequent slides.
 
 ```{r}
 board_games |> 
-  rename(
-    index = ...1,
-    year_published = yearpublished,
-    board_game_category = boardgamecategory,
-    num_comments = numcomments,
-    users_rated = usersrated,
-    max_players = maxplayers
-    ) 
+  janitor::clean_names()
 ```
 
 ## Step 2
@@ -191,15 +186,16 @@ board_games |>
 
 ```{r}
 board_games |> 
+  janitor::clean_names() |> 
   rename(
-    index = ...1,
+    index = x1,
     year_published = yearpublished,
     board_game_category = boardgamecategory,
     num_comments = numcomments,
     users_rated = usersrated,
-    max_players = maxplayers
-  )|> 
-  janitor::clean_names()
+    max_players = maxplayers,
+    designer = boardgamedesigner
+  )
 ```
 
 ## Step 3
@@ -207,15 +203,16 @@ board_games |>
 ```{r}
 board_games <-
   board_games |> 
+  janitor::clean_names() |> 
   rename(
-    index = ...1,
+    index = x1,
     year_published = yearpublished,
     board_game_category = boardgamecategory,
     num_comments = numcomments,
     users_rated = usersrated,
-    max_players = maxplayers
-  )|> 
-  janitor::clean_names()
+    max_players = maxplayers,
+    designer = boardgamedesigner
+  )
 ```
 
 # Subsetting Data Frames {.inverse background-color="#A51C30"}
@@ -311,7 +308,15 @@ select(board_games, contains("game"))
 ```{r}
 board_games <- 
   board_games |> 
-  select(name, year_published, board_game_category, num_comments, users_rated, max_players)
+  select(
+    name, 
+    year_published, 
+    board_game_category, 
+    num_comments, 
+    users_rated, 
+    max_players, 
+    designer
+    )
 ```
 
 . . . 
@@ -445,6 +450,24 @@ board_games |>
   nrow()
 ```
 
+## Multiple "or" statements with `%in%`
+
+```{r}
+specific_years <- c(1995, 2004, 2016)
+
+
+board_games |>
+  filter(year_published %in% specific_years)
+```
+
+## Checking for `NA` values
+
+
+```{r}
+board_games |> 
+  filter(is.na(board_game_category))
+```
+
 
 # Making Changes to Variables {.inverse background-color="#A51C30"}
 
@@ -546,15 +569,15 @@ board_games |>
 #| eval: false
 board_games <-
   board_games |> 
+  janitor::clean_names() |> 
   rename(
-    index = ...1,
+    index = x1,
     year_published = yearpublished,
     board_game_category = boardgamecategory,
     num_comments = numcomments,
     users_rated = usersrated,
     max_players = maxplayers
   )|> 
-  janitor::clean_names() |> 
   select(name, year_published, board_game_category, num_comments, users_rated, max_players) |> 
   mutate(
     popularity_class = if_else(
@@ -584,15 +607,15 @@ board_games <-
       "games_detailed_info2025.csv"
     )
   ) |> 
+  janitor::clean_names() |> 
   rename(
-    index = ...1,
+    index = x1,
     year_published = yearpublished,
     board_game_category = boardgamecategory,
     num_comments = numcomments,
     users_rated = usersrated,
     max_players = maxplayers
   )|> 
-  janitor::clean_names() |> 
   select(name, year_published, board_game_category, num_comments, users_rated, max_players) |> 
   mutate(
     popularity_class = if_else(
