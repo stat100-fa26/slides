@@ -43,11 +43,7 @@ jobs:
       - name: Install TinyTeX
         run: quarto install tinytex --no-prompt
 
-      # 5. Install any extra LaTeX packages your .qmd needs
-      - name: Install LaTeX packages
-        run: tlmgr install fancyhdr titlesec xcolor graphicx hyperref
-
-      # 6. Render Quarto
+      # 5. Render Quarto
       - name: Render Quarto
         run: quarto render
 
