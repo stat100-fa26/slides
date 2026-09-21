@@ -152,7 +152,7 @@ songs
 
 \newpage
 
-## Exercise 1 — `rename()`
+## Exercise 1 
 
 Suppose we run:
 
@@ -180,7 +180,7 @@ New name for `streams_millions`: \answerline
 
 \newpage
 
-## Exercise 2 — `select()`
+## Exercise 2 
 
 Suppose we run:
 
@@ -204,7 +204,7 @@ Which two columns get **dropped**? \answerline
 
 \newpage
 
-## Exercise 3 — `filter()`
+## Exercise 3 
 
 Suppose we run:
 
@@ -226,7 +226,7 @@ songs
 How many rows would remain? \answerline
 
 
-## Exercise 4 — `filter()` with `&` / `|`
+## Exercise 4 
 
 Suppose we run:
 
@@ -248,7 +248,7 @@ songs |>
 
 \newpage
 
-## Exercise 5 — `filter()` with `%in%`
+## Exercise 5 
 
 Suppose we run:
 
@@ -274,7 +274,7 @@ How many rows would remain? \answerline
 
 \newpage
 
-## Exercise 6 — Checking for `NA` values
+## Exercise 6 
 
 Suppose we run:
 
@@ -294,7 +294,7 @@ songs
 
 \newpage
 
-## Exercise 7 — `mutate()` + `if_else()` 
+## Exercise 7 
 
 Suppose we run:
 
@@ -323,7 +323,7 @@ songs |>
 
 \newpage
 
-## Exercise 8 — `mutate()` + `case_when()`
+## Exercise 8 
 
 Suppose we run:
 
@@ -352,7 +352,7 @@ songs |>
 
 \newpage
 
-## Exercise 9 — `group_by()` + `summarize()`
+## Exercise 9 
 
 Suppose we run:
 
@@ -383,7 +383,7 @@ tibble::tibble(
 
 \newpage
 
-## Exercise 10 — Putting it together
+## Exercise 10 
 
 Suppose we run the following chain, **in order**:
 
