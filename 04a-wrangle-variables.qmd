@@ -122,6 +122,70 @@ Shortcut: <br>Ctrl (Command) + Shift + M
 
 Make sure to select `Use native pipe operator` under `Tools > Global Options > Code` in RStudio
 
+## Reading the pipe operator
+
+::::{.columns}
+
+:::{.column width="50%"}
+
+```{r}
+c(4, 8, 16) |> 
+  mean() |> 
+  round()
+```
+
+:::
+
+:::{.column width="50%"}
+Combine 4, 8, and 16 `and then`  
+Take the mean   `and then`  
+Round the output
+:::
+
+::::
+
+. . .
+
+The output of the first function is the first argument of the second function.
+
+## Recall functions from algebra
+
+
+Now we have $f \circ g \circ h (x)$  
+or `round(mean(c(4, 8, 16)))`
+
+. . .
+
+
+::::{.columns}
+
+:::{.column width="50%"}
+
+
+```{r}
+#| eval: false
+h(x) |> 
+  g() |> 
+  f()
+```
+
+:::
+
+:::{.column width="50%"}
+
+```{r}
+#| eval: false
+c(4, 8, 16) |> 
+  mean() |> 
+  round()
+```
+
+
+:::
+
+::::
+
+
 ## Data
 
 ```{r}
