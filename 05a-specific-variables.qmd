@@ -1,0 +1,467 @@
+---
+title: "Dealing with Specific Types of Variables"
+subtitle: "Strings, Dates, and Factors"
+author: "Mine Doğucu"
+format:
+  revealjs:
+    menu:
+      openButton: false
+    footer: |
+      <span id="menu-toggle-box"></span> [stat-100.com](https://stat-100.com)
+    code-line-numbers: false 
+    slide-number: true
+    incremental: false
+    theme: [default, style.scss]
+    logo: 
+      path: images/stat100-logo-square.png
+      alt: "STAT 100 course square logo"
+    transition: fade
+    width: 1280
+    height: 720
+    title-slide-attributes: 
+      data-background-image: "images/stat100-logo-rectangle.png"
+      data-background-size: 10%
+      data-background-position: 50% 85%
+      data-aria-label: "STAT 100 course logo"
+execute:
+  echo: true
+---
+
+
+## Packages
+
+```{r}
+library(stringr) # <1>
+library(lubridate) # <2>
+library(forcats) # <3>
+```
+
+1. We will use the stringr package for handling strings.
+2.  We will use the lubridate package for handling dates.
+3.  We will use the forcats package for handling factors. You can think of forcats as for cat egorical variable s or as an anagram of factors.
+
+## Packages
+
+All these packages are part of tidyverse
+
+```{r}
+#| message: true
+
+library(tidyverse)
+```
+
+```{r}
+#| echo: false
+
+theme_set(theme_grey(base_size = 18))
+
+```
+
+
+## Packages
+
+We will also use 
+
+```{r}
+library(sfemergency25)
+```
+
+
+. . .
+
+All this time we have been downloading packages from CRAN (Comprehensive R Archive Network). 
+Packages on CRAN have to meet certain criteria, including size. 
+Hence package authors who don't meet this criteria host their packages elsewhere (e.g., GitHub). 
+
+[GitHub repo for a package on CRAN - bayesrules](https://github.com/bayes-rules/bayesrules)  
+[GitHub repo for a package not on CRAN - sfemergency25](https://github.com/hellodata-science/sfemergency25)
+
+## Data
+
+```{r}
+data(sf911)
+```
+
+
+. . .
+
+```{r}
+glimpse(sf911)
+```
+
+
+# Strings
+
+## Replace a string
+
+```{r}
+sf911 |> 
+  select(address) |> 
+  head(3)
+```
+
+## Replace a string
+
+```{r}
+sf911 |> 
+  mutate(
+    address_long = str_replace(
+      address, 
+      pattern = "ST", 
+      replacement = "STREET"
+    )
+  ) |>
+  select(address_long) |> 
+  head(3)
+```
+
+
+## Replace a string
+
+```{r}
+address_key <- 
+  c(
+  "ST"   = "STREET", 
+  "AVE"  = "AVENUE", 
+  "PL"   = "PLACE", 
+  "TER"  = "TERRACE"
+  )
+```
+
+
+## Replace a string
+
+```{r}
+sf911 |> 
+  mutate(
+    address_long = str_replace_all(
+      address, 
+      pattern = "ST", 
+      replacement = "STREET"
+    )
+  ) |>
+  select(address_long) 
+```
+
+## Replace a string
+
+```{r}
+address_key <- 
+  c(
+    "ST"   = "STREET", 
+    "AVE"  = "AVENUE", 
+    "PL"   = "PLACE", 
+    "TER"  = "TERRACE"
+  )
+
+```
+
+```{r}
+sf911 |> 
+  mutate(address_long = str_replace_all(address, pattern = address_key)) |>
+  select(address_long)
+```
+
+
+## Regular expressions
+
+```{r}
+address_key <- c(
+  "\\bST\\b"  = "STREET",
+  "\\bAVE\\b" = "AVENUE",
+  "\\bPL\\b"  = "PLACE",
+  "\\bTER\\b" = "TERRACE"
+)
+
+sf911 |> 
+  mutate(address_long = str_replace_all(address, pattern = address_key)) |> 
+  select(address_long)
+```
+
+
+## Change letter types
+
+```{r}
+sf911 |> 
+  select(address) |> 
+  mutate(address = str_to_title(address)) |>
+  head()
+```
+
+We can also use `str_to_upper()` or `str_to_lower()` as needed
+
+## glue
+
+```{r}
+sf911 |> 
+  mutate(
+    description = str_glue(
+      "Incident {call_number} occurred in {neighborhoods_boundaries}"
+    )
+  ) |> 
+  select(description) |> 
+  head(3)
+```
+
+## detect
+
+```{r}
+sf911 |>
+  mutate(is_fire_related = str_detect(call_type, pattern = "Fire|Smoke")) |>
+  select(call_type, is_fire_related) |> 
+  slice(1:10)
+```
+
+
+# Dates
+
+
+## ISO Date
+
+::: callout-note
+## Note
+While there are many ways to write a date for humans, there is only one universally accepted format for data as standardized by the International Organization for Standardization (ISO). It follows the order of YYYY-MM-DD (e.g., 1986-12-20). Writing dates this way ensures they are sorted correctly by computers and avoids any international confusion between months and days.
+:::
+
+
+```{r}
+
+```
+
+
+## UTC and Timezones
+
+- UTC stands for Coordinated Universal Time. Think of it as the world’s main clock. 
+
+- UTC is not a timezone but a high-precision time standard that all time zones use to stay synchronized. 
+
+- UTC never observes Daylight Saving Time, it never skips or repeats hours, making it the safest format for storing data and performing math.
+
+- Cambridge is UTC-5 (5 hours behind UTC) between first Sunday of November and second Sunday of March which is specified as Eastern Standard Time (EST) and UTC-4 during rest of the year which is specified as Eastern Daylight Time (EDT). 
+
+## `received_dt_tm`
+
+```{r}
+sf911 |> 
+  select(received_dt_tm) |> 
+  head(3)
+```
+
+
+## `ymd_hms()`
+
+```{r}
+sf911 <-
+  sf911 |>
+  mutate(received_dt_tm = ymd_hms(received_dt_tm))
+
+str(sf911$received_dt_tm)
+```
+
+## `received_dt_tm`
+
+```{r}
+sf911 |> 
+  select(received_dt_tm) |> 
+  head(3)
+```
+
+## with time zone
+
+```{r}
+sf911 <-
+  sf911 |> 
+  mutate(
+    received_dt_tm = with_tz(received_dt_tm, tzone = "America/Los_Angeles")
+    )
+
+sf911 |> 
+  select(received_dt_tm) |> 
+  head(3)
+```
+
+`OlsonNames()` function lists different names of timezones.
+
+## hour, month and week day
+
+```{r}
+sf911 |> 
+  mutate(
+    hour_val = hour(received_dt_tm),
+    month_val = month(received_dt_tm, label = TRUE),
+    day_name = wday(received_dt_tm, label = TRUE)
+  ) |> 
+  select(received_dt_tm, hour_val, month_val, day_name) |> 
+  head(3)
+```
+
+## duration
+
+```{r}
+sf911 |>
+  mutate(
+    goal_arrival_time = received_dt_tm + dseconds(480)
+  ) |>
+  select(received_dt_tm, goal_arrival_time) |>
+  head(3)
+```
+ 
+## duration
+
+```{r}
+#| label: ddays-days
+event_start <- ymd_hms("2026-03-07 05:00:00", 
+                     tz = "America/Los_Angeles")
+
+event_start + ddays(1)
+event_start + days(1)
+```
+
+::: callout-note
+
+## Note
+
+When performing math with dates, lubridate distinguishes between two ways of measuring time: durations and periods. 
+This distinction is critical when your data spans a Daylight Saving Time (DST) transition.
+The above example shows a hypothetical event start time as March 7th, 2026 at 5:00 in Los Angeles time zone. 
+When you add duration of exactly 1 day using the `ddays()` function, you are simply adding 86,400 seconds. 
+When 86,400 seconds have passed the clocks would be showing 06:00 am on March 8th, 2026 due to start of Daylight Saving Time.
+On the other end, the `days()` function just adds one day to the calendar day without touching the time component. 
+
+:::
+
+## difftime
+
+
+```{r}
+#| label: response-time
+sf911 <- 
+  sf911 |> 
+  mutate(
+    on_scene_dt_tm = ymd_hms(on_scene_dt_tm), 
+    response_time = on_scene_dt_tm - received_dt_tm 
+  )
+
+str(sf911$response_time)
+```
+
+## today and now
+
+```{r}
+today()
+now()
+```
+
+
+# Factors
+
+## `as.factor()`
+
+```{r}
+sf911 <-
+  sf911 |>
+  mutate(unit_type = as.factor(unit_type)) 
+  
+str(sf911$unit_type)
+```
+
+## `levels()`
+
+```{r}
+levels(sf911$unit_type)
+```
+
+## `levels()` as seen in ggplot
+
+```{r}
+#| label: fig-unit-alpha
+#| fig-alt: "A horizontal bar chart titled by unit type, showing the count of various emergency service unit types. From bottom to top, the Y-axis lists unit categories including: AIRPORT, BLS, CHIEF, CP, ENGINE, INVESTIGATION, MEDIC, PRIVATE, RESCUE CAPTAIN, RESCUE SQUAD, SUPPORT, and TRUCK. The X-axis represents counts ranging from 0 to 90,000+ (in increments of 30,000). ENGINE appears to have the highest count, exceeding 90,000, while unit types such as AIRPORT, and INVESTIGATION appear to have the lowest counts, close to zero. The chart provides a comparative view of how frequently each unit type appears in the dataset."
+
+ggplot(sf911, aes(y = unit_type)) +
+  geom_bar()
+```
+
+## `fct_infreq()`
+
+```{r}
+#| label: fct-infreq
+sf911 <- 
+  sf911 |> 
+  mutate(unit_type = fct_infreq(unit_type)) #<1>
+
+str(sf911$unit_type) #<2>
+```
+
+## `levels()` as seen in ggplot
+
+```{r}
+#| label: fig-unit-freq
+#| fig-alt: "A horizontal bar chart showing the count of emergency service unit types, ordered from least to most frequent. The Y-axis lists unit types from lowest (on top) to highest frequency (in the bottom): AIRPORT, INVESTIGATION, RESCUE SQUAD, SUPPORT, BLS, RESCUE, CAPTAIN, CP, CHIEF, PRIVATE, TRUCK, MEDIC, and ENGINE. The X-axis represents counts from 0 to 90,000+ (in increments of 30,000). ENGINE has the highest count, exceeding 90,000, followed by MEDIC and TRUCK. AIRPORT and INVESTIGATION have the lowest counts, close to zero. This frequency-sorted view makes it easy to identify the most and least common unit types in the dataset."
+
+ggplot(sf911, aes(y = unit_type)) +
+  geom_bar()
+```
+
+## `levels()` as seen in ggplot with `fct_rev()`
+
+```{r}
+#| label: fig-unit-rev
+#| fig-alt: "A horizontal bar chart showing the count of emergency service unit types, ordered from most frequent to least. The Y-axis lists unit types from lowest (in the bottom) to highest frequency (on top): AIRPORT, INVESTIGATION, RESCUE SQUAD, SUPPORT, BLS, RESCUE, CAPTAIN, CP, CHIEF, PRIVATE, TRUCK, MEDIC, and ENGINE. The X-axis represents counts from 0 to 90,000+ (in increments of 30,000). ENGINE has the highest count, exceeding 90,000, followed by MEDIC and TRUCK. AIRPORT and INVESTIGATION have the lowest counts, close to zero. This frequency-sorted view makes it easy to identify the most and least common unit types in the dataset with the most frequent bar on top."
+ 
+sf911 |>
+  mutate(unit_type = fct_rev(unit_type)) |> 
+  ggplot(aes(y = unit_type)) +
+  geom_bar()
+```
+
+## `levels()` as seen in ggplot with `fct_lump_n()`
+
+```{r}
+#| label: fig-unit-lump
+#| fig-alt: "A horizontal bar chart titled unit_type on the y-axis and count on the x-axis. The chart displays the frequency of four categories: Other: The most frequent category, with a count of nearly 120,000. ENGINE: The second most frequent, with a count of approximately 110,000. MEDIC: Slightly lower than ENGINE, with a count of approximately 100,000. TRUCK: The least frequent, with a count of approximately 40,000. The order of the categories go as Other, TRUCK, MEDIC, and ENGINE from top to bottom."
+
+sf911 |>
+  mutate(unit_type = fct_lump_n(unit_type, n = 3)) |>
+  ggplot(aes(y = unit_type)) +
+  geom_bar()
+```
+
+
+## `fct_relevel()`
+
+```{r}
+#| label: fct-relevel
+sf911 |>
+  mutate(unit_type = fct_relevel(unit_type, "ENGINE")) |> # <1>
+  group_by(unit_type) |>
+  summarize(total_als_unit = sum(als_unit))
+
+```
+
+
+## `fct_relevel()`
+
+```{r}
+#| label: fct-relevel2
+sf911 |>
+  mutate(unit_type = fct_relevel(unit_type, "ENGINE", "TRUCK")) |> # <1>
+  group_by(unit_type) |>
+  summarize(total_als_unit = sum(als_unit))
+
+```
+
+
+## `fct_reorder()`
+
+
+```{r}
+#| label: fct-reorder
+sf911 <- sf911 |>
+  mutate(
+    neighborhoods_boundaries = as.factor(neighborhoods_boundaries), # <1>
+    neighborhoods = fct_reorder(neighborhoods_boundaries, response_time) # <2>
+    ) 
+
+str(sf911$neighborhoods_boundaries)
+str(sf911$neighborhoods)
+```
