@@ -1,7 +1,6 @@
 ---
-title: "Wrangling Variables — In-Class Handout"
-subtitle: "Practice by hand: select, filter, mutate, and summarize"
-author: "STAT 100"
+title: "Wrangling Variables"
+author: "Name: _________________"
 lang: en
 format:
   pdf:
@@ -140,9 +139,11 @@ movies <- tibble::tribble(
 )
 ```
 
+# Part 1
+
 ## The Data
 
-This is the data set you'll work with for every exercise on this handout:
+This is the data set you'll work with for every exercise in Part 1 of this handout:
 `songs`, 10 rows and 5 columns.
 
 ```{r}
@@ -166,17 +167,13 @@ songs |>
   )
 ```
 
-The `rename()` function doesn't drop or reorder any columns — it only
-relabels the two shown below. Cross out each old name and write the new one
-on the blank line beneath it.
+Show the changes made to the `songs` data frame below by writing on the values/variables and/or crossing rows and/or columns.
 
 ```{r}
 #| label: show-rename
 songs
 ```
 
-New name for `genre`: \answerline
-New name for `streams_millions`: \answerline
 
 \newpage
 
@@ -191,16 +188,15 @@ songs |>
   select(track_name, release_year, streams_millions)
 ```
 
-Shade the columns below that would remain after running this
-code. Do not shade the columns that get dropped.
+Show the changes made to the `songs` data frame below by writing on the values/variables and/or crossing rows and/or columns.
+
 
 ```{r}
 #| label: show-select
 songs
 ```
 
-\vspace{0.4cm}
-Which two columns get **dropped**? \answerline
+
 
 \newpage
 
@@ -261,7 +257,7 @@ songs |>
   filter(release_year %in% specific_years)
 ```
 
-**Your turn:** Shade the rows below whose `release_year` is in
+Shade the rows below whose `release_year` is in
 `specific_years`.
 
 ```{r}
@@ -311,7 +307,7 @@ songs |>
   )
 ```
 
-**Your turn:** Fill in only the new `viral_status` column below (write over
+Fill in only the new `viral_status` column below (write over
 the blanks).
 
 ```{r}
@@ -340,8 +336,7 @@ songs |>
   )
 ```
 
-**Your turn:** Fill in only the new `stream_tier` column below (write over
-the blanks).
+Fill in only the new `stream_tier` column below (write over the blanks).
 
 ```{r}
 #| label: show-mutate-casewhen
@@ -454,7 +449,7 @@ movies |>
   rename(movie_genre = genre, box_office_m = box_office_millions)
 ```
 
-**Your turn:** Write the code that produces this output from `movies`.
+Write the code that produces this output from `movies`.
 
 \codebox
 
@@ -471,7 +466,7 @@ movies |>
   select(title, release_year, box_office_millions)
 ```
 
-**Your turn:** Write the code that produces this output from `movies`.
+Write the code that produces this output from `movies`.
 
 \codebox
 
@@ -487,7 +482,7 @@ movies |>
   filter(release_year >= 2018)
 ```
 
-**Your turn:** Write the code that produces this output from `movies`.
+Write the code that produces this output from `movies`.
 
 \codebox
 
@@ -504,7 +499,7 @@ movies |>
   filter(genre == "Animation" & box_office_millions >= 70)
 ```
 
-**Your turn:** Write the code that produces this output from `movies`.
+Write the code that produces this output from `movies`.
 (Hint: two conditions have to be true at once.)
 
 \codebox
@@ -529,7 +524,7 @@ movies |>
   filter(release_year %in% specific_years)
 ```
 
-**Your turn:** Write the code that produces this output from `movies`.
+Write the code that produces this output from `movies`.
 (Hint: you'll need a vector of years and the `%in%` operator.)
 
 \codebox
@@ -551,7 +546,7 @@ movies |>
   filter(is.na(genre))
 ```
 
-**Your turn:** Write the code that produces this output from `movies` while using `is.na()`.
+Write the code that produces this output from `movies` while using `is.na()`.
 
 \codebox
 
@@ -572,8 +567,7 @@ movies |>
   )
 ```
 
-**Your turn:** Write the code that produces this output. (You're adding one
-new column, `hit_status`, based on a condition.)
+Write the code that produces this output. (You're adding one new column, `hit_status`, based on a condition.)
 
 \codebox
 
@@ -596,8 +590,7 @@ movies |>
   )
 ```
 
-**Your turn:** Write the code that produces this output. (You're adding one
-new column, `revenue_tier`, with three possible values.)
+Write the code that produces this output. (You're adding one new column, `revenue_tier`, with three possible values.)
 
 \codebox
 
@@ -618,8 +611,7 @@ movies |>
   )
 ```
 
-**Your turn:** Write the code that produces this output. (You're grouping
-by one column and calculating two summary values per group.)
+Write the code that produces this output. (You're grouping by one column and calculating two summary values per group.)
 
 \codebox
 
@@ -644,7 +636,7 @@ movies |>
   summarize(count = n())
 ```
 
-**Your turn:** Write the full chain of code — filter, then mutate, then
+Write the full chain of code — filter, then mutate, then
 group and summarize — that turns the input into this output. (Hint: check
 how many rows disappeared in the `filter()` step, and think about why. Does
 `!=` keep or drop a missing `genre` value?)
