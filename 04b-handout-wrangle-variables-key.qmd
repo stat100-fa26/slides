@@ -1,0 +1,772 @@
+---
+title: "Wrangling Variables"
+author: "Name: SOLUTIONS"
+lang: en
+format:
+  pdf:
+    documentclass: article
+    fontsize: 12pt
+    geometry:
+      - margin=1in
+    colorlinks: true
+    number-sections: false
+    header-includes: |
+      \usepackage{xcolor}
+      \usepackage{titlesec}
+      \usepackage{fancyhdr}
+      \usepackage{hyperref}
+      \usepackage{graphicx}
+
+      % ---- Brand colors, pulled from the slide theme (style.scss) ----
+      % Kept at the same WCAG AA/AAA-checked hex values as the slides.
+      \definecolor{harvardcrimson}{HTML}{A51C30}
+      \definecolor{stattextmuted}{HTML}{595959}
+      \definecolor{tealaccent}{HTML}{006677}
+      \definecolor{slateaccent}{HTML}{3B4B61}
+      \definecolor{emeraldaccent}{HTML}{1E6B3F}
+      \definecolor{bodycharcoal}{HTML}{1E1E1E}
+      \definecolor{ruleline}{HTML}{595959}
+
+      % Section headings in crimson, matching the slide deck's heading color.
+      % Weight + color together (not color alone) carry the emphasis.
+      \titleformat{\section}{\color{harvardcrimson}\Large\bfseries}{\thesection}{0.6em}{}
+      \titleformat{\subsection}{\color{harvardcrimson}\large\bfseries}{\thesubsection}{0.6em}{}
+
+      % Recolor Quarto's built-in callout boxes to match the slide accent palette
+      \definecolor{quarto-callout-color-note}{HTML}{006677}
+      \definecolor{quarto-callout-color-tip}{HTML}{1E6B3F}
+      \definecolor{quarto-callout-color-important}{HTML}{A51C30}
+      \definecolor{quarto-callout-color-caution}{HTML}{3B4B61}
+
+      % Footer to match the slide deck's footer link, plus the course logo
+      % in the upper-right corner (same asset used in the slide theme).
+      % Wrapped in \IfFileExists so the document still compiles even if
+      % images/logo.png hasn't been added yet -- it just shows no logo.
+      \newcommand{\brandlogo}{\IfFileExists{images/logo.png}{\includegraphics[height=0.5cm]{images/logo.png}}{}}
+      \pagestyle{fancy}
+      \fancyhf{}
+      \renewcommand{\headrulewidth}{0pt}
+      \fancyhead[R]{\brandlogo}
+      \fancyfoot[C]{\small\textcolor{stattextmuted}{stat-100.com}}
+      \fancyfoot[R]{\small\textcolor{stattextmuted}{\thepage}}
+
+      % article's \maketitle uses the "plain" pagestyle for the title page,
+      % which would otherwise hide the header/logo on page 1 -- redefine it
+      % to match.
+      \fancypagestyle{plain}{%
+        \fancyhf{}
+        \renewcommand{\headrulewidth}{0pt}
+        \fancyhead[R]{\brandlogo}
+        \fancyfoot[C]{\small\textcolor{stattextmuted}{stat-100.com}}
+        \fancyfoot[R]{\small\textcolor{stattextmuted}{\thepage}}
+      }
+
+      \hypersetup{
+        linkcolor=harvardcrimson,
+        urlcolor=harvardcrimson,
+        citecolor=harvardcrimson,
+        bookmarksopen=true,
+        pdfdisplaydoctitle=true
+      }
+
+      % Helper LaTeX command used below to build write-in space (a blank line)
+      \newcommand{\answerline}{\par\vspace{0.55cm}\textcolor{ruleline}{\rule{\linewidth}{0.6pt}}\par}
+
+      % A bordered blank box for students to write R code in (Part 2).
+      % Pure core LaTeX (fbox + minipage) -- no extra package needed.
+      % NOTE: a minipage containing only \vspace (no actual horizontal
+      % material) collapses to near-zero width when framed with \fbox --
+      % the \rule{\linewidth}{0pt} below is a zero-height rule that just
+      % anchors the box to its full width before the vspace runs.
+      \newcommand{\codebox}[1][3.2]{%
+        \par\vspace{0.15cm}
+        \noindent\fbox{%
+          \begin{minipage}[t]{0.97\linewidth}
+            \rule{\linewidth}{0pt}\vspace{#1cm}
+          \end{minipage}%
+        }
+        \par\vspace{0.15cm}
+      }
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+```{r}
+#| label: setup
+library(dplyr)
+library(tibble)
+options(width = 90, pillar.width = 90)
+
+# A small, 10-row x 5-column data set students can work with by hand.
+# Streaming-song data (not board games). One genre is deliberately left
+# missing (NA) so the is.na() exercise has something real to find.
+songs <- tibble::tribble(
+  ~track_name,        ~genre,     ~release_year, ~duration_sec, ~streams_millions,
+  "Blinding Lights",  "Pop",               2020,           200,                87,
+  "Bad Guy",          "Pop",               2019,           194,                65,
+  "Levitating",       "Pop",               2020,           203,                72,
+  "Sunflower",        "Hip-Hop",           2018,           158,                58,
+  "Perfect",          "Pop",               2017,           263,                45,
+  "Old Town Road",    "Hip-Hop",           2019,           113,                90,
+  "Shape of You",     "Pop",               2017,           233,                55,
+  "Circles",          "Indie",             2019,           215,                30,
+  "Ocean Eyes",       "Indie",             2015,           200,                12,
+  "Heat Waves",       NA,                  2020,           238,                68
+)
+
+# A blank write-in placeholder: a run of underscores, used as plain text
+# inside a normal printed tibble (not a LaTeX table), so there's nothing
+# for LaTeX to choke on and no float that can drift to another page.
+blank_col <- function(n, width = 16) rep(strrep("_", width), n)
+
+# Part 2's data set: family movies, 10 rows x 5 columns. Genre is
+# deliberately missing for one row, same as `songs`, so Part 2 can reuse
+# the same is.na() idea.
+movies <- tibble::tribble(
+  ~title,               ~genre,       ~release_year, ~runtime_min, ~box_office_millions,
+  "Coco",               "Animation",           2017,          105,                   72,
+  "Moana",              "Animation",           2016,          107,                   84,
+  "Up",                 "Animation",           2009,           96,                   68,
+  "Zootopia",           "Family",              2016,          108,                   91,
+  "Encanto",            "Animation",           2021,          102,                   58,
+  "Toy Story 4",        "Family",              2019,          100,                   76,
+  "Inside Out",         "Family",              2015,           95,                   65,
+  "Incredibles 2",      "Adventure",           2018,          118,                   88,
+  "Finding Dory",       "Adventure",           2016,           97,                   62,
+  "Soul",               NA,                    2020,          100,                   45
+)
+```
+
+# Part 1
+
+## The Data
+
+This is the data set you'll work with for every exercise in Part 1 of this handout:
+`songs`, 10 rows and 5 columns.
+
+```{r}
+#| label: show-main
+songs
+```
+
+\newpage
+
+## Exercise 1 
+
+Suppose we run:
+
+```{r}
+#| echo: true
+#| eval: false
+songs |>
+  rename(
+    music_genre = genre,
+    stream_count_millions = streams_millions
+  )
+```
+
+Show the changes made to the `songs` data frame below by writing on the values/variables and/or crossing rows and/or columns.
+
+```{r}
+#| label: show-rename
+songs |>
+  rename(
+    music_genre = genre,
+    stream_count_millions = streams_millions
+  )
+```
+
+
+\newpage
+
+## Exercise 2 
+
+Suppose we run:
+
+```{r}
+#| echo: true
+#| eval: false
+songs |>
+  select(track_name, release_year, streams_millions)
+```
+
+Show the changes made to the `songs` data frame below by writing on the values/variables and/or crossing rows and/or columns.
+
+
+```{r}
+#| label: show-select
+songs |>
+  select(track_name, release_year, streams_millions)
+```
+
+\newpage
+
+## Exercise 3 
+
+Suppose we run:
+
+```{r}
+#| echo: true
+#| eval: false
+songs |>
+  filter(release_year >= 2019)
+```
+
+Shade the rows below that would remain after running this
+code.
+
+```{r}
+#| label: show-filter
+songs |>
+  filter(release_year >= 2019)
+```
+
+How many rows would remain? 6
+
+\newpage
+
+## Exercise 4 
+
+Suppose we run:
+
+```{r}
+#| echo: true
+#| eval: false
+songs |>
+  filter(genre == "Pop" & streams_millions >= 60)
+```
+
+Shade the rows below that satisfy **both** conditions.
+
+```{r}
+#| label: show-filter2
+songs |>
+  filter(genre == "Pop")
+```
+
+Answer: 
+
+```{r}
+#| label: show-filter3
+songs |>
+  filter(genre == "Pop" & streams_millions >= 60)
+```
+
+\newpage
+
+## Exercise 5 
+
+Suppose we run:
+
+```{r}
+#| echo: true
+#| eval: false
+specific_years <- c(2017, 2020)
+
+songs |>
+  filter(release_year %in% specific_years)
+```
+
+Shade the rows below whose `release_year` is in
+`specific_years`.
+
+```{r}
+#| label: show-in-operator
+specific_years <- c(2017, 2020)
+
+songs |>
+  filter(release_year %in% specific_years)
+```
+
+\vspace{0.4cm}
+How many rows would remain? 5
+
+\newpage
+
+## Exercise 6 
+
+Suppose we run:
+
+```{r}
+#| echo: true
+#| eval: false
+songs |>
+  filter(is.na(genre))
+```
+
+Shade the row(s) below that would remain after running the code above.
+
+```{r}
+#| label: show-isna
+songs |>
+  filter(is.na(genre))
+```
+
+\newpage
+
+## Exercise 7 
+
+Suppose we run:
+
+```{r}
+#| echo: true
+#| eval: false
+songs |>
+  mutate(
+    viral_status = if_else(
+      streams_millions >= 50,
+      "Viral hit",
+      "Not yet viral"
+    )
+  )
+```
+
+Fill in only the new `viral_status` column below (write over
+the blanks).
+
+```{r}
+#| label: show-mutate-ifelse
+songs |>
+  mutate(
+    viral_status = if_else(
+      streams_millions >= 50,
+      "Viral hit",
+      "Not yet viral"
+    )
+  )
+```
+
+\newpage
+
+## Exercise 8 
+
+Suppose we run:
+
+```{r}
+#| echo: true
+#| eval: false
+songs |>
+  mutate(
+    stream_tier = case_when(
+      streams_millions < 20  ~ "Under 20M",
+      streams_millions < 50  ~ "20M to 49M",
+      streams_millions >= 50 ~ "50M or more"
+    )
+  )
+```
+
+Fill in only the new `stream_tier` column below (write over the blanks).
+
+```{r}
+#| label: show-mutate-casewhen
+songs |>
+  mutate(
+    stream_tier = case_when(
+      streams_millions < 20  ~ "Under 20M",
+      streams_millions < 50  ~ "20M to 49M",
+      streams_millions >= 50 ~ "50M or more"
+    )
+  )
+```
+
+\newpage
+
+## Exercise 9 
+
+Suppose we run:
+
+```{r}
+#| echo: true
+#| eval: false
+songs |>
+  group_by(genre) |>
+  summarize(
+    med_duration_sec = median(duration_sec),
+    count = n()
+  )
+```
+
+Use Exercise 2's table to work
+out the median duration and count of songs for each genre. The group labels
+are already filled in — write your answers over the blanks. Remember: the
+missing `genre` value forms its own group.
+
+```{r}
+#| label: show-groupby
+songs |>
+  group_by(genre) |>
+  summarize(
+    med_duration_sec = median(duration_sec),
+    count = n()
+  )
+```
+
+\newpage
+
+## Exercise 10 
+
+Suppose we run the following chain, **in order**:
+
+```{r}
+#| echo: true
+#| eval: false
+songs |>
+  filter(genre != "Indie") |>
+  mutate(
+    viral_status = if_else(
+      streams_millions >= 50,
+      "Viral hit",
+      "Not yet viral"
+    )
+  ) |>
+  group_by(viral_status) |>
+  summarize(count = n())
+```
+
+
+1. Shade the rows below that survive the `filter()` step. (Hint: think about
+   what `!=` does with the missing `genre` value, and check your answer with
+   `is.na()` logic from Exercise 6 if you're not sure.)
+
+```{r}
+#| label: show-final-start
+songs |>
+  filter(genre != "Indie")
+```
+
+2. List which tracks remain after `filter()`: `r (songs[songs$genre != "Indie",])$track_name`
+
+3. Fill in the final summary table:
+
+```{r}
+#| label: show-final
+songs |>
+  filter(genre != "Indie") |>
+  mutate(
+    viral_status = if_else(
+      streams_millions >= 50,
+      "Viral hit",
+      "Not yet viral"
+    )
+  ) |>
+  group_by(viral_status) |>
+  summarize(count = n())
+```
+
+\newpage
+
+# Part 2 — Write the Code Yourself
+
+In Part 1, you were given the code and had to work out the output by hand.
+Now it's reversed: you'll see the **input** data frame and the **output**
+data frame, and your job is to write the dplyr code that turns one into the
+other. There can be more than one correct way to write some of these — as
+long as your code produces the same output, it's right.
+
+## The Data
+
+This is the data set for Part 2: `movies`, 10 rows and 5 columns.
+
+```{r}
+#| label: show-movies-main
+movies
+```
+
+\newpage
+
+## Exercise 11 
+
+**Output:** (only the column names changed — everything else is identical)
+
+```{r}
+#| label: show-ex11-output
+movies |>
+  rename(movie_genre = genre, box_office_m = box_office_millions)
+```
+
+Write the code that produces this output from `movies`.
+
+```{r}
+#| label: show-ex11-output2
+#| echo: true
+#| eval: false
+movies |>
+  rename(movie_genre = genre, box_office_m = box_office_millions)
+```
+
+
+\newpage
+
+## Exercise 12 
+
+**Output:**
+
+```{r}
+#| label: show-ex12-output
+movies |>
+  select(title, release_year, box_office_millions)
+```
+
+Write the code that produces this output from `movies`.
+
+```{r}
+#| label: show-ex12-output2
+#| echo: true
+#| eval: false
+movies |>
+  select(title, release_year, box_office_millions)
+```
+
+\newpage
+
+## Exercise 13 
+
+**Output:**
+
+```{r}
+#| label: show-ex13-output
+movies |>
+  filter(release_year >= 2018)
+```
+
+Write the code that produces this output from `movies`.
+
+```{r}
+#| label: show-ex13-output2
+#| echo: true
+#| eval: false
+movies |>
+  filter(release_year >= 2018)
+```
+
+
+\newpage
+
+## Exercise 14 
+
+
+**Output:**
+
+```{r}
+#| label: show-ex14-output
+movies |>
+  filter(genre == "Animation" & box_office_millions >= 70)
+```
+
+Write the code that produces this output from `movies`.
+(Hint: two conditions have to be true at once.)
+
+```{r}
+#| label: show-ex14-output2
+#| echo: true
+#| eval: false
+movies |>
+  filter(genre == "Animation" & box_office_millions >= 70)
+```
+
+\newpage
+
+## Exercise 15 
+
+**Input:**
+
+```{r}
+#| label: show-ex15-input
+movies
+```
+
+**Output:**
+
+```{r}
+#| label: show-ex15-output
+specific_years <- c(2016, 2019)
+movies |>
+  filter(release_year %in% specific_years)
+```
+
+Write the code that produces this output from `movies`.
+(Hint: you'll need a vector of years and the `%in%` operator.)
+
+```{r}
+#| label: show-ex15-output2
+#| echo: true
+#| eval: false
+specific_years <- c(2016, 2019)
+movies |>
+  filter(release_year %in% specific_years)
+```
+
+\newpage
+
+## Exercise 16 
+
+**Input:**
+
+```{r}
+#| label: show-ex16-input
+movies
+```
+
+**Output:**
+
+```{r}
+#| label: show-ex16-output
+movies |>
+  filter(is.na(genre))
+```
+
+Write the code that produces this output from `movies` while using `is.na()`.
+
+```{r}
+#| label: show-ex16-output2
+#| echo: true
+#| eval: false
+movies |>
+  filter(is.na(genre))
+```
+
+## Exercise 17 
+
+**Output:**
+
+```{r}
+#| label: show-ex17-output
+movies |>
+  select(title, box_office_millions) |>
+  mutate(
+    hit_status = if_else(
+      box_office_millions >= 70,
+      "Box-office hit",
+      "Modest run"
+    )
+  )
+```
+
+Write the code that produces this output. (You're adding one new column, `hit_status`, based on a condition.)
+
+```{r}
+#| label: show-ex17-output2
+#| echo: true
+#| eval: false
+movies |>
+  select(title, box_office_millions) |>
+  mutate(
+    hit_status = if_else(
+      box_office_millions >= 70,
+      "Box-office hit",
+      "Modest run"
+    )
+  )
+```
+
+\newpage
+
+## Exercise 18
+
+**Output:**
+
+```{r}
+#| label: show-ex18-output
+movies |>
+  select(title, box_office_millions) |>
+  mutate(
+    revenue_tier = case_when(
+      box_office_millions < 50 ~ "Under $50M",
+      box_office_millions < 80 ~ "$50M to $79M",
+      box_office_millions >= 80 ~ "$80M or more"
+    )
+  )
+```
+
+Write the code that produces this output. (You're adding one new column, `revenue_tier`, with three possible values.)
+
+```{r}
+#| label: show-ex18-output2
+#| echo: true
+#| eval: false
+movies |>
+  select(title, box_office_millions) |>
+  mutate(
+    revenue_tier = case_when(
+      box_office_millions < 50 ~ "Under $50M",
+      box_office_millions < 80 ~ "$50M to $79M",
+      box_office_millions >= 80 ~ "$80M or more"
+    )
+  )
+```
+
+\newpage
+
+## Exercise 19 
+
+
+**Output:**
+
+```{r}
+#| label: show-ex19-output
+movies |>
+  group_by(genre) |>
+  summarize(
+    avg_runtime = mean(runtime_min),
+    count = n()
+  )
+```
+
+Write the code that produces this output. (You're grouping by one column and calculating two summary values per group.)
+
+```{r}
+#| label: show-ex19-output2
+#| echo: true
+#| eval: false
+movies |>
+  group_by(genre) |>
+  summarize(
+    avg_runtime = mean(runtime_min),
+    count = n()
+  )
+```
+
+
+## Exercise 20
+
+
+**Output:**
+
+```{r}
+#| label: show-ex20-output
+movies |>
+  filter(genre != "Adventure") |>
+  mutate(
+    hit_status = if_else(
+      box_office_millions >= 70,
+      "Box-office hit",
+      "Modest run"
+    )
+  ) |>
+  group_by(hit_status) |>
+  summarize(count = n())
+```
+
+Write the full chain of code — filter, then mutate, then
+group and summarize — that turns the input into this output. (Hint: check
+how many rows disappeared in the `filter()` step, and think about why. Does
+`!=` keep or drop a missing `genre` value?)
+
+```{r}
+#| label: show-ex20-output2
+#| echo: true
+#| eval: false
+movies |>
+  filter(genre != "Adventure") |>
+  mutate(
+    hit_status = if_else(
+      box_office_millions >= 70,
+      "Box-office hit",
+      "Modest run"
+    )
+  ) |>
+  group_by(hit_status) |>
+  summarize(count = n())
+```
