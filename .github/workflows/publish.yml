@@ -34,6 +34,9 @@ jobs:
         uses: r-lib/actions/setup-r-dependencies@v2
         with:
           needs: website
+          extra-packages: |
+            hellodata-science/sfemergency25
+          cache-version: 1
 
       # 3. Set up Quarto
       - name: Set up Quarto
