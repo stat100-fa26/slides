@@ -2,6 +2,8 @@
 title: "Dealing with Specific Types of Variables"
 subtitle: "Strings, Dates, and Factors"
 author: "Mine Doğucu"
+execute:
+  echo: true
 format:
   revealjs:
     menu:
@@ -13,7 +15,7 @@ format:
     incremental: false
     theme: [default, style.scss]
     logo: 
-      path: images/stat100-logo-square.png
+      path: images/00-stat100-logo-square.png
       alt: "STAT 100 course square logo"
     transition: fade
     width: 1280
@@ -23,8 +25,6 @@ format:
       data-background-size: 10%
       data-background-position: 50% 85%
       data-aria-label: "STAT 100 course logo"
-execute:
-  echo: true
 ---
 
 
