@@ -90,7 +90,7 @@ glimpse(sf911)
 ```
 
 
-# Strings
+# Strings {.inverse background-color="#A51C30"}
 
 ## Replace a string
 
@@ -213,7 +213,7 @@ sf911 |>
 ```
 
 
-# Dates
+# Dates {.inverse background-color="#A51C30"}
 
 
 ## ISO Date
@@ -353,7 +353,7 @@ now()
 ```
 
 
-# Factors
+# Factors {.inverse background-color="#A51C30"}
 
 ## `as.factor()`
 
