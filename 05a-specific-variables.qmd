@@ -27,6 +27,15 @@ format:
       data-aria-label: "STAT 100 course logo"
 ---
 
+## Announcements
+
+:::{.incremental}
+
+1. "Quiz" for team preference is on Gradescope. Please complete by Wednesday 1:30 pm.
+2. Please complete mid-semester feedback. It will be sent to you on Wednesday.
+3. Come learn about the Stats programs!!! Exploring Fields of Study Event (Concentration and Secondary). Friday Oct 2, 11:30 am - 1:00 pm, Maxwell-Dworking L1. 
+
+:::
 
 ## Packages
 
@@ -465,3 +474,4 @@ sf911 <- sf911 |>
 str(sf911$neighborhoods_boundaries)
 str(sf911$neighborhoods)
 ```
+
