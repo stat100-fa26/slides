@@ -31,9 +31,10 @@ format:
 
 :::{.incremental}
 
+1. Midterm will be held on Oct 7 at 1:30 - 2:45 pm at Yenching Auditorium 2 Divinity Ave. Here is a [walking guide](https://canvas.harvard.edu/courses/170920/files/folder/Uploaded%20Media?preview=25833128) from Johnny.
 1. "Quiz" for team preference is on Gradescope. Please complete by Wednesday 1:30 pm.
-2. Please complete mid-semester feedback. It will be sent to you on Wednesday.
-3. Come learn about the Stats programs!!! Exploring Fields of Study Event (Concentration and Secondary). Friday Oct 2, 11:30 am - 1:00 pm, Maxwell-Dworking L1. 
+1. Please complete mid-semester feedback. It will be sent to you on Wednesday.
+1. Come learn about the Stats programs!!! Exploring Fields of Study Event (Concentration and Secondary). Friday Oct 2, 11:30 am - 1:00 pm, Maxwell-Dworking L1. 
 
 :::
 
