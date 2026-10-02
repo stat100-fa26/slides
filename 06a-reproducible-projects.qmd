@@ -130,7 +130,7 @@ Essentially, it means you have tracked your steps clearly enough that your claim
 read_csv("/Users/mine/Desktop/project-team07/data/processed/my-data.csv")
 
 # works on everyone's computer
-read_csv(here::here("data", "processed", "my-data.csv"))
+read_csv(here::here("data/processed/my-data.csv"))
 ```
 
 . . .
@@ -160,7 +160,7 @@ Following the [tidyverse style guide](https://style.tidyverse.org/), we use `sna
 ## 3. Avoid Special Characters and Spaces
 
 - Do not use spaces, slashes (`/` or `\`), colons (`:`), asterisks (`*`), question marks (`?`), or quotes.
-- Spaces can cause issues in command-line tools and on some systems. Use hyphens (or underscores) instead.
+- Spaces can cause issues in some systems. Use hyphens (or underscores) instead.
 
 ## 4. Include Dates When Relevant
 
@@ -212,7 +212,8 @@ You are not limited to using only these resources.
 
 ## Host vs. source
 
-Not all publicly available data are real. Some sites, like Kaggle, are riddled with artificial data sets.
+Not all publicly available data are real. 
+There are many artifical datasets on some sites (e.g., Kaggle).
 
 - The **host** is the site you download the data from.
 - The **source** is the person or organization that actually collected the data.
