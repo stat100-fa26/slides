@@ -74,10 +74,9 @@ When collecting data from human and animal research subjects we need to consider
 In universities, rights of the human and animal research subjects are protected by the Institutional Review Board (IRB) of each university.
 If interested (highly recommended) you can read about Harvard's IRB, the [Committee on the Use of Human Subjects](https://cuhs.harvard.edu/).
 
-##
+## Example
 
 ::: {.stat-callout .example}
-**Example**
 
 Consider that we design a survey with the following questions to study the research question.
 
@@ -94,10 +93,9 @@ Often a subset of the population is selected to be studied.
 __Sample__ is the subset of the population that is studied.
 The goal is to have a sample that is __representative__ of the population so that the findings of the study can generalize to the population.
 
-##
+## Example
 
 ::: {.stat-callout .example}
-**Example**
 
 Since it would be almost impossible to give the survey to ALL Harvard students, we can give it to a sample of students.
 :::
@@ -109,9 +107,11 @@ There are different sampling methods to consider.
 <table align ="center">
 
 <thead>
-<th> </th>
-<th>Sample Statistic</th>
-<th>Population Parameter</th>
+<tr>
+<th scope="col">Measure</th>
+<th scope="col">Sample Statistic</th>
+<th scope="col">Population Parameter</th>
+</tr>
 </thead>
 
 <tr>
@@ -364,10 +364,9 @@ knitr::include_graphics("images/lec07b-experiment-gpa.png")
 
 
 
-##
+## Note
 
 ::: {.stat-callout .note-tip}
-**Note**
 
 Random sampling and random assignment (i.e., random allocation) serve different purposes.
 
@@ -417,7 +416,7 @@ knitr::include_graphics("images/lec07b-blocking-gpa.png")
 
 Both start by splitting people into groups based on a variable. They differ in __when__ the split happens and __why__.
 
-| | Stratified sampling | Blocking |
+|Feature | Stratified sampling | Blocking |
 |------------------|------------------------------|------------------------------|
 | Stage of the study | Choosing the **sample** from the population | Assigning the sample to **treatments** |
 | Groups are called | strata | blocks |
@@ -483,7 +482,7 @@ That is why companies test instead of trusting their intuition.
 
 ## Parts of an A/B test
 
-| | Blog example |
+|Component | Blog example |
 |-------------------|-----------------------------------------------|
 | **Population** | visitors to the blog |
 | **Unit** (what is randomized) | a user, so the same person always sees the same version |
