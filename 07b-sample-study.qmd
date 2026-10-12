@@ -102,6 +102,25 @@ Since it would be almost impossible to give the survey to ALL Harvard students, 
 
 There are different sampling methods to consider.
 
+## Census
+
+When data are collected from __every__ element of the population, it is called a __census__.
+
+::: {.stat-callout .example}
+**Example**
+
+- The U.S. Census Bureau tries to count every person living in the United States every 10 years. The most recent census was in 2020, and the next one will be in 2030.
+- If our population is students enrolled in STAT 100 and we give the survey to every student in the class, we have conducted a census of the class.
+:::
+
+## Note
+
+::: {.stat-callout .note-tip}
+
+Even a census can miss people. Some groups, such as young children and people without a stable address, are harder to count and may be __undercounted__.
+:::
+
+
 ## Notation
 
 <table align ="center">
