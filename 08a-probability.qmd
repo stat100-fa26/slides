@@ -1054,3 +1054,96 @@ ggplot() +
 
 The four joint probabilities are the four cells of the contingency table divided by 1050.
 
+# Practice with contingency tables {.inverse background-color="#A51C30"}
+
+## Hair and eye color
+
+In 1974, 592 statistics students at the University of Delaware reported their hair and eye color. The data are built into R: [HairEyeColor](https://stat.ethz.ch/R-manual/R-devel/library/datasets/html/HairEyeColor.html).
+
+```{r}
+as.data.frame(HairEyeColor) |>
+  count(Hair, Eye, wt = Freq) |>
+  pivot_wider(names_from = Eye, values_from = n)
+```
+
+## Hair and eye color
+
+::: {.stat-callout .exercise}
+**Exercise**
+
+A student is randomly selected from this sample. Find
+
+a. $P(\text{blue eyes})$
+b. $P(\text{blond hair} \cap \text{blue eyes})$
+c. $P(\text{blond hair} \cup \text{blue eyes})$
+d. $P(\text{blue eyes} | \text{blond hair})$
+e. $P(\text{blond hair} | \text{blue eyes})$
+f. Are hair color and eye color independent in this sample? Use your answers to (a) and (d).
+:::
+
+## College students and their parents
+
+The [drug_use](https://openintrostat.github.io/openintro/reference/drug_use.html) data in the `openintro` package come from a 1979 study of 445 college students and their parents on marijuana use.
+
+```{r}
+drug_use |>
+  count(student, parents) |>
+  pivot_wider(names_from = parents, values_from = n)
+```
+
+::: {.stat-callout .exercise}
+**Exercise**
+
+Find $P(\text{student uses})$, $P(\text{student uses} | \text{parents used})$, and $P(\text{parents used} | \text{student uses})$. Are the student's and the parents' use independent in this sample?
+:::
+
+## Brain teaser
+
+::: {.stat-callout .discussion}
+**Discussion**
+
+Jordan is a Harvard student. They love data, code in R every night, and took AP Statistics in high school.
+
+Which is more probable?
+
+a. Jordan is a junior.
+b. Jordan is a junior *and* concentrates in Statistics.
+:::
+
+. . .
+
+__Answer: (a).__ $P(\text{junior} \cap \text{Statistics}) \le P(\text{junior})$. An intersection can never be more probable than either of its events.
+
+# Practice {.inverse background-color="#A51C30"}
+
+## Practice
+
+Draw a Venn diagram of
+
+$(A \cap B)^c \cap (B \cup C)$
+
+```{r}
+#| echo: false
+#| fig-height: 4.2
+#| fig-width: 6
+#| fig-align: center
+#| fig-alt: "An empty Venn diagram with three overlapping circles labeled A, B, and C inside a rectangle labeled S."
+venn3()
+```
+
+## Practice - answer
+
+```{r}
+#| echo: false
+#| fig-height: 3.6
+#| fig-width: 15
+#| fig-align: center
+#| fig-alt: "Three Venn diagrams with circles A, B, and C. The first, the complement of A intersection B, shades everything except the overlap of A and B. The second, B union C, shades circles B and C. The third, their intersection, shades circles B and C except the region where A and B overlap."
+venn3(function(a, b, c) !(a & b), fill = pink, title = "(A ∩ B)ᶜ") |
+  venn3(function(a, b, c) b | c, fill = pink, title = "B ∪ C") |
+  venn3(function(a, b, c) !(a & b) & (b | c), title = "(A ∩ B)ᶜ ∩ (B ∪ C)")
+```
+
+. . .
+
+Bonus: with our die events ($A$ even, $B$ odd, $C$ prime), which outcomes are in $(A \cap B)^c \cap (B \cup C)$?
