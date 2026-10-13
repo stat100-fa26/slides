@@ -1,0 +1,25 @@
+/* STAT 100 handout styles (HTML output) */
+body { color: #1E1E1E; }
+h1, h2, h3 { color: #A51C30; }
+.blank-line {
+  display: inline-block;
+  border-bottom: 1px solid #595959;
+  height: 1.1em;
+  vertical-align: bottom;
+}
+.write-space {
+  border: 1px dashed #c8c8c8;
+  border-radius: 6px;
+  margin: 0.5em 0 1em 0;
+}
+.ans-inline { color: #A51C30; font-weight: 700; }
+.ans-block {
+  color: #A51C30;
+  border-left: 4px solid #A51C30;
+  background: #FDF3F4;
+  padding: 0.4em 0.9em;
+  margin: 0.5em 0 1em 0;
+}
+@media print {
+  .write-space { border: none; }
+}

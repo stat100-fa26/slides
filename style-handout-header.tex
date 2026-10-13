@@ -1,0 +1,37 @@
+% Shared LaTeX header for STAT 100 handouts (PDF output).
+% Same brand colors and page style as the earlier handouts (e.g., 04b).
+\usepackage{xcolor}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{graphicx}
+
+\definecolor{harvardcrimson}{HTML}{A51C30}
+\definecolor{stattextmuted}{HTML}{595959}
+\definecolor{tealaccent}{HTML}{006677}
+\definecolor{slateaccent}{HTML}{3B4B61}
+\definecolor{emeraldaccent}{HTML}{1E6B3F}
+\definecolor{bodycharcoal}{HTML}{1E1E1E}
+\definecolor{ruleline}{HTML}{595959}
+
+\titleformat{\section}{\color{harvardcrimson}\Large\bfseries}{\thesection}{0.6em}{}
+\titleformat{\subsection}{\color{harvardcrimson}\large\bfseries}{\thesubsection}{0.6em}{}
+
+\definecolor{quarto-callout-color-note}{HTML}{006677}
+\definecolor{quarto-callout-color-tip}{HTML}{1E6B3F}
+\definecolor{quarto-callout-color-important}{HTML}{A51C30}
+\definecolor{quarto-callout-color-caution}{HTML}{3B4B61}
+
+\newcommand{\brandlogo}{\IfFileExists{images/00-stat100-logo-square.png}{\includegraphics[height=0.6cm]{images/00-stat100-logo-square.png}}{}}
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0pt}
+\fancyhead[R]{\brandlogo}
+\fancyfoot[C]{\small\textcolor{stattextmuted}{stat-100.com}}
+\fancyfoot[R]{\small\textcolor{stattextmuted}{\thepage}}
+\fancypagestyle{plain}{%
+  \fancyhf{}
+  \renewcommand{\headrulewidth}{0pt}
+  \fancyhead[R]{\brandlogo}
+  \fancyfoot[C]{\small\textcolor{stattextmuted}{stat-100.com}}
+  \fancyfoot[R]{\small\textcolor{stattextmuted}{\thepage}}
+}

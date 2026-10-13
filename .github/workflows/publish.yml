@@ -36,6 +36,8 @@ jobs:
           needs: website
           extra-packages: |
             hellodata-science/sfemergency25
+            openintro
+            patchwork
           cache-version: 1
 
       # 3. Set up Quarto

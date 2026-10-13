@@ -1,0 +1,484 @@
+---
+title: "Foundations of Inference: Probability"
+subtitle: "Lecture 8A handout (answer key)"
+author: "Name: SOLUTIONS"
+lang: en
+key: true
+filters:
+  - style-handout.lua
+execute:
+  echo: false
+  warning: false
+  message: false
+format:
+  html:
+    toc: false
+    embed-resources: true
+    css: style-handout.css
+  pdf:
+    documentclass: article
+    fontsize: 11pt
+    linestretch: 1.5
+    geometry:
+      - margin=0.9in
+    colorlinks: true
+    linkcolor: harvardcrimson
+    urlcolor: harvardcrimson
+    include-in-header: style-handout-header.tex
+---
+
+```{r}
+#| label: setup
+#| include: false
+# `key` in the YAML above: true shows the answers, false leaves blanks.
+key <- isTRUE(rmarkdown::metadata$key)
+library(tidyverse)
+library(patchwork)
+
+crimson <- "#A51C30"
+navy <- "#3B4B61"
+pink <- "#F6D5DA"
+theme_set(theme_minimal(base_size = 12))
+
+circle_path <- function(cx, cy = 0, r = 1) {
+  tibble(t = seq(0, 2 * pi, length.out = 200), x = cx + r * cos(t), y = cy + r * sin(t))
+}
+
+# Die Venn diagram: A = even, B = odd, C = prime (dashed).
+# A and B do not overlap; C overlaps both.
+die_venn <- function(region = function(a, b, c) FALSE, numbers = TRUE,
+                     fill = crimson, title = NULL) {
+  inA <- function(x, y) (x + 1.1)^2 + y^2 <= 0.9^2
+  inB <- function(x, y) (x - 1.1)^2 + y^2 <= 0.9^2
+  inC <- function(x, y) x^2 + (y + 0.1)^2 <= 0.85^2
+  grid <- expand_grid(x = seq(-2.4, 2.4, length.out = 400),
+                      y = seq(-1.5, 1.5, length.out = 250)) |>
+    mutate(shade = region(inA(x, y), inB(x, y), inC(x, y)))
+  nums <- tibble(x = c(-1.5, -1.5, -0.5, 0.48, 0.48, 1.6),
+                 y = c(0.3, -0.3, -0.05, 0.22, -0.32, 0),
+                 label = c("4", "6", "2", "3", "5", "1")) |>
+    mutate(shaded = region(inA(x, y), inB(x, y), inC(x, y)))
+  p <- ggplot() +
+    geom_raster(data = grid, aes(x, y, fill = shade), show.legend = FALSE) +
+    scale_fill_manual(values = c(`FALSE` = "white", `TRUE` = fill)) +
+    geom_path(data = circle_path(-1.1, 0, 0.9), aes(x, y), linewidth = 1) +
+    geom_path(data = circle_path(1.1, 0, 0.9), aes(x, y), linewidth = 1) +
+    geom_path(data = circle_path(0, -0.1, 0.85), aes(x, y), linewidth = 1, linetype = "dashed") +
+    annotate("rect", xmin = -2.4, xmax = 2.4, ymin = -1.5, ymax = 1.5,
+             fill = NA, color = "black", linewidth = 1) +
+    annotate("text", x = c(-1.75, 1.75, 0), y = c(1.15, 1.15, -1.22),
+             label = c("A", "B", "C"), size = 7, fontface = "bold") +
+    annotate("text", x = -2.2, y = 1.3, label = "S", size = 6, fontface = "italic") +
+    coord_equal() + theme_void()
+  if (numbers) {
+    p <- p + geom_text(data = nums, aes(x, y, label = label, color = shaded),
+                       size = 7, show.legend = FALSE) +
+      scale_color_manual(values = c(`FALSE` = "black", `TRUE` = "white"))
+  }
+  if (!is.null(title)) p <- p + labs(title = title) + theme(plot.title = element_text(hjust = 0.5))
+  p
+}
+```
+
+
+# Reminder: sample statistics and population parameters
+
+| Measure | Sample statistic | Population parameter |
+|---|---|---|
+| Mean | $\bar{x}$ | $\mu$ |
+| Standard deviation | $s$ | $\sigma$ |
+| Variance | $s^2$ | $\sigma^2$ |
+| Proportion | $p$ | $\pi$ |
+
+We calculate sample statistics from the data. Population parameters are usually unknown, and inference is about learning them from the sample.
+
+# Probability basics
+
+A __random process__ has more than one possible outcome, and we cannot predict for certain which one will happen. For example, flipping a coin or rolling a die.
+
+The [sample space]{.blank width="4cm"}, $S$, is the set of all possible outcomes of a random process.
+
+- A single roll of a die: $S =$ [$\{1, 2, 3, 4, 5, 6\}$]{.blank width="6cm"}
+- Flipping a coin twice: $S =$ [$\{HH, HT, TH, TT\}$]{.blank width="6cm"}
+
+An [event]{.blank width="4cm"} is a subset of the sample space. Roll a die once and let
+
+- $A$: the roll is even. $A =$ [$\{2, 4, 6\}$]{.blank width="4.5cm"}
+- $B$: the roll is odd. $B =$ [$\{1, 3, 5\}$]{.blank width="4.5cm"}
+- $C$: the roll is prime. $C =$ [$\{2, 3, 5\}$]{.blank width="4.5cm"}
+
+**Venn diagram.** `r if (key) "The numbers 1 to 6 go in their regions:" else "Write the numbers 1 to 6 in the right regions:"`
+
+```{r}
+#| label: venn-blank
+#| echo: false
+#| fig-width: 5
+#| fig-height: 3.2
+#| fig-align: center
+#| fig-alt: "Venn diagram for a roll of a die. A rectangle S contains circle A (even) and circle B (odd), which do not overlap, and a dashed circle C (prime) that overlaps both. In the answer key, 4 and 6 are in A only, 2 is in A and C, 3 and 5 are in B and C, and 1 is in B only."
+die_venn(numbers = key)
+```
+
+| Name | Notation | Read as | Outcomes |
+|---|---|---|---|
+| Complement of $A$ | $A^c$ | not $A$ | [$\{1, 3, 5\}$]{.blank width="4cm"} |
+| Union | $A \cup C$ | $A$ or $C$ | [$\{2, 3, 4, 5, 6\}$]{.blank width="4cm"} |
+| Intersection | $A \cap C$ | $A$ and $C$ | [$\{2\}$]{.blank width="4cm"} |
+
+Two events are __mutually exclusive__ (disjoint) if they cannot happen at the same time.
+
+Are $A$ and $B$ mutually exclusive? Explain.
+
+::: {.answer lines="3"}
+Yes. A roll cannot be both even and odd, so $A \cap B = \emptyset$.
+:::
+
+Are $A$ and $C$ mutually exclusive? Explain.
+
+::: {.answer lines="3"}
+No. 2 is both even and prime, so $A \cap C = \{2\}$ and both can happen at the same time.
+:::
+
+**Your turn.** List the outcomes in $B^c$, $B \cap C$, and $B \cup C$.
+
+::: {.answer lines="6"}
+$B^c = \{2, 4, 6\}$, $\quad B \cap C = \{3, 5\}$, $\quad B \cup C = \{1, 2, 3, 5\}$
+:::
+
+{{< pagebreak >}}
+
+# Defining probability
+
+**Frequentist definition:** The probability of an outcome is the proportion of times the outcome is observed when the random process is repeated a very large number of times.
+
+```{r}
+#| label: coin-flips
+#| echo: false
+#| fig-width: 7
+#| fig-height: 2.2
+#| fig-align: center
+#| fig-alt: "Line plot of the proportion of heads after each of 1,000 simulated coin flips. The proportion jumps around during the first 50 flips, then settles close to the dashed line at 0.5."
+set.seed(8)
+flips <- sample(c("H", "T"), size = 1000, replace = TRUE)
+tibble(n = 1:1000, prop = cumsum(flips == "H") / n) |>
+  ggplot(aes(n, prop)) +
+  geom_hline(yintercept = 0.5, linetype = "dashed", color = crimson) +
+  geom_line(color = navy) +
+  scale_y_continuous(limits = c(0, 1)) +
+  labs(x = "Number of flips, n", y = "Proportion of heads")
+```
+
+**Bayesian definition:** The probability of an event is how plausible the event is, based on the information we have, including prior information. When we get new information (data), we update the probability.
+
+**Example: what is the probability that a bottle cap lands top side up?** Unlike a coin, we do not know the answer ahead of time.
+
+- A __frequentist__ flips the bottle cap a very large number of times. The probability is the long-run proportion of flips that land top side up.
+- A __Bayesian__ starts with a prior belief, for example "probably around 0.5, but I am not sure," and updates it after each flip.
+
+Suppose we flip the bottle cap 3 times and all 3 land top side up.
+
+What would the frequentist estimate be? [$\frac{3}{3} = 1$]{.blank width="3cm"}
+
+Would the Bayesian's answer be higher or lower than that? Why?
+
+::: {.answer lines="3"}
+Lower. The prior belief of around 0.5 pulls the answer down, so the Bayesian's updated probability is somewhere between 0.5 and 1 (for example, about 0.7). Three flips are not much data.
+:::
+
+What do you think happens after 500 flips?
+
+::: {.answer lines="2.5"}
+With that much data, the prior matters very little, and the two approaches give almost the same answer.
+:::
+
+# Rules of probability
+
+**1.** The probability of any event is between 0 and 1: $0 \le P(A) \le 1$
+
+**2.** The probability of the sample space is 1: $P(S) = 1$
+
+Example: when you roll a fair die, $P(S) = P(\{1, 2, 3, 4, 5, 6\}) =$ [$\frac{6}{6} = 1$]{.blank width="4cm"}. Something in the sample space always happens.
+
+**3.** If $A$ and $B$ are mutually exclusive, $P(A \cup B) = P(A) + P(B)$
+
+Example: rolling a fair die, find $P(A \cup B)$, the probability that the roll is even or odd.
+
+::: {.answer lines="2"}
+$A$ and $B$ are mutually exclusive, so $P(A \cup B) = P(A) + P(B) = \frac{3}{6} + \frac{3}{6} = 1$.
+:::
+
+**Complement rule:** $P(A^c) =$ [$1 - P(A)$]{.blank width="4cm"}
+
+Example: find $P(C^c)$, the probability that the roll is not prime.
+
+::: {.answer lines="1.5"}
+$P(C^c) = 1 - P(C) = 1 - \frac{3}{6} = \frac{3}{6}$
+:::
+
+**Addition rule:** for __any__ two events, $P(A \cup C) = P(A) + P(C) -$ [$P(A \cap C)$]{.blank width="3.5cm"}
+
+Example: for a fair die, find $P(A \cup C)$. Why do we subtract?
+
+::: {.answer lines="2.5"}
+$P(A \cup C) = \frac{3}{6} + \frac{3}{6} - \frac{1}{6} = \frac{5}{6}$. The outcome 2 is in both $A$ and $C$, so it would be counted twice. Check: $A \cup C = \{2, 3, 4, 5, 6\}$.
+:::
+
+**Independence:** two processes are independent if knowing the outcome of one does not help predict the outcome of the other. If $A$ and $B$ are from independent processes,
+
+$$P(A \cap B) = P(A) \times P(B)$$
+
+Example: what is the probability of getting two heads in two flips of a fair coin? Check your answer with the sample space.
+
+::: {.answer lines="3"}
+$P(H \cap H) = \frac{1}{2} \times \frac{1}{2} = \frac{1}{4}$. Check: $HH$ is 1 of the 4 equally likely outcomes in $\{HH, HT, TH, TT\}$.
+:::
+
+**Your turn.** You roll a fair die and flip a fair coin. What is the probability of getting a prime number and heads?
+
+::: {.answer lines="2.5"}
+$P(C \cap H) = P(C) \times P(H) = \frac{3}{6} \times \frac{1}{2} = \frac{3}{12} = \frac{1}{4}$
+:::
+
+
+
+# Random variables
+
+A [random variable]{.blank width="4.5cm"} is a numerical outcome of a random process.
+
+Flip a coin twice and let $X$ be the number of heads. $X$ can be [0, 1, or 2]{.blank width="4cm"}.
+
+A random variable can be...
+
+- $X$: the height of a randomly selected student
+- $\bar{X}$: the mean height of a random sample of 25 students
+- $p$: the proportion of a random sample of students who drink coffee daily
+- $\mu$: the mean height of all students. In Bayesian inference, even a population parameter is treated as a random variable to describe our uncertainty about it.
+
+A __discrete__ random variable takes values we can [list (count)]{.blank width="4cm"}.
+
+A __continuous__ random variable can take [any value in an interval]{.blank width="6cm"}.
+
+**Your turn.** Write the sample space of each random variable. Is it discrete or continuous?
+
+| Random variable | Sample space | Discrete or continuous? |
+|---|---|---|
+| Number on a die | $\{1, 2, 3, 4, 5, 6\}$ | discrete |
+| Number of courses you take this semester | [$\{0, 1, 2, \dots\}$]{.blank width="4cm"} | [discrete]{.blank width="3.5cm"} |
+| Hours you sleep tonight | [$[0, 24]$, any number]{.blank width="4cm"} | [continuous]{.blank width="3.5cm"} |
+| Number of texts you get today | [$\{0, 1, 2, \dots\}$]{.blank width="4cm"} | [discrete]{.blank width="3.5cm"} |
+| Time the broken alarm rings (below) | [$[0, 24]$ hours]{.blank width="4cm"} | [continuous]{.blank width="3.5cm"} |
+
+# Probability distributions
+
+The __probability distribution__ of a random variable tells us all its possible values and how probable each one is.
+
+**Discrete.** We can list $P(X = x)$ for every value. Complete the distribution of $X$, the number of heads in two flips of a fair coin:
+
+| $x$ | 0 | 1 | 2 |
+|---|---|---|---|
+| $P(X = x)$ | [$\frac{1}{4}$]{.blank width="2cm"} | [$\frac{2}{4}$]{.blank width="2cm"} | [$\frac{1}{4}$]{.blank width="2cm"} |
+
+These probabilities add up to [1]{.blank width="2cm"}.
+
+`r if (key) "The distribution as a bar plot:" else "Draw the distribution as a bar plot:"`
+
+```{r}
+#| label: heads-dist
+#| echo: false
+#| fig-width: 4.5
+#| fig-height: 2.4
+#| fig-align: center
+#| fig-alt: "Bar plot of the number of heads in two flips of a fair coin. In the answer key, the bars at 0, 1, and 2 have heights 0.25, 0.5, and 0.25. In the student version, the axes are empty."
+heads <- tibble(x = 0:2, p = c(1, 2, 1) / 4)
+ggplot(heads, aes(factor(x), p)) +
+  geom_col(fill = if (key) crimson else NA, width = 0.5) +
+  scale_y_continuous(limits = c(0, 0.6), breaks = seq(0, 0.5, 0.25)) +
+  labs(x = "x: number of heads", y = "P(X = x)") +
+  theme(panel.grid.minor = element_blank())
+```
+
+
+
+**From discrete to continuous.** A phone has a broken alarm. It rings once a day, at a completely random time between 0 and 24 hours (midnight to midnight). Let $X$ be the time it rings.
+
+If the alarm could only ring at the start of an hour, there would be 24 equally likely times. At the start of a minute, 1,440. At the start of a second, 86,400:
+
+```{r}
+#| label: discrete-to-continuous
+#| echo: false
+#| fig-width: 7.5
+#| fig-height: 2.2
+#| fig-align: center
+#| fig-alt: "Three bar plots of equally likely ring times between 0 and 24 hours. With 24 possible times (every hour), each bar has height 1/24, about 0.04. With 1,440 possible times (every minute), each is 1/1,440, and the bars are barely visible. With 86,400 possible times (every second), each is 1/86,400 and the bars are invisible."
+split_plot <- function(k, label) {
+  tibble(x = seq(0, 24, length.out = k + 1)[-(k + 1)], p = 1 / k) |>
+    ggplot(aes(x, p)) +
+    geom_col(fill = crimson, width = 24 / k * 0.7) +
+    scale_y_continuous(limits = c(0, 0.045), breaks = c(0, 0.02, 0.04)) +
+    scale_x_continuous(breaks = c(0, 12, 24)) +
+    labs(x = "hour", y = "P(X = x)", title = label) +
+    theme_minimal(base_size = 9) +
+    theme(plot.title = element_text(hjust = 0.5))
+}
+split_plot(24, "every hour: 1/24 each") |
+  split_plot(1440, "every minute: 1/1,440 each") |
+  split_plot(86400, "every second: 1/86,400 each")
+```
+
+But time is __continuous__: the alarm could ring at any instant, so there are infinitely many possible times. Then
+
+$P(X = 9) =$ [$\frac{1}{\infty} = 0$]{.blank width="3.5cm"}
+
+For a continuous random variable, we cannot calculate the probability of a single value. Instead, we calculate the probability of an [interval]{.blank width="3.5cm"}, and the probability is the [area under the curve]{.blank width="5cm"}. The total area under the curve is 1.
+
+```{r}
+#| label: alarm
+#| echo: false
+#| fig-width: 7
+#| fig-height: 2.4
+#| fig-align: center
+#| fig-alt: "A flat curve at height 1/24 from 0 to 24 hours, forming a rectangle with total area 1. The y-axis is labeled density, not a probability. The region between 9 and 12 is shaded crimson."
+ggplot() +
+  annotate("rect", xmin = 0, xmax = 24, ymin = 0, ymax = 1/24, fill = "gray92", color = "black") +
+  annotate("rect", xmin = 9, xmax = 12, ymin = 0, ymax = 1/24, fill = crimson) +
+  scale_x_continuous(breaks = seq(0, 24, 3)) +
+  scale_y_continuous(limits = c(0, 0.05), breaks = c(0, 1/24), labels = c("0", "1/24")) +
+  labs(x = "X: time the alarm rings (hours after midnight)",
+       y = "Density\n(not a probability!)") +
+  theme(panel.grid.minor = element_blank())
+```
+
+The height of the curve is [$\frac{1}{24}$]{.blank width="2.5cm"} because the total area, $24 \times \text{height}$, must be 1.
+
+**Switch your mindset!**
+
+| | y-axis shows | Probability is |
+|---|---|---|
+| Discrete random variable | [$P(X = x)$, a probability]{.blank width="4.5cm"} | [the height of a bar]{.blank width="4.5cm"} |
+| Continuous random variable | [density: the height of the curve, not a probability]{.blank width="4.5cm"} | [the area under the curve]{.blank width="4.5cm"} |
+
+$P(9 < X < 12)$ is the probability that the alarm rings between 9 am and noon:
+
+::: {.answer lines="2"}
+$P(9 < X < 12) = \text{width} \times \text{height} = 3 \times \frac{1}{24} = \frac{3}{24} = 0.125$
+:::
+
+**Your turn.** Find the probability that the alarm rings
+
+a. while you sleep, between midnight and 8 am: [$8 \times \frac{1}{24} = \frac{1}{3}$]{.blank width="5cm"}
+b. during this lecture (75 minutes): [$1.25 \times \frac{1}{24} \approx 0.052$]{.blank width="5cm"}
+c. at exactly noon: [0]{.blank width="5cm"}
+
+
+
+# Conditional probability
+
+::: {.callout-note appearance="simple" icon="false"}
+"Conditioning is the soul of statistics."
+
+Joe Blitzstein, Harvard Statistics (Stat 110)
+:::
+
+Conditional probability answers the question: how should we update what we believe when we learn something new? It is at the heart of statistical inference. Thomas Bayes's famous essay on it was published in 1763, after his death, and it is the root of Bayesian inference, which we will learn in a few weeks.
+
+$P(A \mid B)$ is the probability of $A$ __given that__ $B$ has happened. We [reduce]{.blank width="3.5cm"} the sample space to $B$.
+
+$$P(A \mid B) = \frac{P(A \cap B)}{P(B)}$$
+
+**Die.** Given that the roll is even, what is the probability that it is prime? Write it in notation and calculate it.
+
+::: {.answer lines="3"}
+$P(C \mid A) = \frac{P(C \cap A)}{P(A)} = \frac{1/6}{3/6} = \frac{1}{3}$. Given $A$, the sample space is $\{2, 4, 6\}$, and only 2 is prime.
+:::
+
+**Data: [GSS 2018](https://gss.norc.org/).** The General Social Survey has surveyed U.S. residents since 1972.
+
+| | Believes in life after death | Does not believe | Total |
+|---|---|---|---|
+| Took a college science course | 375 | 75 | 450 |
+| Did not take one | 485 | 115 | 600 |
+| Total | 860 | 190 | 1050 |
+
+Let $B$: a randomly selected person in this sample believes in life after death, and $C$: they took a college science course.
+
+$P(B \mid C) =$ [$\frac{375}{450} \approx 0.833$]{.blank width="4cm"} $\qquad P(C \mid B) =$ [$\frac{375}{860} \approx 0.436$]{.blank width="4cm"}
+
+**The order matters!** $P(\text{has a dog} \mid \text{likes dogs}) \neq P(\text{likes dogs} \mid \text{has a dog})$. Which one is larger? Why?
+
+::: {.answer lines="2.5"}
+$P(\text{likes dogs} \mid \text{has a dog})$ is larger: almost everyone who has a dog likes dogs, but many people who like dogs do not have one.
+:::
+
+# Writing conditional probabilities
+
+$$P(\text{what we want the probability of} \mid \text{what we know or assume})$$
+
+The part after $\mid$ is __given__: we treat it as known (fixed).
+
+Let $\mu$ be the mean hours of sleep of __all__ Harvard students and $\bar{X}$ the mean of a random __sample__ of 30 Harvard students. Write in notation:
+
+a. The probability that the sample mean is at most 7.5 hours, if the population mean is 8 hours.
+
+::: {.answer lines="1.5"}
+$P(\bar{X} \le 7.5 \mid \mu = 8)$
+:::
+
+b. The probability that the population mean is more than 8 hours, given that the sample mean is 7.5 hours.
+
+::: {.answer lines="1.5"}
+$P(\mu > 8 \mid \bar{X} = 7.5)$
+:::
+
+c. The probability of getting 10 heads in 10 flips, if the coin is fair.
+
+::: {.answer lines="1.5"}
+$P(\text{10 heads} \mid \text{fair coin})$
+:::
+
+d. The probability that the coin is fair, given that we got 10 heads in 10 flips.
+
+::: {.answer lines="1.5"}
+$P(\text{fair coin} \mid \text{10 heads})$
+:::
+
+In (a), what is treated as fixed? [$\mu$, the parameter]{.blank width="5cm"} In (b)? [$\bar{X}$, the data]{.blank width="5cm"}
+
+{{< pagebreak >}}
+
+# Exercises: if you finish early
+
+1. Roll a fair die. Find $P(A \mid C)$, $P(C \mid B)$, and $P(A \mid B)$.
+
+::: {.answer lines="3"}
+$P(A \mid C) = \frac{1}{3}$ (only 2 of $\{2, 3, 5\}$ is even), $P(C \mid B) = \frac{2}{3}$ (3 and 5 of $\{1, 3, 5\}$), $P(A \mid B) = 0$ (mutually exclusive).
+:::
+
+2. Roll a die four times. What is the probability of getting at least one 6? (Hint: complement and independence.)
+
+::: {.answer lines="2.5"}
+$1 - P(\text{no 6s}) = 1 - \left(\frac{5}{6}\right)^4 \approx 0.518$
+:::
+
+3. Using the GSS table, find $P(B^c \mid C)$ and $P(B \mid C) + P(B^c \mid C)$. Why do you get this sum?
+
+::: {.answer lines="2.5"}
+$P(B^c \mid C) = \frac{75}{450}$. The sum is 1: given $C$, a person either believes or does not.
+:::
+
+4. The broken alarm rings at a random time between 0 and 24 hours. Find $P(X > 20)$ and $P(6 < X < 18)$.
+
+::: {.answer lines="2"}
+$P(X > 20) = 4 \times \frac{1}{24} = \frac{1}{6}$, $\quad P(6 < X < 18) = 12 \times \frac{1}{24} = \frac{1}{2}$
+:::
+
+5. Let $\mu$ be the mean GPA of all Harvard students and $\bar{X}$ the mean GPA of a random sample of 50 students. Write in words: $P(\bar{X} > 3.8 \mid \mu = 3.7)$ and $P(\mu > 3.8 \mid \bar{X} = 3.75)$.
+
+::: {.answer lines="4"}
+The probability that the sample mean GPA is more than 3.8, if the mean GPA of all Harvard students is 3.7. The probability that the mean GPA of all Harvard students is more than 3.8, given that the sample mean GPA is 3.75.
+:::
+
+6. $\pi$ is the proportion of all Harvard students who drink coffee daily, and $p$ is the proportion in a random sample of 100. Write in notation: the probability that more than half of all students drink coffee daily, given that the sample proportion is 0.6.
+
+::: {.answer lines="1.5"}
+$P(\pi > 0.5 \mid p = 0.6)$
+:::
