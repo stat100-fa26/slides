@@ -249,10 +249,9 @@ Flip a coin twice and let $X$ be the number of heads. $X$ can be [0, 1, or 2]{.b
 
 A random variable can be...
 
-- $X$: the height of a randomly selected student
-- $\bar{X}$: the mean height of a random sample of 25 students
-- $p$: the proportion of a random sample of students who drink coffee daily
-- $\mu$: the mean height of all students. In Bayesian inference, even a population parameter is treated as a random variable to describe our uncertainty about it.
+- a __random observation__, $X$: the height of a randomly selected student. Technically, $X$ is an observation in the population. Every observation in a sample is also in the population, so the observations in a sample, $X_1, X_2, \dots, X_n$, are random observations too.
+- a __random sample statistic__, $\bar{X}$: the mean height of a random sample of 25 students, or $p$: the proportion of a random sample of students who drink coffee daily
+- a __random population parameter__, $\mu$: the mean height of all students. In Bayesian inference, even a population parameter is treated as a random variable to describe our uncertainty about it.
 
 A __discrete__ random variable takes values we can [list (count)]{.blank width="4cm"}.
 
