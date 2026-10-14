@@ -1,0 +1,982 @@
+---
+title: "Normal Distribution and Likelihood"
+author: "Mine Doğucu"
+execute:
+  echo: true
+format:
+  revealjs:
+    menu:
+      openButton: false
+    footer: |
+      <span id="menu-toggle-box"></span> [stat-100.com](https://stat-100.com)
+    code-line-numbers: false
+    slide-number: true
+    incremental: false
+    theme: [default, style.scss]
+    logo:
+      path: images/00-stat100-logo-square.png
+      alt: "STAT 100 course square logo"
+    transition: fade
+    width: 1280
+    height: 720
+    title-slide-attributes:
+      data-background-image: "images/stat100-logo-rectangle.png"
+      data-background-size: 10%
+      data-background-position: 50% 85%
+      data-aria-label: "STAT 100 course logo"
+---
+
+```{r}
+#| echo: false
+#| message: false
+library(tidyverse)
+library(openintro)
+library(patchwork)
+options(scipen = 999)
+
+source("R/plot-normal.R")
+
+green <- hds_colors[["green"]]
+yellow <- hds_colors[["yellow"]]
+pink <- hds_colors[["pink"]]
+
+theme_set(theme_minimal(base_size = 22))
+
+# A normal curve with no y-axis (we only care about the shape and areas)
+theme_curve <- theme(axis.text.y = element_blank(),
+                     axis.title.y = element_blank(),
+                     panel.grid.major.y = element_blank(),
+                     panel.grid.minor = element_blank())
+
+# Small static normal curve with a shaded area (for pictures, not for students)
+shade_normal <- function(mean, sd, from = -Inf, to = Inf, title = NULL, breaks = NULL) {
+  curve <- tibble(x = seq(mean - 4 * sd, mean + 4 * sd, length.out = 500),
+                  y = dnorm(x, mean, sd))
+  area <- curve |> filter(x >= from, x <= to)
+  p <- ggplot(curve, aes(x, y)) +
+    geom_area(data = area, fill = pink, alpha = 0.9) +
+    geom_line(color = green, linewidth = 1.3) +
+    labs(x = NULL, title = title) +
+    theme_curve
+  if (!is.null(breaks)) p <- p + scale_x_continuous(breaks = breaks)
+  p
+}
+
+# Heights (cm) of physically active adults in the bdims data
+women <- bdims |> filter(sex == 0)
+men <- bdims |> filter(sex == 1)
+```
+
+# Normal distribution {.inverse background-color="#A51C30"}
+
+## A familiar shape
+
+```{r}
+#| echo: false
+#| fig-height: 5
+#| fig-width: 14
+#| fig-align: center
+#| fig-alt: "Three histograms side by side. Left: heights of 260 physically active women, centered near 165 cm. Middle: heights of 247 physically active men, centered near 178 cm. Right: heights of 435 NBA players, centered near 201 cm. All three are roughly symmetric and bell shaped."
+hist_plot <- function(data, var, title) {
+  ggplot(data, aes({{ var }})) +
+    geom_histogram(binwidth = 2.54, fill = green, color = "white") +
+    labs(x = "Height (cm)", y = NULL, title = title)
+}
+(hist_plot(women, hgt, "Active women") |
+   hist_plot(men, hgt, "Active men") |
+   hist_plot(nba_heights, h_meters * 100, "NBA players")) &
+  theme(plot.title = element_text(size = 20), axis.text.y = element_blank())
+```
+
+Many variables have a symmetric, bell-shaped distribution.
+
+<small>Data: [bdims](https://openintrostat.github.io/openintro/reference/bdims.html) and [nba_heights](https://openintrostat.github.io/openintro/reference/nba_heights.html) in the `openintro` package.</small>
+
+## Normal distribution
+
+The __normal distribution__ is a symmetric, bell-shaped curve. It is completely described by two numbers:
+
+- its __mean__: where the center is,
+- its __variance__, or __standard deviation__ (the square root of the variance): how spread out it is.
+
+. . .
+
+```{r}
+#| echo: false
+#| fig-height: 3.4
+#| fig-width: 11
+#| fig-align: center
+#| fig-alt: "Histogram of the heights of active women with a smooth green normal curve on top. The curve, with mean 165 cm and standard deviation 6.5 cm, follows the shape of the histogram closely."
+ggplot(women, aes(hgt)) +
+  geom_histogram(aes(y = after_stat(density)), binwidth = 2.54, fill = "gray80", color = "white") +
+  stat_function(fun = dnorm, args = list(mean = mean(women$hgt), sd = sd(women$hgt)),
+                color = green, linewidth = 1.6) +
+  labs(x = "Height (cm)") +
+  theme_curve
+```
+
+Heights of active women are approximately normal with mean `r round(mean(women$hgt))` cm and standard deviation `r round(sd(women$hgt), 1)` cm.
+
+## Changing the mean
+
+```{r}
+#| echo: false
+#| fig-height: 4
+#| fig-width: 11
+#| fig-align: center
+#| fig-alt: "Three normal curves with the same standard deviation, 6.5, centered at 150, 165, and 180. Changing the mean slides the curve left or right without changing its shape."
+tibble(m = c(150, 165, 180)) |>
+  expand_grid(x = seq(120, 210, length.out = 500)) |>
+  mutate(y = dnorm(x, m, 6.5), m = factor(m)) |>
+  ggplot(aes(x, y, color = m)) +
+  geom_line(linewidth = 1.5) +
+  scale_color_manual(values = c("gray40", green, pink), name = "mean") +
+  labs(x = NULL, title = "Same standard deviation (6.5), different means") +
+  theme_curve
+```
+
+. . .
+
+The mean moves the curve left and right.
+
+## Changing the standard deviation
+
+```{r}
+#| echo: false
+#| fig-height: 4
+#| fig-width: 11
+#| fig-align: center
+#| fig-alt: "Three normal curves all centered at 165 with standard deviations 4, 6.5, and 12. The curve with standard deviation 4 is tall and narrow; the one with 12 is short and wide."
+tibble(s = c(4, 6.5, 12)) |>
+  expand_grid(x = seq(120, 210, length.out = 500)) |>
+  mutate(y = dnorm(x, 165, s), s = factor(s)) |>
+  ggplot(aes(x, y, color = s)) +
+  geom_line(linewidth = 1.5) +
+  scale_color_manual(values = c("gray40", green, pink), name = "standard\ndeviation") +
+  labs(x = NULL, title = "Same mean (165), different standard deviations") +
+  theme_curve
+```
+
+. . .
+
+The standard deviation makes the curve narrower or wider. The total area under the curve is always 1, so a narrower curve is taller.
+
+## SAT scores
+
+From here on, we will use SAT scores as our example.
+
+According to the [College Board's 2025 SAT Suite of Assessments Annual Report](https://reports.collegeboard.org/media/pdf/2025-total-group-sat-suite-of-assessments-annual-report%20ADA-v0.2.pdf), about 2 million students in the class of 2025 took the SAT. Their total scores had
+
+- mean 1029
+- standard deviation 235
+
+```{r}
+#| echo: false
+sat_mean <- 1029
+sat_sd <- 235
+```
+
+## Notation
+
+$$\text{random variable} \sim N(\text{mean}, \text{variance})$$
+
+. . .
+
+::: {.stat-callout .example}
+**Example**
+
+Let $X$ be the total SAT score of a randomly selected test taker in the class of 2025.
+
+$$X \sim N(1029, 235^2)$$
+
+is read "$X$ is normally distributed with mean 1029 and variance $235^2$." The standard deviation is 235 and the variance is $235^2 = 55{,}225$.
+:::
+
+## Many ways to say the same thing
+
+All of these mean the same thing:
+
+- $X$ is normally distributed with mean 1029 and variance 55,225.
+- $X$ is normally distributed with mean 1029 and standard deviation 235.
+- $X \sim N(1029, 55{,}225)$
+- $X \sim N(1029, 235^2)$
+- $X \sim \text{Normal}(\text{mean} = 1029, \text{sd} = 235)$
+
+## Careful!
+
+::: {.stat-callout .note-tip}
+**Note**
+
+Some books and some software put the standard deviation (not the variance) as the second number. In R, `pnorm()`, `qnorm()`, and `rnorm()` all use the standard deviation:
+
+`pnorm(1200, mean = 1029, sd = 235)`
+
+Always check whether the second number is the standard deviation or the variance. Writing it as $235^2$ makes it clear.
+:::
+
+## Reading the notation {.smaller}
+
+::: {.stat-callout .exercise}
+**Exercise**
+
+For each normal distribution, find the mean, the variance, and the standard deviation.
+
+a. $Y \sim N(10, 4)$
+b. $Z \sim N(0, 1)$
+c. $W \sim N(-3, 3^2)$
+d. SAT Math scores of the class of 2025 had mean 508 and standard deviation 126.
+
+Note: $N(0, 1)$ in (b) is called the standard normal distribution.
+:::
+
+## Not just for $X$ {.smaller}
+
+The random variable on the left of $\sim$ can be many things.
+
+| Notation | What is normally distributed? |
+|-----------------------------|---------------------------------------------|
+| $X \sim N(1029, 235^2)$ | a __random observation__ (in the population, and so also in a sample): the SAT score of one test taker |
+| $\mu \sim N(7, 0.5^2)$ | a __random population parameter__: our belief about the mean hours of sleep of all Harvard students |
+
+In a few weeks, we will see that a __random sample statistic__, like $\bar{X}$, can also be normally distributed.
+
+. . .
+
+This is why we say "mean" and "variance" for the two numbers in $N(\ , \ )$ rather than giving them their own symbols: sometimes the random variable itself is a mean, like $\mu$!
+
+# Probability as area {.inverse background-color="#A51C30"}
+
+## Area = probability
+
+The total area under a normal curve is 1. The __probability__ that the random variable falls in an interval is the __area__ under the curve over that interval.
+
+```{r}
+#| echo: false
+#| fig-height: 3.4
+#| fig-width: 14
+#| fig-align: center
+#| fig-alt: "Three normal curves for SAT scores, centered at 1029 with standard deviation 235. In the first, the area to the left of 800 is shaded, labeled P(X < 800). In the second, the area to the right of 1400 is shaded, labeled P(X > 1400). In the third, the area between 800 and 1400 is shaded, labeled P(800 < X < 1400)."
+b <- c(400, 800, 1200, 1600)
+(shade_normal(sat_mean, sat_sd, to = 800, title = "P(X < 800)", breaks = b) |
+   shade_normal(sat_mean, sat_sd, from = 1400, title = "P(X > 1400)", breaks = b) |
+   shade_normal(sat_mean, sat_sd, from = 800, to = 1400, title = "P(800 < X < 1400)", breaks = b)) &
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+. . .
+
+We will never calculate these areas by hand. We will use functions.
+
+## The `plot_normal()` function
+
+```{r}
+#| eval: false
+plot_normal(random_variable = "x",  # "x", "x_bar", "p", "mu", or "pi"
+            mean = 1029,            # mean of the normal distribution
+            sd = 235,               # standard deviation (or variance = 55225)
+            lower = 800,            # shade from here...
+            upper = 1400)           # ...to here
+```
+
+- It draws the normal curve with the random variable on the x-axis.
+- It shades the area between `lower` and `upper` and writes the area under the plot.
+- Leave out `lower` to shade everything below `upper`, and leave out `upper` to shade everything above `lower`.
+
+## The `calc_prob_normal()` function
+
+`plot_normal()` draws the picture. To get the probability as a number that you can use in your answers, use `calc_prob_normal()` with the same arguments:
+
+```{r}
+calc_prob_normal("x", mean = 1029, sd = 235, lower = 800, upper = 1400)
+```
+
+. . .
+
+You can save it and use it with inline code:
+
+```{r}
+prob_800_1400 <- calc_prob_normal("x", mean = 1029, sd = 235, lower = 800, upper = 1400)
+```
+
+About `r round(prob_800_1400 * 100)`% of test takers scored between 800 and 1400.
+
+## Area to the left
+
+What is the probability that a randomly selected test taker scored below 800?
+
+```{r}
+#| fig-height: 3.6
+#| fig-width: 10
+#| fig-align: center
+#| fig-alt: "Normal curve for X with mean 1029 and standard deviation 235. The area to the left of 800 is shaded pink, and a yellow label below the curve reads Area = 0.1649. The title is P(X < 800)."
+plot_normal("x", mean = 1029, sd = 235, upper = 800)
+calc_prob_normal("x", mean = 1029, sd = 235, upper = 800)
+```
+
+## Area to the right
+
+What is the probability that a randomly selected test taker scored above 1400?
+
+```{r}
+#| fig-height: 3.6
+#| fig-width: 10
+#| fig-align: center
+#| fig-alt: "Normal curve for X with mean 1029 and standard deviation 235. The area to the right of 1400 is shaded pink, and the label reads Area = 0.0572."
+plot_normal("x", mean = 1029, sd = 235, lower = 1400)
+calc_prob_normal("x", mean = 1029, sd = 235, lower = 1400)
+```
+
+## How good is the normal model?
+
+The College Board report also shows how many test takers scored in each range:
+
+| Score range | Test takers | Proportion | Normal model |
+|---|---|---|---|
+| 400–790 (below 800) | `r format(52472 + 281174, big.mark = ",")` | `r round((52472 + 281174) / 2004965, 3)` | `r round(pnorm(800, sat_mean, sat_sd), 3)` |
+| 1400–1600 | `r format(149767, big.mark = ",")` | `r round(149767 / 2004965, 3)` | `r round(1 - pnorm(1400, sat_mean, sat_sd), 3)` |
+
+. . .
+
+Close, though not perfect. The normal distribution is a __model__. It is not perfect, but it is useful.
+
+## Area in between
+
+What is the probability that a randomly selected test taker scored between 800 and 1400?
+
+```{r}
+#| fig-height: 3.6
+#| fig-width: 10
+#| fig-align: center
+#| fig-alt: "Normal curve for X with mean 1029 and standard deviation 235. The area between 800 and 1400 is shaded pink, and the label reads Area = 0.7779."
+plot_normal("x", mean = 1029, sd = 235, lower = 800, upper = 1400)
+```
+
+## The 68-95-99.7 rule
+
+```{r}
+#| echo: false
+#| fig-height: 4.5
+#| fig-width: 15
+#| fig-align: center
+#| fig-alt: "Three standard normal curves. The first shades the area within 1 standard deviation of the mean, labeled 68%. The second shades within 2 standard deviations, labeled 95%. The third shades within 3 standard deviations, labeled 99.7%. The x-axes are labeled mean minus 3 sd through mean plus 3 sd."
+lab <- c("mean\n- 3 sd", "mean\n- 2 sd", "mean\n- 1 sd", "mean", "mean\n+ 1 sd", "mean\n+ 2 sd", "mean\n+ 3 sd")
+rule_plot <- function(k, pct) {
+  shade_normal(0, 1, from = -k, to = k, title = pct) +
+    scale_x_continuous(breaks = -3:3, labels = lab, limits = c(-3.6, 3.6)) +
+    theme(plot.title = element_text(hjust = 0.5, size = 30, face = "bold"),
+          axis.text.x = element_text(size = 12))
+}
+rule_plot(1, "68%") | rule_plot(2, "95%") | rule_plot(3, "99.7%")
+```
+
+For __any__ normal distribution, about 68% of the values are within 1 standard deviation of the mean, 95% within 2, and 99.7% within 3.
+
+## The 68-95-99.7 rule {.smaller}
+
+::: {.stat-callout .exercise}
+**Exercise**
+
+SAT total scores are approximately $N(1029, 235^2)$. Without using R, find the approximate probability that a randomly selected test taker scored
+
+a. between 794 and 1264.
+b. between 559 and 1499.
+c. above 1499.
+d. above 1029.
+
+Then check (a) and (c) with `calc_prob_normal()`.
+:::
+
+## Match the picture {.smaller}
+
+:::: columns
+::: {.column width="55%"}
+
+```{r}
+#| echo: false
+#| fig-height: 6.5
+#| fig-width: 7
+#| fig-alt: "Four normal curves labeled A, B, C, D, each centered at 1029 with standard deviation 235 and x-axis ticks at 800, 1029, and 1400. A shades the region to the right of 800. B shades the region to the left of 800. C shades the region between 800 and 1400. D shades the region to the right of 1400."
+b <- c(800, 1029, 1400)
+(shade_normal(sat_mean, sat_sd, from = 800, title = "A", breaks = b) |
+   shade_normal(sat_mean, sat_sd, to = 800, title = "B", breaks = b)) /
+  (shade_normal(sat_mean, sat_sd, from = 800, to = 1400, title = "C", breaks = b) |
+     shade_normal(sat_mean, sat_sd, from = 1400, title = "D", breaks = b)) &
+  theme(plot.title = element_text(size = 28, face = "bold"))
+```
+
+:::
+
+::: {.column width="45%"}
+
+::: {.stat-callout .exercise}
+**Exercise**
+
+$X \sim N(1029, 235^2)$. Match each picture to a probability.
+
+1. $P(X < 800)$
+2. $P(X > 1400)$
+3. $P(X > 800)$
+4. $P(800 < X < 1400)$
+
+Then write the `plot_normal()` code for each.
+:::
+
+:::
+::::
+
+## Exactly 1200?
+
+::: {.stat-callout .discussion}
+**Discussion**
+
+$X \sim N(1029, 235^2)$. According to this model, what is the probability that a randomly selected test taker scored *exactly* 1200? Not 1200.1, not 1199.99999, but exactly 1200.000000...
+:::
+
+## Exactly 1200? - answer
+
+__Answer: 0.__ The area of a single line under the curve is 0.
+
+Just like the broken alarm last class: for a continuous random variable, we only ask about probabilities of __intervals__. This also means $P(X < 1200) = P(X \le 1200)$.
+
+. . .
+
+Real SAT scores are reported in steps of 10, so some students do score exactly 1200. The normal distribution treats scores as continuous: it is a model.
+
+## Going backwards: `find_normal_value()`
+
+Sometimes we know the area and want the value. What total SAT score does a test taker need to be in the top 10%?
+
+```{r}
+#| fig-height: 3.6
+#| fig-width: 10
+#| fig-align: center
+#| fig-alt: "Normal curve for X with mean 1029 and standard deviation 235. The area to the right of about 1330 is shaded pink, and the label reads Area = 0.1000."
+find_normal_value("x", mean = 1029, sd = 235, area = 0.10, side = "above")
+```
+
+## Practice {.smaller}
+
+::: {.stat-callout .exercise}
+**Exercise**
+
+SAT Math scores of the class of 2025 are approximately $N(508, 126^2)$.
+
+a. What is the probability that a randomly selected test taker scored above 700 on SAT Math? Sketch the picture first, then use `plot_normal()` and `calc_prob_normal()`.
+b. What is the probability that a randomly selected test taker scored between 400 and 600?
+c. What SAT Math score separates the lowest 25% of test takers from the rest?
+:::
+
+## z-scores
+
+A __z-score__ tells us how many standard deviations a value is away from the mean.
+
+$$z = \frac{\text{value} - \text{mean}}{\text{standard deviation}}$$
+
+. . .
+
+::: {.stat-callout .example}
+**Example**
+
+A total SAT score of 1499: $z = \frac{1499 - 1029}{235} = 2$. The score is 2 standard deviations above the mean.
+:::
+
+. . .
+
+If $X$ is normal, its z-score $Z = \frac{X - \text{mean}}{\text{standard deviation}}$ follows $N(0, 1)$, the __standard normal distribution__.
+
+## Normal vs. standard normal
+
+```{r}
+#| echo: false
+#| fig-height: 5.4
+#| fig-width: 13
+#| fig-align: center
+#| fig-alt: "Two normal curves of the same shape, one above the other. The top curve is the distribution of SAT total scores, N(1029, 235 squared), with x-axis ticks at 324, 559, 794, 1029, 1264, 1499, and 1734. The bottom curve is the standard normal distribution of z-scores, N(0, 1), with x-axis ticks at -3 through 3. In both, the area above the same point (1400 on the top, z = 1.58 on the bottom) is shaded, and both areas equal 0.057."
+z_1400 <- (1400 - sat_mean) / sat_sd
+top <- shade_normal(sat_mean, sat_sd, from = 1400,
+                    breaks = sat_mean + (-3:3) * sat_sd,
+                    title = expression("SAT total score:  " * X %~% N(1029, 235^2))) +
+  labs(x = "X: SAT total score")
+bottom <- shade_normal(0, 1, from = z_1400, breaks = -3:3,
+                       title = expression("z-score:  " * Z %~% N(0, 1) * ", the standard normal distribution")) +
+  labs(x = "Z: number of standard deviations from the mean")
+(top / bottom) &
+  theme(plot.title = element_text(size = 22), axis.text.x = element_text(size = 16),
+        axis.title.x = element_text(size = 18))
+```
+
+A score of 1400 has $z = \frac{1400 - 1029}{235} =$ `r round(z_1400, 2)`. $P(X > 1400) = P(Z > `r round(z_1400, 2)`)$: converting to z-scores changes the numbers on the axis, not the shape or the areas.
+
+## z-scores
+
+::: {.stat-callout .exercise}
+**Exercise**
+
+SAT total scores are approximately $N(1029, 235^2)$ and SAT Math scores are approximately $N(508, 126^2)$.
+
+Which is more unusual: a total SAT score of 1450 or an SAT Math score of 720?
+:::
+
+# Normal distribution for a population parameter {.inverse background-color="#A51C30"}
+
+## What do you believe about $\mu$?
+
+So far, the population mean $\mu$ was a fixed number.
+
+. . .
+
+Another way to think about $\mu$: we can use a normal distribution to describe __what we believe__ about it.
+
+. . .
+
+::: {.stat-callout .example}
+**Example**
+
+$\mu$: average hours of sleep of Harvard students on a school night.
+
+- Alex believes $\mu \sim N(7, 0.5^2)$: "around 7 hours, fairly sure."
+- Sam believes $\mu \sim N(6.5, 1^2)$: "around 6.5 hours, not very sure."
+:::
+
+## Two beliefs about $\mu$
+
+```{r}
+#| echo: false
+#| fig-height: 4.2
+#| fig-width: 12
+#| fig-align: center
+#| fig-alt: "Two normal curves describing beliefs about mu, the average hours of sleep of Harvard students. Alex's curve, in green, is centered at 7 and narrow, mostly between 6 and 8. Sam's curve, in pink, is centered at 6.5 and wide, mostly between 4.5 and 8.5."
+tibble(mu = seq(3, 10, length.out = 600)) |>
+  mutate(Alex = dnorm(mu, 7, 0.5), Sam = dnorm(mu, 6.5, 1)) |>
+  pivot_longer(-mu, names_to = "person", values_to = "y") |>
+  ggplot(aes(mu, y, color = person)) +
+  geom_line(linewidth = 1.6) +
+  scale_color_manual(values = c(Alex = green, Sam = pink), name = NULL) +
+  scale_x_continuous(breaks = 3:10) +
+  labs(x = expression(mu * ": average hours of sleep")) +
+  theme_curve +
+  theme(legend.position = "top")
+```
+
+A narrower curve means more certainty. Both curves describe beliefs about the __same__ unknown number $\mu$.
+
+## Using `plot_normal()` for $\mu$
+
+According to Alex's belief, what is the probability that the average hours of sleep of Harvard students is more than 7.5?
+
+```{r}
+#| fig-height: 3.6
+#| fig-width: 10
+#| fig-align: center
+#| fig-alt: "Normal curve for mu with mean 7 and standard deviation 0.5. The area to the right of 7.5 is shaded pink, and the label reads Area = 0.1587. The x-axis is labeled mu."
+plot_normal("mu", mean = 7, sd = 0.5, lower = 7.5)
+```
+
+Now the x-axis is $\mu$: the random variable is the population parameter.
+
+## Two beliefs about $\mu$
+
+::: {.stat-callout .exercise}
+**Exercise**
+
+a. According to Sam's belief, what is the probability that $\mu$ is more than 7.5?
+b. Who thinks it is more plausible that $\mu$ is less than 5 hours? Calculate both probabilities.
+c. Write down your own belief about $\mu$ as $\mu \sim N(\ ?, \ ?^2)$. Plot it with `plot_normal()` and compare with your neighbor.
+
+Use `calc_prob_normal()` to get the probabilities as numbers.
+:::
+
+## Looking ahead
+
+::: {.stat-callout .note-tip}
+**Looking ahead**
+
+In a few weeks, we will learn Bayesian inference: start with a belief like $\mu \sim N(7, 0.5^2)$, collect data, and *update* the belief.
+:::
+
+## Same notation, different things {.smaller}
+
+::: {.stat-callout .exercise}
+**Exercise**
+
+Does each normal distribution describe a *random observation* or a *random population parameter*? Then write the `plot_normal()` and `calc_prob_normal()` code for the probability in brackets.
+
+a. $X \sim N(508, 126^2)$: SAT Math score of a randomly selected test taker $[P(X > 600)]$
+b. $\pi \sim N(0.6, 0.1^2)$: our belief about the proportion of all Harvard students who drink coffee daily $[P(\pi > 0.5)]$
+c. $X \sim N(70, 10^2)$: resting heart rate of a randomly selected student $[P(X > 80)]$
+d. $\mu \sim N(3.7, 0.1^2)$: our belief about the mean GPA of all Harvard students $[P(\mu < 3.6)]$
+:::
+
+# Probability vs. likelihood {.inverse background-color="#A51C30"}
+
+## Flashback: lecture 1
+
+```{r}
+#| echo: false
+#| fig-height: 3.4
+#| fig-width: 14
+#| fig-align: center
+#| fig-alt: "Two diagrams from lecture 1, side by side. Left, titled Probability: an oval labeled Design of the Coin with pi = 0.5, and an arrow on top pointing right to an oval labeled Observed Data with a question mark. Right, titled Statistical Inference: an oval labeled Observed Data with H, H, H, H, T, and an arrow on the bottom pointing left to the oval Design of the Coin with pi = question mark."
+oval <- function(cx, cy = 5, a = 2.2, b = 1.25) {
+  tibble(t = seq(0, 2 * pi, length.out = 200), x = cx + a * cos(t), y = cy + b * sin(t))
+}
+diagram <- function(left_title, left_value, right_title, right_value,
+                    top_label = NULL, bottom_label = NULL, left_fill = "white",
+                    right_fill = "white") {
+  p <- ggplot() +
+    geom_polygon(data = oval(2.2), aes(x, y), fill = left_fill, color = "#A51C30", linewidth = 1.5) +
+    geom_polygon(data = oval(7.8), aes(x, y), fill = right_fill, color = "#A51C30", linewidth = 1.5) +
+    annotate("text", x = 2.2, y = 5.4, label = left_title, size = 6, fontface = "bold") +
+    annotate("text", x = 2.2, y = 4.55, label = left_value, size = 6, parse = TRUE) +
+    annotate("text", x = 7.8, y = 5.4, label = right_title, size = 6, fontface = "bold") +
+    annotate("text", x = 7.8, y = 4.55, label = right_value, size = 6, parse = TRUE)
+  if (!is.null(top_label)) {
+    p <- p +
+      geom_curve(aes(x = 4.2, y = 5.7, xend = 5.8, yend = 5.7), curvature = -0.35,
+                 arrow = arrow(length = unit(0.35, "cm"), type = "closed"), linewidth = 1) +
+      annotate("text", x = 5, y = 6.75, label = top_label, size = 6, fontface = "bold", parse = TRUE)
+  }
+  if (!is.null(bottom_label)) {
+    p <- p +
+      geom_curve(aes(x = 5.8, y = 4.3, xend = 4.2, yend = 4.3), curvature = -0.35,
+                 arrow = arrow(length = unit(0.35, "cm"), type = "closed"), linewidth = 1) +
+      annotate("text", x = 5, y = 3.25, label = bottom_label, size = 6, fontface = "bold", parse = TRUE)
+  }
+  p + coord_fixed(xlim = c(-0.1, 10.1), ylim = c(2.4, 7.6)) + theme_void()
+}
+diagram("Design of the Coin", "pi == 0.5", "Observed Data", '"?"',
+        top_label = '"Probability"') |
+  diagram("Design of the Coin", 'pi == "?"', "Observed Data", '"H, H, H, H, T"',
+          bottom_label = '"Statistical Inference"')
+```
+
+In lecture 1 we asked: "If we observe H, H, H, H, T on five coin flips, what is the likelihood that this is a fair coin?"
+
+. . .
+
+Back then we did not have the words __population__, __sample__, __parameter__, or __likelihood__. Now we do!
+
+## The same picture, with today's words: probability
+
+```{r}
+#| echo: false
+#| fig-height: 3.7
+#| fig-width: 7
+#| out-width: 80%
+#| fig-align: center
+#| fig-alt: "Diagram with two ovals. The left oval, shaded green, is labeled Population, with parameter pi, the probability of heads. The right oval, shaded yellow, is labeled Sample, with the observed data H, H, T, H. An arrow on top goes from population to sample and is labeled Probability: P(data given pi), with the note pi fixed, data vary."
+diagram("Population", 'pi * ": P(heads)"', "Sample (data)", '"H, H, T, H"',
+        top_label = '"Probability:" ~ P(data ~ "|" ~ pi)',
+        left_fill = "#CDEDE3", right_fill = "#FBF8D0") +
+  annotate("text", x = 5, y = 7.35, label = "π fixed, data vary", size = 5.5,
+           color = "gray30", parse = FALSE)
+```
+
+__Probability__ goes from the population to the sample: if we knew $\pi$, how probable is the data?
+
+$$P(\text{data} \mid \pi)$$
+
+## The same picture, with today's words: likelihood
+
+```{r}
+#| echo: false
+#| fig-height: 3.7
+#| fig-width: 7
+#| out-width: 80%
+#| fig-align: center
+#| fig-alt: "The same diagram with two ovals, Population with parameter pi and Sample with the observed data H, H, T, H. This time the arrow is on the bottom, going from the sample back to the population, labeled Likelihood: L(pi given data), with the note data fixed, pi varies."
+diagram("Population", 'pi * ": P(heads)"', "Sample (data)", '"H, H, T, H"',
+        bottom_label = '"Likelihood:" ~ L(pi ~ "|" ~ data)',
+        left_fill = "#CDEDE3", right_fill = "#FBF8D0") +
+  annotate("text", x = 5, y = 2.65, label = "data fixed, π varies", size = 5.5,
+           color = "gray30")
+```
+
+__Likelihood__ goes from the sample back to the population: given the data, how well does each value of $\pi$ explain it? This is the first step of __inference__.
+
+$$L(\pi \mid \text{data})$$
+
+## Is this coin fair?
+
+Back to the question from lecture 1. A friend hands you a coin. Let $\pi$ be the probability that it lands __heads__. If the coin is fair, $\pi = 0.5$. But maybe it is not!
+
+. . .
+
+You flip it 4 times and get:
+
+__H, H, T, H__
+
+Three heads out of four. Is the coin fair? Or is $\pi$ something else, like 0.75?
+
+## Each flip
+
+If we knew $\pi$:
+
+- $P(\text{H} \mid \pi) = \pi$
+- $P(\text{T} \mid \pi) = 1 - \pi$
+
+. . .
+
+The flips are independent, so we multiply (last class!):
+
+$$P(\text{H, H, T, H} \mid \pi) = \pi \times \pi \times (1 - \pi) \times \pi = \pi^3 (1 - \pi)$$
+
+## Two questions
+
+__Probability question:__ If the coin is fair ($\pi = 0.5$), how probable is each possible set of 4 flips?
+
+. . .
+
+__Likelihood question:__ We __observed__ H, H, T, H. How well does each possible value of $\pi$ (0.5? 0.75? 0.25?) explain these flips?
+
+. . .
+
+Same ingredients, different direction.
+
+## Probability: fix $\pi$, vary the data
+
+```{r}
+#| echo: false
+seqs <- expand_grid(f1 = c("H", "T"), f2 = c("H", "T"), f3 = c("H", "T"), f4 = c("H", "T")) |>
+  mutate(data = paste0(f1, f2, f3, f4),
+         k = (f1 == "H") + (f2 == "H") + (f3 == "H") + (f4 == "H")) |>
+  arrange(desc(k), data) |>
+  mutate(data = factor(data, levels = data))
+```
+
+If the coin is fair, each of the 16 possible sets of 4 flips has probability $0.5^4 = \frac{1}{16} = 0.0625$:
+
+```{r}
+#| echo: false
+#| fig-height: 3.8
+#| fig-width: 13
+#| fig-align: center
+#| fig-alt: "Bar chart of the probability of each of the 16 possible sets of four coin flips when pi equals 0.5. All 16 bars have the same height, 0.0625. The bar for HHTH, our observed data, is pink; the rest are green. The bars add up to 1."
+seqs |>
+  mutate(prob = 0.5^4, observed = data == "HHTH") |>
+  ggplot(aes(data, prob, fill = observed)) +
+  geom_col() +
+  scale_fill_manual(values = c(`FALSE` = green, `TRUE` = pink), guide = "none") +
+  scale_y_continuous(limits = c(0, 0.08)) +
+  labs(x = "Possible data", y = expression("P(data | " * pi * " = 0.5)")) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 14))
+```
+
+These 16 probabilities add up to __1__. This is a __probability distribution__ (over the data).
+
+## Probability: a biased coin
+
+What if the coin were biased toward heads, with $\pi = 0.75$? Then each set of 4 flips with $k$ heads has probability $0.75^k \times 0.25^{4 - k}$:
+
+```{r}
+#| echo: false
+#| fig-height: 3.8
+#| fig-width: 13
+#| fig-align: center
+#| fig-alt: "Bar chart of the probability of each of the 16 possible sets of four coin flips when pi equals 0.75. HHHH has the tallest bar, about 0.32. The four sets with three heads, including HHTH, our observed data in pink, are each about 0.105. Sets with fewer heads have shorter bars, and TTTT is about 0.004. The bars add up to 1."
+seqs |>
+  mutate(prob = 0.75^k * 0.25^(4 - k), observed = data == "HHTH") |>
+  ggplot(aes(data, prob, fill = observed)) +
+  geom_col() +
+  scale_fill_manual(values = c(`FALSE` = green, `TRUE` = pink), guide = "none") +
+  labs(x = "Possible data", y = expression("P(data | " * pi * " = 0.75)")) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 14))
+```
+
+Now sets with more heads are more probable. These 16 probabilities also add up to __1__.
+
+## Likelihood: fix the data, vary $\pi$
+
+We observed __H, H, T, H__. Plug in different values of $\pi$:
+
+| $\pi$ | $L(\pi \mid \text{HHTH}) = \pi^3(1 - \pi)$ |
+|---|---|
+| 0.25 (biased toward tails) | $0.25^3 \times 0.75 \approx 0.012$ |
+| 0.5 (fair) | $0.5^3 \times 0.5 = 0.0625$ |
+| 0.75 (biased toward heads) | $0.75^3 \times 0.25 \approx 0.105$ |
+
+. . .
+
+- $\pi = 0.75$ explains the data better than a fair coin: $\frac{0.105}{0.0625} \approx 1.7$ times more likely.
+- These three likelihoods add up to about 0.18, __not__ 1. This is a __likelihood function__ (over $\pi$). It is __not__ a probability distribution.
+
+## Likelihood for every $\pi$
+
+```{r}
+#| echo: false
+#| fig-height: 4
+#| fig-width: 12
+#| fig-align: center
+#| fig-alt: "Likelihood curve of pi for the data H, H, T, H. The curve is zero at pi = 0, rises to a peak at pi = 0.75, and falls to zero at pi = 1. Points mark pi = 0.25 (0.012), 0.5 (0.0625), and 0.75 (0.105)."
+lik4 <- tibble(pi = seq(0, 1, length.out = 501)) |>
+  mutate(likelihood = pi^3 * (1 - pi))
+marks <- tibble(pi = c(0.25, 0.5, 0.75)) |>
+  mutate(likelihood = pi^3 * (1 - pi),
+         label = c("0.012", "0.0625\n(fair)", "0.105"))
+ggplot(lik4, aes(pi, likelihood)) +
+  geom_area(fill = yellow, alpha = 0.6) +
+  geom_line(color = "gray20", linewidth = 1.4) +
+  geom_point(data = marks, size = 5, color = pink) +
+  geom_text(data = marks, aes(label = label), vjust = -0.6, size = 6) +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.3))) +
+  labs(x = expression(pi), y = expression("L(" * pi * " | HHTH)"))
+```
+
+The likelihood is highest at $\pi = 0.75$, the sample proportion $\frac{3}{4}$. It is called the __maximum likelihood estimate__.
+
+## So is the coin fair?
+
+::: {.stat-callout .discussion}
+**Discussion**
+
+$\pi = 0.75$ has the highest likelihood. Can we conclude that the coin is not fair? What would make you more convinced?
+:::
+
+. . .
+
+With only 4 flips, a fair coin explains the data almost as well. A fair coin gives 3 or more heads in 4 flips fairly often. We need more data, and a way to decide how much evidence is enough: that is __inference__, coming in the next weeks.
+
+## The likelihood function
+
+$$L(\pi \mid \text{data}) = P(\text{data} \mid \pi)$$
+
+. . .
+
+- The numbers are calculated the same way: by multiplying the conditional probabilities of each flip.
+- What is different is __what is fixed__ and __what varies__.
+
+. . .
+
+- $P(\text{data} \mid \pi)$: $\pi$ is fixed, the data vary. "The probability of the data given $\pi$."
+- $L(\pi \mid \text{data})$: the data are fixed, $\pi$ varies. "The likelihood of $\pi$ given the data."
+
+## Both views in one table
+
+```{r}
+#| echo: false
+#| fig-height: 4.6
+#| fig-width: 13
+#| fig-align: center
+#| fig-alt: "A grid of numbers. Rows are pi = 0.25, 0.5, and 0.75; columns are the 16 possible sets of four flips. Each cell is P(data given pi). The row for pi = 0.5, where every cell is 0.0625, is outlined in green and labeled 'probability: row adds to 1'. The column for HHTH is outlined in pink, with values 0.012, 0.062, and 0.105, and labeled 'likelihood: column does not add to 1'. Every row total on the right is 1.00."
+grid <- expand_grid(pi = c(0.25, 0.5, 0.75), seqs) |>
+  mutate(prob = pi^k * (1 - pi)^(4 - k))
+row_totals <- grid |> group_by(pi) |> summarize(total = sum(prob))
+col_idx <- which(levels(seqs$data) == "HHTH")
+
+ggplot(grid, aes(data, factor(pi))) +
+  geom_tile(fill = "white", color = "gray85") +
+  geom_text(aes(label = sprintf("%.3f", prob)), size = 5) +
+  annotate("rect", xmin = 0.5, xmax = 16.5, ymin = 1.5, ymax = 2.5,
+           fill = green, alpha = 0.15, color = green, linewidth = 1.5) +
+  annotate("rect", xmin = col_idx - 0.5, xmax = col_idx + 0.5, ymin = 0.5, ymax = 3.5,
+           fill = pink, alpha = 0.25, color = pink, linewidth = 1.5) +
+  geom_text(data = row_totals, aes(x = 17.2, y = factor(pi), label = sprintf("%.2f", total)),
+            size = 5.5, fontface = "bold", inherit.aes = FALSE) +
+  annotate("text", x = 17.2, y = 3.8, label = "row total", size = 5) +
+  annotate("text", x = 19, y = 2, label = "probability:\nrow adds to 1", color = green,
+           size = 5.5, fontface = "bold") +
+  annotate("text", x = col_idx, y = 4, label = "likelihood: column does not add to 1",
+           color = "#9E4A7D", size = 5.5, fontface = "bold", hjust = 0.2) +
+  scale_y_discrete(limits = rev) +
+  coord_cartesian(xlim = c(0.5, 20.3), ylim = c(0.5, 4.2), clip = "off") +
+  labs(x = "Data", y = expression(pi)) +
+  theme_minimal(base_size = 20) +
+  theme(panel.grid = element_blank(),
+        axis.text.x = element_text(angle = 90, vjust = 0.5, size = 13))
+```
+
+Read a __row__: probability distribution of the data. Read a __column__: likelihood of $\pi$.
+
+## Probability vs. likelihood
+
+| | Probability | Likelihood |
+|----------------------|-----------------------------|-----------------------------|
+| Notation | $P(\text{data} \mid \pi)$ | $L(\pi \mid \text{data})$ |
+| What is fixed? | the parameter $\pi$ | the observed data |
+| What varies? | the data | the parameter $\pi$ |
+| Adds up to 1? | Yes | Not necessarily |
+| Question it answers | How probable is this data if $\pi$ were this value? | How well does this value of $\pi$ explain the data we saw? |
+
+## The area is not 1 either
+
+The area under the likelihood curve is 0.05, not 1. The likelihood function is __not__ a probability distribution of $\pi$. Only the __relative__ heights matter: which values of $\pi$ explain the data better than others.
+
+## More flips, more focused likelihood
+
+What if we flipped the coin 40 times and got 30 heads? Same proportion, $\frac{30}{40} = 0.75$, more data.
+
+```{r}
+#| echo: false
+#| fig-height: 4
+#| fig-width: 12
+#| fig-align: center
+#| fig-alt: "Two likelihood curves of pi, each rescaled so its peak is 1, both peaking at 0.75. The curve for 4 flips (3 heads) is wide, and is still fairly high at pi = 0.5. The curve for 40 flips (30 heads) is narrow, spanning roughly 0.6 to 0.88, and is almost zero at pi = 0.5, marked with a dashed line."
+bind_rows(
+  tibble(pi = seq(0.001, 0.999, length.out = 999), n = "4 flips (3 heads)",
+         loglik = 3 * log(pi) + 1 * log(1 - pi)),
+  tibble(pi = seq(0.001, 0.999, length.out = 999), n = "40 flips (30 heads)",
+         loglik = 30 * log(pi) + 10 * log(1 - pi))
+) |>
+  group_by(n) |>
+  mutate(rel_lik = exp(loglik - max(loglik))) |>
+  ggplot(aes(pi, rel_lik, color = n)) +
+  geom_vline(xintercept = 0.5, linetype = "dashed") +
+  annotate("text", x = 0.49, y = 0.95, label = "fair coin", hjust = 1, size = 6) +
+  geom_line(linewidth = 1.6) +
+  scale_color_manual(values = c(green, pink), name = NULL) +
+  labs(x = expression(pi), y = "Relative likelihood") +
+  theme(legend.position = "top")
+```
+
+With 40 flips, a fair coin explains the data very poorly compared to $\pi = 0.75$. More data rule out more values of $\pi$.
+
+## Practice
+
+::: {.stat-callout .exercise}
+**Exercise**
+
+Your friend has a different coin and suspects it lands tails more often. You flip it 5 times: T, H, T, T, T.
+
+a. Write $P(\text{T, H, T, T, T} \mid \pi)$ in terms of $\pi$, the probability of heads.
+b. Calculate the likelihood for $\pi = 0.5$ (fair) and for $\pi = 0.25$.
+c. How many times more likely is $\pi = 0.25$ than a fair coin?
+d. Add the two likelihoods. Should the sum be 1?
+e. Which value of $\pi$ has the highest likelihood?
+:::
+
+## Practice - answers
+
+a. $(1 - \pi) \times \pi \times (1 - \pi) \times (1 - \pi) \times (1 - \pi) = \pi (1 - \pi)^4$
+b. $L(0.5 \mid \text{data}) = 0.5 \times 0.5^4 \approx 0.031$ and $L(0.25 \mid \text{data}) = 0.25 \times 0.75^4 \approx 0.079$
+c. $\frac{0.079}{0.031} \approx 2.5$ times more likely.
+d. The sum is about 0.11. Likelihoods for different values of $\pi$ do not need to add up to 1.
+e. $\pi = \frac{1}{5} = 0.2$, the sample proportion of heads.
+
+## What is wrong here?
+
+::: {.stat-callout .discussion}
+**Discussion**
+
+A friend says: "We flipped H, H, T, H. The likelihood of $\pi = 0.5$ is 0.0625, so there is a 6.25% chance that the coin is fair."
+
+What is wrong with this statement?
+:::
+
+## What is wrong here? - answer
+
+0.0625 is $P(\text{HHTH} \mid \pi = 0.5)$: the probability of the __data__ if the coin were fair. It is not $P(\pi = 0.5 \mid \text{HHTH})$, the probability that the coin is fair.
+
+. . .
+
+Remember from last class: $P(A \mid B) \neq P(B \mid A)$!
+
+To get the probability that the coin is fair given the data, we need Bayesian inference, coming in a few weeks.
+
+## Summary {.smaller}
+
+- A normal distribution is described by its mean and variance: $N(\text{mean}, \text{variance})$. Check whether the second number is the standard deviation or the variance!
+- Probability = area under the curve: `plot_normal()` draws the area, `calc_prob_normal()` calculates it (value → area), and `find_normal_value()` goes from area → value.
+- The random variable can be a random observation ($X$) or a random population parameter that describes our uncertainty ($\mu$, $\pi$). In a few weeks: random sample statistics ($\bar{X}$, $p$).
+- A z-score is the number of standard deviations a value is from the mean. z-scores follow the standard normal distribution, $N(0, 1)$.
+- Probability $P(\text{data} \mid \pi)$: parameter fixed, data vary, adds up to 1.
+- Likelihood $L(\pi \mid \text{data})$: data fixed, parameter varies, does __not__ need to add up to 1. It is calculated by multiplying the conditional probabilities of each observation.
