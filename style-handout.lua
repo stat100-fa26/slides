@@ -46,7 +46,8 @@ local function blank_span(el)
     else
       w = w or string.format("%.1fem", math.max(6, n * 0.6))
       return pandoc.RawInline("html",
-        '<span class="blank-line" style="width:' .. w .. '"></span>')
+        '<span class="blank-line" style="width:' .. w .. '">' ..
+        '<span class="sr-only">blank to fill in</span></span>')
     end
   end
 end

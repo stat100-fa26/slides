@@ -1,6 +1,9 @@
 ---
 title: "Normal Distribution and Likelihood"
 author: "Mine Doğucu"
+filters:
+  - quarto
+  - a11y-tables.lua
 execute:
   echo: true
 format:
@@ -241,6 +244,8 @@ The random variable on the left of $\sim$ can be many things.
 |-----------------------------|---------------------------------------------|
 | $X \sim N(1000, 200^2)$ | a __random observation__ (in the population, and so also in a sample): the SAT score of one test taker |
 | $\mu \sim N(7, 0.5^2)$ | a __random population parameter__: our belief about the mean hours of sleep of all Harvard students |
+
+: What can be normally distributed: an observation or a population parameter
 
 In a few weeks, we will see that a __random sample statistic__, like $\bar{X}$, can also be normally distributed.
 
@@ -786,6 +791,8 @@ We observed __H, H, T, H__. Plug in different values of $\pi$:
 | 0.5 (fair) | $0.5^3 \times 0.5 = 0.0625$ |
 | 0.75 (biased toward heads) | $0.75^3 \times 0.25 \approx 0.105$ |
 
+: Likelihood of three values of $\pi$ given the observed flips H, H, T, H
+
 . . .
 
 - $\pi = 0.75$ explains the data better than a fair coin: $\frac{0.105}{0.0625} \approx 1.7$ times more likely.
@@ -880,13 +887,15 @@ Read a __row__: probability distribution of the data. Read a __column__: likelih
 
 ## Probability vs. likelihood
 
-| | Probability | Likelihood |
+| Feature | Probability | Likelihood |
 |----------------------|-----------------------------|-----------------------------|
 | Notation | $P(\text{data} \mid \pi)$ | $L(\pi \mid \text{data})$ |
 | What is fixed? | the parameter $\pi$ | the observed data |
 | What varies? | the data | the parameter $\pi$ |
 | Adds up to 1? | Yes | Not necessarily |
 | Question it answers | How probable is this data if $\pi$ were this value? | How well does this value of $\pi$ explain the data we saw? |
+
+: Comparison of probability and likelihood
 
 ## The area is not 1 either
 

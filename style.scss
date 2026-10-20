@@ -285,3 +285,26 @@ $border-color: #E2E8F0 !default;
   padding: 3px 6px;
   border-radius: 4px;
 }
+// ==========================================
+// Accessible Tables
+// ==========================================
+// Table captions are read by screen readers (they name the table when
+// navigating by table) but are hidden visually on slides, where the
+// slide title already does that job and space is tight.
+.reveal table caption {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+// Row headers (first column, added by a11y-tables.lua) are left-aligned
+// like the rest of the row so the visual layout matches the reading order.
+.reveal table tbody th[scope="row"] {
+  text-align: left;
+}
