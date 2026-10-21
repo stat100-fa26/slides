@@ -1,5 +1,6 @@
 ---
 title: "Frequentist Hypothesis Testing and Confidence Intervals"
+subtitle: "Do babies prefer helpers?"
 author: "Mine Doğucu"
 filters:
   - quarto
