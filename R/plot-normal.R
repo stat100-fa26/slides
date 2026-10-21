@@ -41,7 +41,7 @@ hds_colors <- c(green  = "#009E73",
   1
 }
 
-.round_value <- function(x) round(x, 2)
+.round_value <- function(x) round(x, 3)
 
 .area_text <- function(area) {
   if (area < 0.00005) "Area < 0.0001" else sprintf("Area = %.4f", area)
