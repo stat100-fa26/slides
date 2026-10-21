@@ -7,6 +7,7 @@
 **/*.quarto_ipynb
 _site
 *.html
+!a11y-revealjs.html
 
 # Quarto execution freeze cache
 /_freeze/

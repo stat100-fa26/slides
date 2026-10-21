@@ -1,0 +1,25 @@
+<!-- Accessibility fixes for STAT 100 revealjs slides.
+     Include with:  include-after-body: a11y-revealjs.html
+     1. Allow zooming (WCAG 1.4.4): revealjs disables pinch zoom by default.
+     2. Give the slide logo alt text (Quarto does not pass logo alt to revealjs).
+     3. Make the scrollable menu panel reachable by keyboard. -->
+<script>
+(function () {
+  function fix() {
+    var vp = document.querySelector('meta[name="viewport"]');
+    if (vp) vp.setAttribute('content', 'width=device-width, initial-scale=1.0');
+    document.querySelectorAll('img.slide-logo').forEach(function (img) {
+      if (!img.hasAttribute('alt')) img.setAttribute('alt', 'STAT 100 course square logo');
+    });
+    document.querySelectorAll('.slide-menu-panel, .active-menu-panel').forEach(function (p) {
+      if (!p.hasAttribute('tabindex')) p.setAttribute('tabindex', '0');
+    });
+  }
+  if (window.Reveal && Reveal.on) {
+    Reveal.on('ready', fix);
+    Reveal.on('slidechanged', fix);
+  }
+  document.addEventListener('DOMContentLoaded', fix);
+  new MutationObserver(fix).observe(document.documentElement, { childList: true, subtree: true });
+})();
+</script>
