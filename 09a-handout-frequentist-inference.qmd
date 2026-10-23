@@ -1,0 +1,696 @@
+---
+title: "Frequentist Hypothesis Testing and Confidence Intervals"
+subtitle: "Lecture 9A handout"
+author: "Name: _________________"
+lang: en
+key: false
+filters:
+  - style-handout.lua
+  - quarto
+  - a11y-tables.lua
+execute:
+  echo: false
+  warning: false
+  message: false
+format:
+  html:
+    toc: false
+    embed-resources: true
+    css: style-handout.css
+  pdf:
+    documentclass: article
+    fontsize: 11pt
+    linestretch: 1.5
+    geometry:
+      - margin=0.9in
+    colorlinks: true
+    linkcolor: harvardcrimson
+    urlcolor: harvardcrimson
+    include-in-header:
+      - style-handout-header.tex
+      - text: |
+          \usepackage{needspace}
+---
+
+```{r}
+#| label: setup
+#| include: false
+# `key` in the YAML above: true shows the answers, false leaves blanks.
+key <- isTRUE(rmarkdown::metadata$key)
+library(tidyverse)
+options(scipen = 999)
+
+source("R/plot-normal.R")
+
+green <- hds_colors[["green"]]
+yellow <- hds_colors[["yellow"]]
+pink <- hds_colors[["pink"]]
+
+theme_set(theme_minimal(base_size = 12))
+
+# The infant study (Hamlin, Wynn, and Bloom, 2007)
+n_babies <- 16
+n_helper <- 14
+p_hat <- n_helper / n_babies
+
+# 95% margin of error for a sample proportion. Students do not see this
+# calculation; it comes back when we learn the normal distribution for
+# sample statistics.
+margin_95 <- function(p, n, level = 0.95) {
+  qnorm(1 - (1 - level) / 2) * sqrt(p * (1 - p) / n)
+}
+me_study <- margin_95(p_hat, n_babies)
+
+# 10,000 Randomville studies of 16 babies (not shown to students)
+set.seed(9)
+randomville <- tibble(study = 1:10000) |>
+  mutate(n_helper = map_int(study, \(i) {
+    choices <- sample(c("helper", "hinderer"), size = 16, replace = TRUE)
+    sum(choices == "helper")
+  }),
+  p = n_helper / 16)
+null_counts <- randomville |> count(n_helper) |>
+  complete(n_helper = 0:16, fill = list(n = 0))
+extreme <- function(k) k >= n_helper | k <= n_babies - n_helper
+p_value <- mean(extreme(randomville$n_helper))
+n_extreme <- sum(extreme(randomville$n_helper))
+se_null <- sqrt(0.5 * 0.5 / n_babies)
+```
+
+```{=latex}
+\needspace{10.0cm}
+```
+
+# Do babies prefer helpers?
+
+Researchers at the Yale Infant Cognition Center showed 10-month-old babies a short puppet show. A shape tries to climb a hill. Sometimes another shape __helps__ it up, and sometimes another shape __hinders__ it, pushing it back down. Then each baby was offered the two shapes. Which one would the baby reach for?
+
+Videos from the [Yale Infant Cognition Center](https://campuspress.yale.edu/infantlab/media/):
+
+- [The helper](https://www.youtube.com/watch?v=j4n_Qh4Gg9Q): a red circle with eyes tries to climb a hill, and a second shape pushes it up from below.
+- [The hinderer](https://www.youtube.com/watch?v=ExcxDMEHlHY): a different shape comes from above and pushes the red circle back down.
+- [Data collection](https://www.youtube.com/watch?v=NsWICFLt_-g): a baby on a parent's lap reaches for one of the two shapes.
+
+<small>Hamlin, J. K., Wynn, K., & Bloom, P. (2007). [Social evaluation by preverbal infants](https://www.nature.com/articles/nature06288). *Nature*, 450, 557–559. Activity as seen in Chance, B. L., & Rossman, A. J. (2006). *Investigating Statistical Concepts, Applications, and Methods*.</small>
+
+```{=latex}
+\needspace{6.7cm}
+```
+
+**The result:** __14 out of 16__ babies chose the helper.
+
+What are some possible explanations for this? Write down as many as you can with your neighbor.
+
+::: {.answer lines="4"}
+For example: babies prefer helpers; babies were choosing randomly and 14 out of 16 happened by chance; they liked the color or the shape of the helper; the helper was always on the side of their dominant hand; the researcher's body language gave it away.
+:::
+
+The researchers designed the study to rule out many explanations. The [color, the shape, and the side (right or left)]{.blank width="9cm"} of the toys were all balanced across babies.
+
+Two explanations remain:
+
+1. 10-month-old babies are socially developed: they __prefer helpers__.
+2. 10-month-old babies are making a __random choice__, and 14 out of 16 happened by chance.
+
+```{=latex}
+\needspace{4.1cm}
+```
+
+Which of these two explanations is easier to model right now? Why?
+
+::: {.answer lines="2.5"}
+The random choice. If babies choose randomly, each baby chooses the helper with probability 0.5, just like a fair coin. "Prefer helpers" does not tell us how strong the preference is.
+:::
+
+```{=latex}
+\needspace{10.0cm}
+```
+
+# Hypotheses
+
+Let $\pi$ be the proportion of __all__ 10-month-old babies who would choose the helper.
+
+- __Null hypothesis__ $H_0$: babies are making a random choice. $\quad \pi =$ [0.5]{.blank width="2cm"}
+- __Alternative hypothesis__ $H_A$: babies are not making a random choice. $\quad \pi$ [$\neq 0.5$]{.blank width="2cm"}
+
+The null hypothesis is the "[nothing interesting is going on]{.blank width="6cm"}" model. It is the one we can model.
+
+In __frequentist__ hypothesis testing, we
+
+1. start by [assuming the null hypothesis is true]{.blank width="7cm"}: babies are choosing randomly, $\pi = 0.5$,
+2. ask how [surprising]{.blank width="3cm"} our data would be in that world,
+3. and if the data would be very surprising, [reject]{.blank width="3cm"} the null hypothesis.
+
+$\pi$ is a [fixed]{.blank width="2.5cm"} (unknown) number. Probability describes what would happen over many [repeated samples]{.blank width="4.5cm"}.
+
+**In conditional probability notation.** Remember from last week: $P(\text{what we want the probability of} \mid \text{what we know or assume})$. In frequentist hypothesis testing, what we __assume__ is the null hypothesis. So the probabilities we find today look like
+
+$$P(\text{sample statistic} \mid \pi = 0.5)$$
+
+We make judgments about [sample statistics]{.blank width="4cm"} if $\pi$ were 0.5. We do __not__ find probabilities of [$\pi$]{.blank width="2cm"}.
+
+```{=latex}
+\needspace{10.0cm}
+```
+
+# Welcome to Randomville
+
+In Randomville, every baby picks the helper with probability 0.5, just like a fair coin flip.
+
+Out of 16 Randomville babies, how many would you expect to choose the helper? [8]{.blank width="2cm"}
+
+```{=latex}
+\needspace{4.2cm}
+```
+
+If babies were making random choices, would you be surprised to see 7 babies choose the helper? 11? 3? 14?
+
+::: {.answer lines="2"}
+7: not surprised, it is close to 8. 11: a little, but it can happen. 3: yes. 14: very surprised.
+:::
+
+```{=latex}
+\needspace{5.9cm}
+```
+
+Mark the numbers that would surprise you if babies were choosing randomly. Below and above which number would you start getting surprised?
+
+```{r}
+#| label: number-line
+#| fig-width: 7
+#| fig-height: 1.4
+#| fig-align: center
+#| fig-alt: "A number line from 0 to 16 babies who choose the helper. The middle value, 8, is circled; it corresponds to a proportion of 0.5. The ends of the line are labeled 0 and 1 as proportions."
+tibble(k = 0:16) |>
+  ggplot(aes(k, 0)) +
+  geom_hline(yintercept = 0, linewidth = 0.8, color = "gray30") +
+  geom_point(shape = 124, size = 5, color = "gray30") +
+  annotate("point", x = 8, y = 0, shape = 21, size = 8, stroke = 1.2,
+           color = pink, fill = NA) +
+  geom_text(aes(label = k), vjust = 2.4, size = 4) +
+  annotate("text", x = c(0, 8, 16), y = 0.9, label = c("0", "0.5", "1"),
+           size = 3.5, color = "gray40") +
+  annotate("text", x = -1.2, y = c(-0.55, 0.9), label = c("count", "proportion"),
+           size = 3.5, hjust = 1, color = "gray40") +
+  scale_y_continuous(limits = c(-1, 1.3)) +
+  coord_cartesian(xlim = c(-4, 16.5), clip = "off") +
+  theme_void()
+```
+
+**Researchers of Randomville.** With your neighbor, flip a coin 16 times. Heads means the baby chose the helper. Each pair of you is a team of researchers observing 16 babies from Randomville.
+
+Our number of heads: [any number from 0 to 16]{.blank width="4cm"}
+
+Your instructor will put the class's counts together. How many Randomville teams saw 14 or more babies choose the helper? [very few, probably none]{.blank width="5cm"}
+
+```{=latex}
+\needspace{8.9cm}
+```
+
+**10,000 Randomville studies.** Flipping coins takes time, so we asked R to run 10,000 Randomville studies of 16 babies each.
+
+```{r}
+#| label: null-counts
+#| fig-width: 6.5
+#| fig-height: 2.6
+#| fig-align: center
+#| fig-alt: !expr glue::glue("Bar chart of the number of babies who chose the helper in 10,000 simulated Randomville studies of 16 babies. The distribution is symmetric and centered at 8, with most studies between 5 and 11. The bars at 14 or more and at 2 or fewer are highlighted in pink; they are so short they are barely visible. Each pink bar is labeled with its count, {paste(null_counts$n[null_counts$n_helper <= 2], collapse = ', ')} studies with 0, 1, and 2 babies, and {paste(null_counts$n[null_counts$n_helper >= 14], collapse = ', ')} studies with 14, 15, and 16 babies. A dashed vertical line marks 14, the result of the real study. {n_extreme} of the 10,000 studies were as extreme as 14.")
+null_counts |>
+  mutate(group = if_else(extreme(n_helper), "as extreme as 14", "less extreme")) |>
+  ggplot(aes(n_helper, n, fill = group)) +
+  geom_col() +
+  geom_vline(xintercept = n_helper, linetype = "dashed") +
+  annotate("label", x = n_helper, y = 1500, label = "real study: 14", size = 3.5) +
+  # the pink bars are too short to see, so label them with their counts
+  geom_text(data = \(d) filter(d, extreme(n_helper)), aes(label = n),
+            vjust = -0.6, size = 3.3, color = "#7A2E5C", fontface = "bold") +
+  scale_fill_manual(values = c("as extreme as 14" = pink, "less extreme" = green),
+                    name = NULL) +
+  scale_x_continuous(breaks = 0:16) +
+  labs(x = "Number of babies who chose the helper (out of 16)",
+       y = "Number of studies") +
+  theme(legend.position = "top")
+```
+
+The distribution of a sample statistic over many, many samples is called a [sampling distribution]{.blank width="4.5cm"}.
+
+The one above is the [null sampling distribution]{.blank width="5cm"}: the sampling distribution of the sample statistic [if the null hypothesis were true]{.blank width="6cm"}.
+
+In notation, it is the distribution of $X \mid$ [$\pi = 0.5$]{.blank width="2.5cm"}, where $X$ is the number of babies (out of 16) who choose the helper.
+
+Only `r n_extreme` of the 10,000 Randomville studies were as extreme as 14 (14 or more, or 2 or fewer).
+
+```{=latex}
+\needspace{10.0cm}
+```
+
+# p-value
+
+The __p-value__ is the probability of observing a sample statistic [as extreme as ours, or more extreme]{.blank width="7cm"}, [if the null hypothesis were true]{.blank width="6cm"}.
+
+From the 10,000 Randomville studies, the p-value is about [$\frac{`r n_extreme`}{10{,}000} \approx `r p_value`$]{.blank width="4cm"}.
+
+```{=latex}
+\needspace{3.5cm}
+```
+
+Why do we also count 2 or fewer babies?
+
+::: {.answer lines="2"}
+Our alternative hypothesis is $\pi \neq 0.5$: 2 out of 16 would be just as surprising as 14 out of 16, in the other direction.
+:::
+
+```{=latex}
+\needspace{3.7cm}
+```
+
+**The p-value is a conditional probability.** Let $X$ be the number of babies (out of 16) who choose the helper. Write the p-value in notation:
+
+::: {.answer lines="1.5"}
+$P(X \ge 14 \text{ or } X \le 2 \mid \pi = 0.5)$
+:::
+
+- What we __assume__, [$\pi = 0.5$]{.blank width="2.5cm"}, goes after the $\mid$.
+- The [sample statistic]{.blank width="4cm"} goes before the $\mid$.
+
+**What a p-value is not.** The p-value is $P(\text{data this extreme} \mid \pi = 0.5)$. It is __not__ [$P(\pi = 0.5 \mid \text{data})$]{.blank width="4cm"}. Remember: $P(A \mid B) \neq P(B \mid A)$!
+
+In frequentist inference, $\pi$ is a fixed number, not a random variable. So we __cannot__ make any probability statements about [$\pi$]{.blank width="2cm"} itself. A p-value of 0.004 does __not__ mean there is a 0.4% chance that babies are choosing randomly.
+
+```{=latex}
+\needspace{8.4cm}
+```
+
+**The null sampling distribution is approximately normal.** Using the proportion $p$ instead of the count:
+
+```{r}
+#| label: null-normal
+#| fig-width: 6.5
+#| fig-height: 2.4
+#| fig-align: center
+#| fig-alt: "Histogram of the sample proportion p from 10,000 Randomville studies of 16 babies, on a scale from 0 to 1. It is symmetric and centered at 0.5. A smooth green normal curve with mean 0.5 and standard deviation 0.125 follows the histogram closely."
+ggplot(randomville, aes(p)) +
+  geom_histogram(aes(y = after_stat(density)), binwidth = 1 / 16, boundary = 1 / 32,
+                 fill = "gray80", color = "white") +
+  stat_function(fun = dnorm, args = list(mean = 0.5, sd = se_null),
+                color = green, linewidth = 1.2) +
+  scale_x_continuous(limits = c(-0.05, 1.05), breaks = seq(0, 1, 0.125)) +
+  labs(x = "p: proportion of babies who chose the helper", y = NULL) +
+  theme(axis.text.y = element_blank(), panel.grid.minor = element_blank())
+```
+
+The standard deviation of a sampling distribution has its own name: the [standard error]{.blank width="4cm"}. You will not need to calculate standard errors in this course: we will give you the mean and standard error of the null sampling distribution.
+
+For the infant study, if the null hypothesis were true, approximately
+
+$$p \mid \pi = 0.5 \ \sim \ N(0.5, 0.125^2)$$
+
+with mean [0.5]{.blank width="2cm"} and standard error [0.125]{.blank width="2cm"}.
+
+```{=latex}
+\needspace{9.2cm}
+```
+
+**p-value from the normal curve.** The plot below shows the null sampling distribution, $N(0.5, 0.125^2)$, with the area above 0.875 shaded. Write this area in probability notation and give its value.
+
+```{r}
+#| label: pvalue-plot
+#| fig-width: 5.5
+#| fig-height: 2.4
+#| fig-align: center
+#| fig-alt: "Normal curve for p with mean 0.5 and standard deviation 0.125. The area to the right of 0.875 is shaded pink and is tiny; the label reads Area = 0.0013."
+plot_normal("p", mean = 0.5, sd = 0.125, lower = 0.875)
+```
+
+::: {.answer lines="1.5"}
+$P(p \ge 0.875 \mid \pi = 0.5) \approx 0.0013$
+:::
+
+Two tails: $P(p \ge 0.875 \text{ or } p \le 0.125 \mid \pi = 0.5) \approx$ [$2 \times 0.0013 \approx 0.003$]{.blank width="4.5cm"}, close to the `r p_value` from the 10,000 Randomville studies.
+
+```{=latex}
+\needspace{10.0cm}
+```
+
+# Significance level and conclusion
+
+We decide on a __surprise threshold__ before looking at the data: the [significance level]{.blank width="4cm"}, $\alpha$. Most often $\alpha =$ [0.05]{.blank width="2cm"}.
+
+- If the p-value $< \alpha$: we [reject]{.blank width="2.5cm"} $H_0$. The result is __statistically significant__.
+- If the p-value $\ge \alpha$: we [fail to reject]{.blank width="3cm"} $H_0$. The result is __not statistically significant__.
+
+**Other words for the same thing.** You will see many ways to say that the p-value is less than $\alpha$:
+
+- the result is __statistically significant__,
+- the result is __statistically discernible__: the data let us *discern* (tell apart) the result from what random chance would give,
+- the data provide __convincing evidence__ against $H_0$ (and in favor of $H_A$).
+
+Many statisticians prefer "discernible," because in everyday language "significant" sounds like "important." A statistically significant result is __not__ necessarily important!
+
+```{=latex}
+\needspace{4.6cm}
+```
+
+**Conclusion for the infant study** (p-value about `r round(p_value, 3)`, $\alpha = 0.05$):
+
+::: {.answer lines="3"}
+The p-value is less than 0.05, so we reject $H_0$. If babies were choosing randomly, it would be very unlikely to see 14 or more (or 2 or fewer) out of 16 babies choose the helper.
+:::
+
+```{=latex}
+\needspace{7.2cm}
+```
+
+Do you agree with the authors' claim: "These findings constitute evidence that preverbal infants assess individuals on the basis of their behaviour towards others"? Do the findings generalize to all infants?
+
+::: {.answer lines="4"}
+The study design balanced the color, the shape, and the side of the toys, so these do not explain the result. The evidence supports the claim __for babies like the ones in the study__. But the 16 babies were not a random sample of all infants (their families volunteered, near Yale), and 16 is a small sample, so generalizing to all infants is a stretch.
+:::
+
+```{=latex}
+\needspace{10.0cm}
+```
+
+**Practical significance.** A result is __practically significant__ if [the effect is large enough to matter in real life]{.blank width="8.5cm"}. Statistical significance tells us whether the data are surprising if $H_0$ were true. Practical significance asks: *so what?* How big is the difference, and does anyone care?
+
+With a very large sample, even a tiny difference can be statistically significant. Suppose a study of 100,000 students finds that a new study app raises exam scores by 0.2 points out of 100, with a p-value less than 0.001. Is the result statistically significant? Is it practically significant? Explain.
+
+::: {.answer lines="3"}
+It is statistically significant (statistically discernible): the p-value is less than 0.05. But it is probably not practically significant: 0.2 points out of 100 is too small to matter to a student.
+:::
+
+```{=latex}
+\needspace{4.1cm}
+```
+
+Is the infant study result practically significant? Why?
+
+::: {.answer lines="2.5"}
+Yes: 87.5% of the babies chose the helper, compared to 50% if they were choosing randomly. That is a big difference. (But remember that it comes from only 16 babies.)
+:::
+
+```{=latex}
+\needspace{10.0cm}
+```
+
+# Errors
+
+We rejected the random choice model. Suppose it was actually true. Could 14 out of 16 babies have chosen the helper anyway? [Yes! Low probability, but possible. `r n_extreme` of our 10,000 Randomville studies did.]{.blank width="13cm"}
+
+```{=latex}
+\needspace{4.9cm}
+```
+
+Complete the table:
+
+| Decision | $H_0$ is true | $H_0$ is false |
+|---|---|---|
+| Reject $H_0$ | [Type I error]{.blank width="3.5cm"} | [Correct decision]{.blank width="3.5cm"} |
+| Fail to reject $H_0$ | [Correct decision]{.blank width="3.5cm"} | [Type II error]{.blank width="3.5cm"} |
+
+: Possible outcomes of a hypothesis test
+
+```{=latex}
+\needspace{5.1cm}
+```
+
+| Error | Conditional probability |
+|---|---|
+| Type I error | [$P(\text{reject } H_0 \mid H_0 \text{ is true}) = \alpha$]{.blank width="7cm"} |
+| Type II error | [$P(\text{fail to reject } H_0 \mid H_0 \text{ is false})$]{.blank width="7cm"} |
+
+: Type I and Type II errors in conditional probability notation
+
+```{=latex}
+\needspace{5.7cm}
+```
+
+**Infant study.** What would a Type I error be? A Type II error? Which one could we have made?
+
+::: {.answer lines="4"}
+__Type I error:__ concluding that babies are not choosing randomly, when they actually are. __Type II error:__ concluding that we do not have evidence against random choice, when babies actually do prefer one of the shapes. We rejected $H_0$, so the only error we could have made is a Type I error.
+:::
+
+```{=latex}
+\needspace{5.3cm}
+```
+
+**A trial.** $H_0$: the defendant is innocent. $H_A$: the defendant is guilty. What are the Type I and Type II errors?
+
+::: {.answer lines="3"}
+__Type I error:__ an innocent person is convicted (goes to jail). __Type II error:__ a guilty person is acquitted (goes free). "Beyond reasonable doubt" plays the role of $\alpha$: we want $P(\text{convict} \mid \text{innocent})$ to be small.
+:::
+
+```{=latex}
+\needspace{6.4cm}
+```
+
+**A new drug.** $H_0$: a new migraine drug works no better than a placebo. $H_A$: it works better. What are the Type I and Type II errors? Who is hurt by each?
+
+::: {.answer lines="4"}
+__Type I error:__ concluding that the drug works when it does not. Patients pay for, and take, a drug that does not help them, maybe with side effects. __Type II error:__ concluding that we do not have evidence that the drug works when it does. A helpful drug never reaches patients. A smaller $\alpha$ makes Type I errors less likely, but Type II errors more likely.
+:::
+
+```{=latex}
+\needspace{5.4cm}
+```
+
+**Your turn.** A new team of researchers repeats the study with 64 babies, and 40 of them choose the helper ($p = 0.625$). If babies were choosing randomly, the null sampling distribution of $p$ would be approximately normal with mean 0.5 and standard error 0.0625.
+
+a. State the hypotheses.
+
+::: {.answer lines="1.5"}
+$H_0: \pi = 0.5$ (random choice) and $H_A: \pi \neq 0.5$.
+:::
+
+```{=latex}
+\needspace{8.4cm}
+```
+
+b. The plot below shows the null sampling distribution with the area above 0.625 shaded. Use it to find the p-value. Remember to count both tails.
+
+```{r}
+#| label: your-turn-plot
+#| fig-width: 5.5
+#| fig-height: 2.4
+#| fig-align: center
+#| fig-alt: "Normal curve for p with mean 0.5 and standard deviation 0.0625. The area to the right of 0.625 is shaded pink, and the label reads Area = 0.0228."
+plot_normal("p", mean = 0.5, sd = 0.0625, lower = 0.625)
+```
+
+::: {.answer lines="2"}
+p-value $= 2 \times 0.0228 \approx 0.046$. (0.625 is 2 standard errors above 0.5, so this also matches the 68-95-99.7 rule: about 5% in the two tails.)
+:::
+
+```{=latex}
+\needspace{3.0cm}
+```
+
+c. What is your conclusion at $\alpha = 0.05$?
+
+::: {.answer lines="1.5"}
+$0.046 < 0.05$, so we reject $H_0$, but just barely!
+:::
+
+```{=latex}
+\needspace{3.0cm}
+```
+
+d. Which type of error could you have made?
+
+::: {.answer lines="1.5"}
+A Type I error: babies may actually be choosing randomly.
+:::
+
+```{=latex}
+\needspace{10.0cm}
+```
+
+# Confidence intervals
+
+We rejected $\pi = 0.5$. So what __is__ $\pi$? Our best single guess, the [point estimate]{.blank width="3.5cm"}, is the sample proportion $p = \frac{14}{16} =$ [`r p_hat`]{.blank width="2cm"}.
+
+If the researchers repeated the study with 16 different babies, would they get 0.875 again? [Probably not: a different sample gives a different estimate.]{.blank width="11cm"}
+
+So instead of a single number, we give a range of plausible values:
+
+$$\text{estimate} \pm \text{margin of error}$$
+
+For the infant study, a 95% confidence interval is $`r p_hat` \pm `r round(me_study, 2)`$, that is, from about [`r round(p_hat - me_study, 2)`]{.blank width="2cm"} to [1]{.blank width="2cm"}. (A proportion cannot be larger than 1.) You will not need to calculate the margin of error.
+
+```{=latex}
+\needspace{4.8cm}
+```
+
+Is 0.5 a plausible value for $\pi$ according to this interval? How does this compare with our hypothesis test?
+
+::: {.answer lines="2.5"}
+No: 0.5 is outside the interval. This agrees with the hypothesis test, where we rejected $\pi = 0.5$.
+:::
+
+```{=latex}
+\needspace{9.5cm}
+```
+
+**Your Randomville interval.** Use your team's number of heads and the table below. Write your 95% confidence interval as estimate ± margin of error, and as an interval from lower to upper. In Randomville, we *know* that $\pi = 0.5$. Did your interval capture 0.5?
+
+```{r}
+#| label: me-table
+me_table <- tibble(heads = 0:16) |>
+  mutate(estimate = heads / 16,
+         margin = margin_95(estimate, 16)) |>
+  mutate(heads = as.character(heads),
+         estimate = sprintf("%.3f", estimate),
+         margin = sprintf("%.2f", margin))
+knitr::kable(
+  bind_cols(me_table[1:9, ], rbind(me_table[10:17, ], c("", "", ""))),
+  col.names = rep(c("Heads", "Estimate", "Margin of error"), 2),
+  caption = "95% margin of error for 16 babies, by number of heads (helper)",
+  align = "cccccc"
+)
+```
+
+```{=latex}
+\needspace{3.0cm}
+```
+
+::: {.answer lines="2.5"}
+For example, 10 heads: $0.625 \pm 0.24$, from 0.385 to 0.865. This interval captures 0.5.
+:::
+
+```{r}
+#| label: intervals-data
+# 100 Randomville samples of 16 babies, plus the real infant study on top
+set.seed(103)
+intervals <- tibble(sample = 1:100) |>
+  mutate(heads = map_int(sample, \(i) sum(sample(0:1, 16, replace = TRUE))),
+         source = "Randomville") |>
+  bind_rows(tibble(sample = 103, heads = n_helper, source = "Infant study")) |>
+  mutate(estimate = heads / 16,
+         margin = margin_95(estimate, 16),
+         lower = pmax(estimate - margin, 0),
+         upper = pmin(estimate + margin, 1),
+         captured = lower <= 0.5 & upper >= 0.5,
+         group = case_when(source == "Infant study" ~ "Infant study",
+                           captured ~ "captures 0.5",
+                           TRUE ~ "misses 0.5"))
+n_capture <- sum(intervals$captured[intervals$source == "Randomville"])
+```
+
+```{=latex}
+\needspace{13.7cm}
+```
+
+**100 Randomville intervals and the infant study.** Each interval below comes from a Randomville sample of 16 babies, where we know that $\pi = 0.5$. The black interval at the top is the real infant study.
+
+```{r}
+#| label: intervals-plot
+#| fig-width: 6.5
+#| fig-height: 4.2
+#| fig-align: center
+#| fig-alt: !expr glue::glue("One hundred 95 percent confidence intervals from Randomville studies of 16 babies, where pi is 0.5, drawn as horizontal segments stacked from bottom to top on an axis for pi from 0 to 1. A dashed vertical line marks 0.5. {n_capture} of the intervals cross the dashed line and are green, and {100 - n_capture} miss it and are pink with triangles. Above them, a thick black interval shows the real infant study, from 0.71 to 1, with its estimate at 0.875. It does not cross 0.5.")
+ggplot(intervals, aes(y = sample, color = group, shape = group)) +
+  geom_vline(xintercept = 0.5, linetype = "dashed") +
+  geom_segment(aes(x = lower, xend = upper, yend = sample, linewidth = group)) +
+  geom_point(aes(x = estimate), size = 1.4) +
+  scale_linewidth_manual(values = c("captures 0.5" = 0.4, "misses 0.5" = 1,
+                                    "Infant study" = 1.2), name = NULL) +
+  scale_color_manual(values = c("captures 0.5" = green, "misses 0.5" = pink,
+                                "Infant study" = "black"), name = NULL) +
+  scale_shape_manual(values = c("captures 0.5" = 16, "misses 0.5" = 17,
+                                "Infant study" = 15), name = NULL) +
+  scale_x_continuous(limits = c(0, 1), breaks = seq(0, 1, 0.1)) +
+  scale_y_continuous(limits = c(0, 104)) +
+  labs(x = expression(pi), y = "Sample") +
+  theme(legend.position = "top", panel.grid.minor = element_blank(),
+        axis.text.y = element_blank())
+```
+
+How many of the 100 Randomville intervals captured $\pi = 0.5$? [`r n_capture`]{.blank width="2cm"}
+
+In notation: $P(\text{interval captures } \pi \mid \pi = 0.5) \approx$ [$\frac{`r n_capture`}{100}$]{.blank width="2.5cm"}. The [interval]{.blank width="2.5cm"} is the random part; $\pi$ is fixed.
+
+Does the infant study interval look like a Randomville interval? [No. This is the same evidence the hypothesis test gave us, seen in a different way.]{.blank width="12cm"}
+
+```{=latex}
+\needspace{10.0cm}
+```
+
+# What does 95% confidence mean?
+
+The confidence level, 95%, is about the [method]{.blank width="2.5cm"}, not one interval: if we took many samples and built an interval from each one, about [95% of the intervals would capture the true value of the parameter]{.blank width="11cm"}.
+
+A single interval either captures $\pi$ or it does not. We do not know which!
+
+```{=latex}
+\needspace{4.1cm}
+```
+
+**Interpretation for the infant study:**
+
+::: {.answer lines="2.5"}
+We are 95% confident that between about `r round(p_hat - me_study, 2)` and 1 of all 10-month-old babies (like the ones in the study) would choose the helper.
+:::
+
+Just like the p-value, the 95% is a probability about [samples]{.blank width="2.5cm"}, not about $\pi$:
+
+$$P(\text{the interval from a new sample captures } \pi \mid \pi) = 0.95$$
+
+- __Before__ we take a sample, the interval is [random]{.blank width="2.5cm"}: 95% of samples give an interval that captures $\pi$.
+- __After__ we take the sample, the interval (`r round(p_hat - me_study, 2)`, 1) is [fixed]{.blank width="2.5cm"}, and $\pi$ is fixed. $\pi$ is either in it or not.
+
+**Correct or not?** For the infant study, write "correct" or "not correct" and explain.
+
+a. There is a 95% probability that $\pi$ is between `r round(p_hat - me_study, 2)` and 1. [Not correct: a probability about $\pi$.]{.blank width="7cm"}
+b. We are 95% confident that $\pi$ is between `r round(p_hat - me_study, 2)` and 1. [Correct.]{.blank width="7cm"}
+c. If we repeated the study many times, about 95% of the intervals would capture $\pi$. [Correct: this is what 95% confidence means.]{.blank width="7cm"}
+d. There is a 0.4% probability that babies are choosing randomly. [Not correct: the p-value is not $P(\pi = 0.5 \mid \text{data})$.]{.blank width="7cm"}
+e. If babies were choosing randomly, there would be a 0.4% probability of seeing results as extreme as ours. [Correct: this is the p-value.]{.blank width="7cm"}
+
+```{=latex}
+\needspace{11.3cm}
+```
+
+**Wider or narrower?**
+
+```{r}
+#| label: wider
+#| fig-width: 6.5
+#| fig-height: 2
+#| fig-align: center
+#| fig-alt: "Three confidence intervals for pi, each centered at 0.875. Top: 95 percent confidence with 16 babies, 0.875 plus or minus 0.16. Middle: 99 percent confidence with 16 babies, 0.875 plus or minus 0.21, wider. Bottom: 95 percent confidence with 160 babies, 0.875 plus or minus 0.05, much narrower."
+compare <- tibble(
+  label = c("95% confidence, 16 babies", "99% confidence, 16 babies",
+            "95% confidence, 160 babies"),
+  n = c(16, 16, 160), level = c(0.95, 0.99, 0.95)) |>
+  mutate(margin = margin_95(p_hat, n, level),
+         lower = p_hat - margin, upper = pmin(p_hat + margin, 1),
+         text = paste0(p_hat, " %+-% ", round(margin, 2)),
+         label = factor(label, levels = rev(label)))
+ggplot(compare, aes(y = label)) +
+  geom_segment(aes(x = lower, xend = upper, yend = label), linewidth = 2, color = green) +
+  geom_point(aes(x = p_hat), size = 3) +
+  geom_text(aes(x = 0.6, label = text), size = 3.8, hjust = 1, parse = TRUE) +
+  scale_x_continuous(limits = c(0.4, 1), breaks = seq(0.4, 1, 0.1)) +
+  labs(x = expression(pi), y = NULL) +
+  theme(panel.grid.minor = element_blank())
+```
+
+What makes an interval wider? What makes it narrower?
+
+::: {.answer lines="3"}
+__Higher confidence__ (99% instead of 95%) → __wider__ interval: to be more confident that we capture $\pi$, we need a wider net. __Larger sample__ (160 babies instead of 16) → __narrower__ interval: more data, more precise estimate.
+:::
+
+```{=latex}
+\needspace{14.1cm}
+```
+
+# Summary
+
+- __Frequentist hypothesis test:__ start by assuming [the null hypothesis $H_0$ is true]{.blank width="5.5cm"}, and see what data would look like: the [null sampling distribution]{.blank width="5cm"}.
+- __p-value:__ the probability of a sample statistic as extreme as ours, or more extreme, [if $H_0$ were true]{.blank width="4cm"}. If the p-value $< \alpha$, [reject $H_0$]{.blank width="3cm"}: the result is statistically significant, or statistically [discernible]{.blank width="2.5cm"}.
+- __Practical significance:__ [the effect is large enough to matter in real life]{.blank width="7.5cm"}. A statistically significant result is not necessarily practically significant.
+- __Type I error:__ [rejecting a true $H_0$]{.blank width="4.5cm"}. __Type II error:__ [failing to reject a false $H_0$]{.blank width="5cm"}.
+- __Confidence interval:__ estimate ± margin of error. __Confidence level:__ the proportion of intervals that would [capture the true parameter]{.blank width="5cm"} if we repeated the sampling many times.
+- The p-value and the confidence level are probabilities about [sample statistics]{.blank width="4cm"}, assuming a value of $\pi$. In frequentist inference we cannot make probability statements about [$\pi$]{.blank width="1.5cm"}.

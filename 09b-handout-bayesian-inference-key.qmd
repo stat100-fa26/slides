@@ -1,0 +1,1101 @@
+---
+title: "Likelihood and Bayesian Inference"
+subtitle: "Lecture 9B handout (answer key)"
+author: "Name: SOLUTIONS"
+lang: en
+key: true
+filters:
+  - style-handout.lua
+  - quarto
+  - a11y-tables.lua
+execute:
+  echo: false
+  warning: false
+  message: false
+format:
+  html:
+    toc: false
+    embed-resources: true
+    css: style-handout.css
+  pdf:
+    documentclass: article
+    fontsize: 11pt
+    linestretch: 1.5
+    geometry:
+      - margin=0.9in
+    colorlinks: true
+    linkcolor: harvardcrimson
+    urlcolor: harvardcrimson
+    include-in-header:
+      - style-handout-header.tex
+      - text: |
+          \usepackage{needspace}
+---
+
+```{r}
+#| label: setup
+#| include: false
+# `key` in the YAML above: true shows the answers, false leaves blanks.
+key <- isTRUE(rmarkdown::metadata$key)
+library(tidyverse)
+library(patchwork)
+library(Lock5Data)
+options(scipen = 999)
+
+source("R/plot-normal.R")
+
+green <- hds_colors[["green"]]
+yellow <- hds_colors[["yellow"]]
+pink <- hds_colors[["pink"]]
+
+theme_set(theme_minimal(base_size = 12))
+
+# A normal curve with no y-axis (we only care about the shape and areas)
+theme_curve <- theme(axis.text.y = element_blank(),
+                     axis.title.y = element_blank(),
+                     panel.grid.major.y = element_blank(),
+                     panel.grid.minor = element_blank())
+
+f2 <- function(x) sprintf("%.2f", x)
+f1 <- function(x) sprintf("%.1f", x)
+r2 <- function(x) round(x, 2)
+
+# ---- Coin flips (probability vs. likelihood) --------------------------------
+seqs <- expand_grid(f1 = c("H", "T"), f2 = c("H", "T"), f3 = c("H", "T"), f4 = c("H", "T")) |>
+  mutate(data = paste0(f1, f2, f3, f4),
+         k = (f1 == "H") + (f2 == "H") + (f3 == "H") + (f4 == "H")) |>
+  arrange(desc(k), data) |>
+  mutate(data = factor(data, levels = data))
+
+oval <- function(cx, cy = 5, a = 2.2, b = 1.25) {
+  tibble(t = seq(0, 2 * pi, length.out = 200), x = cx + a * cos(t), y = cy + b * sin(t))
+}
+diagram <- function(left_title, left_value, right_title, right_value,
+                    top_label = NULL, bottom_label = NULL, left_fill = "white",
+                    right_fill = "white", size = 4) {
+  p <- ggplot() +
+    geom_polygon(data = oval(2.2), aes(x, y), fill = left_fill, color = "#A51C30", linewidth = 1) +
+    geom_polygon(data = oval(7.8), aes(x, y), fill = right_fill, color = "#A51C30", linewidth = 1) +
+    annotate("text", x = 2.2, y = 5.4, label = left_title, size = size, fontface = "bold") +
+    annotate("text", x = 2.2, y = 4.55, label = left_value, size = size, parse = TRUE) +
+    annotate("text", x = 7.8, y = 5.4, label = right_title, size = size, fontface = "bold") +
+    annotate("text", x = 7.8, y = 4.55, label = right_value, size = size, parse = TRUE)
+  if (!is.null(top_label)) {
+    p <- p +
+      geom_curve(aes(x = 4.2, y = 5.7, xend = 5.8, yend = 5.7), curvature = -0.35,
+                 arrow = arrow(length = unit(0.25, "cm"), type = "closed"), linewidth = 0.7) +
+      annotate("text", x = 5, y = 6.75, label = top_label, size = size, fontface = "bold", parse = TRUE)
+  }
+  if (!is.null(bottom_label)) {
+    p <- p +
+      geom_curve(aes(x = 5.8, y = 4.3, xend = 4.2, yend = 4.3), curvature = -0.35,
+                 arrow = arrow(length = unit(0.25, "cm"), type = "closed"), linewidth = 0.7) +
+      annotate("text", x = 5, y = 3.25, label = bottom_label, size = size, fontface = "bold", parse = TRUE)
+  }
+  p + coord_fixed(xlim = c(-0.1, 10.1), ylim = c(2.4, 7.6)) + theme_void()
+}
+
+# ---- Sleep study (Bayesian inference) ---------------------------------------
+# Weekday sleep (hours) from the sleep diaries of 253 college students
+sleep <- SleepStudy |> select(WeekdaySleep)
+first10 <- sleep |> slice_head(n = 10)
+
+# Sample mean and standard error. Students do not calculate standard errors:
+# we give them the values.
+summarize_sleep <- function(x) {
+  list(n = length(x), x_bar = mean(x), se = sd(x) / sqrt(length(x)))
+}
+d10 <- summarize_sleep(first10$WeekdaySleep)
+d253 <- summarize_sleep(sleep$WeekdaySleep)
+
+# Normal prior for mu + normal likelihood -> normal posterior (not shown to
+# students). w_prior is the weight of the prior mean in the posterior mean.
+update_normal <- function(prior_mean, prior_sd, x_bar, se) {
+  prec_prior <- 1 / prior_sd^2
+  prec_data <- 1 / se^2
+  list(mean = (prec_prior * prior_mean + prec_data * x_bar) / (prec_prior + prec_data),
+       sd = sqrt(1 / (prec_prior + prec_data)),
+       w_prior = prec_prior / (prec_prior + prec_data))
+}
+alex <- list(mean = 7, sd = 0.5)
+sam <- list(mean = 6.5, sd = 1)
+alex10 <- update_normal(alex$mean, alex$sd, d10$x_bar, d10$se)
+sam10 <- update_normal(sam$mean, sam$sd, d10$x_bar, d10$se)
+alex253 <- update_normal(alex$mean, alex$sd, d253$x_bar, d253$se)
+sam253 <- update_normal(sam$mean, sam$sd, d253$x_bar, d253$se)
+
+# Prior, likelihood, and posterior on one plot (not shown to students).
+# The likelihood is scaled so that its area is 1, like the other two curves.
+# Colors are paired with line types so the curves differ without color.
+plot_bayes <- function(prior_mean, prior_sd, x_bar, se,
+                       show = c("prior", "likelihood", "posterior"),
+                       xlim = c(4.5, 9.5)) {
+  post <- update_normal(prior_mean, prior_sd, x_bar, se)
+  curves <- tibble(mu = seq(xlim[1], xlim[2], length.out = 800)) |>
+    mutate(prior = dnorm(mu, prior_mean, prior_sd),
+           likelihood = dnorm(mu, x_bar, se),
+           posterior = dnorm(mu, post$mean, post$sd)) |>
+    pivot_longer(-mu, names_to = "curve", values_to = "y") |>
+    filter(curve %in% show) |>
+    mutate(curve = factor(curve, levels = c("prior", "likelihood", "posterior")))
+  ggplot(curves, aes(mu, y, color = curve, linetype = curve)) +
+    geom_line(linewidth = 1.1) +
+    scale_color_manual(values = c(prior = green, likelihood = "gray25", posterior = pink),
+                       drop = FALSE, name = NULL) +
+    scale_linetype_manual(values = c(prior = "dashed", likelihood = "dotted",
+                                     posterior = "solid"),
+                          drop = FALSE, name = NULL) +
+    scale_x_continuous(breaks = seq(ceiling(xlim[1]), floor(xlim[2]), 0.5)) +
+    labs(x = expression(mu * ": average weekday hours of sleep")) +
+    theme_curve +
+    theme(legend.position = "top", legend.key.width = unit(1.5, "cm"))
+}
+
+# Probabilities of the hypotheses (H0: mu >= 7, HA: mu < 7), from the rounded
+# prior and posterior values that students see
+p_ha <- function(mean, sd) calc_prob_normal("mu", mean = mean, sd = sd, upper = 7)
+alex_prior_ha <- p_ha(7, 0.5)
+alex10_ha <- p_ha(7.05, 0.37)
+sam_prior_ha <- p_ha(6.5, 1)
+sam10_ha <- p_ha(6.96, 0.49)
+p_mid <- calc_prob_normal("mu", mean = 7.85, sd = 0.073, lower = 7.75, upper = 7.95)
+
+# Prior or posterior with the two hypotheses shaded (not shown to students).
+# Each area is also labeled, so the colors are not the only cue.
+# hide: which probabilities show "?" for students to fill in ("none", "H0",
+# or "both")
+shade_hypotheses <- function(mean, sd, who, hide = "none", xlim = c(5, 9)) {
+  curve <- tibble(mu = seq(xlim[1], xlim[2], length.out = 800),
+                  y = dnorm(mu, mean, sd)) |>
+    mutate(hypothesis = if_else(mu < 7, "HA", "H0"))
+  ha <- p_ha(mean, sd)
+  peak <- dnorm(mean, mean, sd)
+  fmt <- function(x, hidden) {
+    if (hidden) "?" else if (x < 0.0001) "< 0.0001" else if (x > 0.9999) "> 0.9999" else f2(x)
+  }
+  # plotmath labels, so the Greek letters show on any computer
+  lab <- function(h, sign, p) sprintf('atop(H[%s]*":"~mu %s 7, "%s")', h, sign, p)
+  ggplot(curve, aes(mu, y)) +
+    geom_area(aes(fill = hypothesis), alpha = 0.85) +
+    geom_line(linewidth = 0.9) +
+    geom_vline(xintercept = 7, linetype = "dashed") +
+    annotate("label", x = 5.7, y = 0.75 * peak, size = 3.5, parse = TRUE,
+             label = lab("A", "<", fmt(ha, hide == "both"))) +
+    annotate("label", x = 8.5, y = 0.75 * peak, size = 3.5, parse = TRUE,
+             label = lab("0", ">=", fmt(1 - ha, hide %in% c("H0", "both")))) +
+    scale_fill_manual(values = c(HA = pink, H0 = green), guide = "none") +
+    scale_x_continuous(breaks = 5:9) +
+    labs(x = expression(mu), title = bquote(.(who) ~ N(.(mean), .(sd)^2))) +
+    theme_curve +
+    theme(plot.title = element_text(hjust = 0.5, size = 12))
+}
+
+# Posterior with the middle 95% shaded and the two ends labeled, so students
+# can read off the credible interval (not shown to students).
+shade_middle <- function(mean, sd, who, digits = 2) {
+  ends <- qnorm(c(0.025, 0.975), mean, sd)
+  curve <- tibble(mu = seq(mean - 4 * sd, mean + 4 * sd, length.out = 800),
+                  y = dnorm(mu, mean, sd))
+  ggplot(curve, aes(mu, y)) +
+    geom_area(data = filter(curve, mu >= ends[1], mu <= ends[2]), fill = pink, alpha = 0.9) +
+    geom_line(color = green, linewidth = 1) +
+    geom_vline(xintercept = ends, linetype = "dashed") +
+    annotate("label", x = ends, y = 0.5 * dnorm(mean, mean, sd), size = 3.5,
+             label = sprintf(paste0("%.", digits, "f"), ends)) +
+    annotate("label", x = mean, y = 0.15 * dnorm(mean, mean, sd), size = 3.5,
+             label = "middle 95%", fill = yellow) +
+    labs(x = expression(mu), title = bquote(.(who) ~ N(.(mean), .(sd)^2))) +
+    theme_curve +
+    theme(plot.title = element_text(hjust = 0.5, size = 12))
+}
+```
+
+```{=latex}
+\needspace{10.0cm}
+```
+
+# Normal distribution for a population parameter
+
+On Monday, in frequentist inference, a population parameter like $\pi$ was a [fixed, unknown number]{.blank width="5cm"}.
+
+Another way to think about population parameters: we can use a probability distribution to describe [what we believe]{.blank width="4cm"} about them. Today we will work with a population __mean__, $\mu$, and use a normal distribution to describe what we believe about it.
+
+**Example.** $\mu$: average hours of sleep of Harvard students on a school night.
+
+```{=latex}
+\needspace{12.0cm}
+```
+
+- Alex believes $\mu \sim N(7, 0.5^2)$: "around 7 hours, fairly sure."
+- Sam believes $\mu \sim N(6.5, 1^2)$: "around 6.5 hours, not very sure."
+
+```{r}
+#| label: two-beliefs
+#| fig-width: 6.5
+#| fig-height: 2.4
+#| fig-align: center
+#| fig-alt: "Two normal curves describing beliefs about mu, the average hours of sleep of Harvard students. Alex's curve, in green and solid, is centered at 7 and narrow, mostly between 6 and 8. Sam's curve, in pink and dashed, is centered at 6.5 and wide, mostly between 4.5 and 8.5."
+tibble(mu = seq(3, 10, length.out = 600)) |>
+  mutate(Alex = dnorm(mu, 7, 0.5), Sam = dnorm(mu, 6.5, 1)) |>
+  pivot_longer(-mu, names_to = "person", values_to = "y") |>
+  ggplot(aes(mu, y, color = person, linetype = person)) +
+  geom_line(linewidth = 1.1) +
+  scale_color_manual(values = c(Alex = green, Sam = pink), name = NULL) +
+  scale_linetype_manual(values = c(Alex = "solid", Sam = "dashed"), name = NULL) +
+  scale_x_continuous(breaks = 3:10) +
+  labs(x = expression(mu * ": average hours of sleep")) +
+  theme_curve +
+  theme(legend.position = "top")
+```
+
+Who is more certain about $\mu$? How can you tell from the plot?
+
+::: {.answer lines="2"}
+Alex: Alex's curve is narrower (standard deviation 0.5 instead of 1). Both curves describe beliefs about the __same__ unknown number $\mu$.
+:::
+
+```{=latex}
+\needspace{8.9cm}
+```
+
+**Probability of $\mu$.** According to Alex's belief, what is the probability that the average hours of sleep of Harvard students is more than 7.5? The plot below shows Alex's belief, $N(7, 0.5^2)$, with the area above 7.5 shaded. Write the probability in notation and give its value.
+
+```{r}
+#| label: alex-75
+#| fig-width: 5.5
+#| fig-height: 2.3
+#| fig-align: center
+#| fig-alt: "Normal curve for mu with mean 7 and standard deviation 0.5. The area to the right of 7.5 is shaded pink, and the label reads Area = 0.1587."
+plot_normal("mu", mean = 7, sd = 0.5, lower = 7.5)
+```
+
+::: {.answer lines="1.5"}
+$P(\mu > 7.5) \approx 0.16$. Now the x-axis is $\mu$: the random variable is the population parameter.
+:::
+
+```{=latex}
+\needspace{4.7cm}
+```
+
+**Your turn.** Use the 68-95-99.7 rule.
+
+a. According to Sam's belief, $N(6.5, 1^2)$, what is the probability that $\mu$ is more than 7.5?
+
+::: {.answer lines="1.5"}
+7.5 is 1 standard deviation above the mean, so about $\frac{1 - 0.68}{2} = 0.16$.
+:::
+
+```{=latex}
+\needspace{4.1cm}
+```
+
+b. Who thinks it is more plausible that $\mu$ is less than 4.5 hours? Find both probabilities.
+
+::: {.answer lines="2.5"}
+Sam: 4.5 is 2 standard deviations below 6.5, so about $\frac{1 - 0.95}{2} = 0.025$. Alex: 4.5 is 5 standard deviations below 7, so the probability is almost 0. Sam thinks it is more plausible: Sam is less sure, so Sam's curve is wider.
+:::
+
+```{=latex}
+\needspace{5.9cm}
+```
+
+c. Write down your own belief about $\mu$ as $\mu \sim N(\ ?, \ ?^2)$. Sketch it, and compare with your neighbor.
+
+::: {.answer lines="3.5"}
+Answers vary, for example $\mu \sim N(7.5, 0.75^2)$.
+:::
+
+```{=latex}
+\needspace{21.0cm}
+```
+
+**Same notation, different things.** Does each normal distribution describe a *random observation*, a *random sample statistic*, or a *random population parameter*? Then use the 68-95-99.7 rule to find the probability in brackets.
+
+| Normal distribution | Observation, sample statistic, or parameter? | Probability |
+|------------------------------------------|---------------------|--------------|
+| $X \sim N(500, 100^2)$: SAT Math score of a randomly selected test taker $[P(X > 600)]$ | [observation]{.blank width="3.5cm"} | [about 0.16]{.blank width="2.5cm"} |
+| $\pi \sim N(0.6, 0.1^2)$: our belief about the proportion of all Harvard students who drink coffee daily $[P(\pi > 0.5)]$ | [parameter]{.blank width="3.5cm"} | [about 0.84]{.blank width="2.5cm"} |
+| $p \mid \pi = 0.5 \sim N(0.5, 0.125^2)$: proportion of 16 Randomville babies who choose the helper $[P(p > 0.75)]$ | [sample statistic]{.blank width="3.5cm"} | [about 0.025]{.blank width="2.5cm"} |
+| $X \sim N(70, 10^2)$: resting heart rate of a randomly selected student $[P(X > 80)]$ | [observation]{.blank width="3.5cm"} | [about 0.16]{.blank width="2.5cm"} |
+| $\mu \sim N(3.7, 0.1^2)$: our belief about the mean GPA of all Harvard students $[P(\mu < 3.6)]$ | [parameter]{.blank width="3.5cm"} | [about 0.16]{.blank width="2.5cm"} |
+| $\bar{X} \sim N(7, 0.2^2)$: mean hours of sleep of a random sample of 36 students, if the mean for all students is 7 $[P(\bar{X} < 6.6)]$ | [sample statistic]{.blank width="3.5cm"} | [about 0.025]{.blank width="2.5cm"} |
+
+: Is each normal distribution about a random observation, a random sample statistic, or a random population parameter?
+
+```{=latex}
+\needspace{10.0cm}
+```
+
+# Probability vs. likelihood
+
+```{=latex}
+\needspace{7.9cm}
+```
+
+**Flashback: lecture 1.** We asked: "If we observe H, H, H, H, T on five coin flips, what is the likelihood that this is a fair coin?" Back then we did not have the words __population__, __sample__, __parameter__, or __likelihood__. Now we do!
+
+```{r}
+#| label: prob-lik-diagram
+#| fig-width: 7
+#| fig-height: 1.9
+#| fig-align: center
+#| fig-alt: "Two diagrams side by side. Left: an oval labeled Population with parameter pi, the probability of heads, and an oval labeled Sample with the data H, H, T, H; an arrow on top goes from population to sample, labeled Probability: P(data given pi). Right: the same two ovals, with an arrow on the bottom going from the sample back to the population, labeled Likelihood: L(pi given data)."
+diagram("Population", 'pi * ": P(heads)"', "Sample (data)", '"H, H, T, H"',
+        top_label = '"Probability:" ~ P(data ~ "|" ~ pi)',
+        left_fill = "#CDEDE3", right_fill = "#FBF8D0", size = 3) |
+  diagram("Population", 'pi * ": P(heads)"', "Sample (data)", '"H, H, T, H"',
+          bottom_label = '"Likelihood:" ~ L(pi ~ "|" ~ data)',
+          left_fill = "#CDEDE3", right_fill = "#FBF8D0", size = 3)
+```
+
+- __Probability__ goes from the [population to the sample]{.blank width="5cm"}: if we knew $\pi$, how probable is the data? $\quad P(\text{data} \mid \pi)$
+- __Likelihood__ goes from the [sample back to the population]{.blank width="5.5cm"}: given the data, how well does each value of $\pi$ explain it? $\quad L(\pi \mid \text{data})$
+
+**Is this coin fair?** A friend hands you a coin. Let $\pi$ be the probability that it lands __heads__. You flip it 4 times and get __H, H, T, H__. Is the coin fair? Or is $\pi$ something else, like 0.75?
+
+If we knew $\pi$: $P(\text{H} \mid \pi) =$ [$\pi$]{.blank width="2cm"} and $P(\text{T} \mid \pi) =$ [$1 - \pi$]{.blank width="2.5cm"}.
+
+```{=latex}
+\needspace{3.7cm}
+```
+
+The flips are independent, so we multiply. Write $P(\text{H, H, T, H} \mid \pi)$ in terms of $\pi$:
+
+::: {.answer lines="1.5"}
+$\pi \times \pi \times (1 - \pi) \times \pi = \pi^3 (1 - \pi)$
+:::
+
+**Two questions.**
+
+- __Probability question:__ If the coin is fair ($\pi = 0.5$), how probable is each possible set of 4 flips?
+- __Likelihood question:__ We __observed__ H, H, T, H. How well does each possible value of $\pi$ (0.5? 0.75? 0.25?) explain these flips?
+
+```{=latex}
+\needspace{12.9cm}
+```
+
+**Probability: fix $\pi$, vary the data.** If the coin is fair, each of the 16 possible sets of 4 flips has probability $0.5^4 =$ [$\frac{1}{16} = 0.0625$]{.blank width="3cm"}. If the coin were biased toward heads, $\pi = 0.75$, each set of 4 flips with $k$ heads has probability $0.75^k \times 0.25^{4 - k}$:
+
+```{r}
+#| label: prob-bars
+#| fig-width: 7
+#| fig-height: 3.6
+#| fig-align: center
+#| fig-alt: "Two bar charts of the probability of each of the 16 possible sets of four coin flips. Top, pi equals 0.5: all 16 bars have the same height, 0.0625. Bottom, pi equals 0.75: HHHH has the tallest bar, about 0.32; the four sets with three heads, including HHTH, are each about 0.105; TTTT is about 0.004. In both, the bar for HHTH, our observed data, is pink, and the bars add up to 1."
+prob_bars <- function(p) {
+  seqs |>
+    mutate(prob = p^k * (1 - p)^(4 - k), observed = data == "HHTH") |>
+    ggplot(aes(data, prob, fill = observed)) +
+    geom_col() +
+    scale_fill_manual(values = c(`FALSE` = green, `TRUE` = pink), guide = "none") +
+    labs(x = NULL, y = bquote("P(data |" ~ pi == .(p) * ")")) +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 8))
+}
+prob_bars(0.5) / prob_bars(0.75)
+```
+
+In each plot, the 16 probabilities add up to [1]{.blank width="1.5cm"}. Each is a [probability distribution]{.blank width="4.5cm"} (over the data).
+
+```{=latex}
+\needspace{7.0cm}
+```
+
+**Likelihood: fix the data, vary $\pi$.** We observed H, H, T, H. Complete the table. Hint: $0.25^3 \approx 0.016$ and $0.75^3 \approx 0.42$.
+
+| $\pi$ | $L(\pi \mid \text{HHTH}) = \pi^3(1 - \pi)$ |
+|---|---|
+| 0.25 (biased toward tails) | [$0.25^3 \times 0.75 \approx 0.012$]{.blank width="5cm"} |
+| 0.5 (fair) | [$0.5^3 \times 0.5 = 0.0625$]{.blank width="5cm"} |
+| 0.75 (biased toward heads) | [$0.75^3 \times 0.25 \approx 0.105$]{.blank width="5cm"} |
+
+: Likelihood of three values of $\pi$ given the observed flips H, H, T, H
+
+How many times more likely is $\pi = 0.75$ than a fair coin? [$\frac{0.105}{0.0625} \approx 1.7$]{.blank width="3.5cm"}
+
+```{=latex}
+\needspace{8.4cm}
+```
+
+Do these three likelihoods add up to 1? [No, about 0.18.]{.blank width="4cm"} This is a [likelihood function]{.blank width="4cm"} (over $\pi$). It is __not__ a probability distribution.
+
+```{r}
+#| label: lik-curve
+#| fig-width: 6.5
+#| fig-height: 2.4
+#| fig-align: center
+#| fig-alt: "Likelihood curve of pi for the data H, H, T, H. The curve is zero at pi = 0, rises to a peak at pi = 0.75, and falls to zero at pi = 1. Points mark pi = 0.25 (0.012), 0.5 (0.0625), and 0.75 (0.105)."
+lik4 <- tibble(pi = seq(0, 1, length.out = 501)) |>
+  mutate(likelihood = pi^3 * (1 - pi))
+marks <- tibble(pi = c(0.25, 0.5, 0.75)) |>
+  mutate(likelihood = pi^3 * (1 - pi),
+         label = c("0.012", "0.0625 (fair)", "0.105"))
+ggplot(lik4, aes(pi, likelihood)) +
+  geom_area(fill = yellow, alpha = 0.6) +
+  geom_line(color = "gray20", linewidth = 1) +
+  geom_point(data = marks, size = 3, color = pink) +
+  geom_text(data = marks, aes(label = label), vjust = -0.8, size = 3.5) +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.3))) +
+  labs(x = expression(pi), y = expression("L(" * pi * " | HHTH)"))
+```
+
+The value of $\pi$ with the highest likelihood, [0.75]{.blank width="2cm"}, is the sample proportion $\frac{3}{4}$. It is called the [maximum likelihood estimate]{.blank width="5cm"}.
+
+```{=latex}
+\needspace{5.3cm}
+```
+
+**So is the coin fair?** $\pi = 0.75$ has the highest likelihood. Can we conclude that the coin is not fair? What would make you more convinced?
+
+::: {.answer lines="3"}
+No. With only 4 flips, a fair coin explains the data almost as well: a fair coin gives 3 or more heads in 4 flips fairly often. We need more data, and a way to decide how much evidence is enough: that is inference. On Monday we saw the frequentist way; today we will see the Bayesian way.
+:::
+
+```{=latex}
+\needspace{9.9cm}
+```
+
+**The likelihood function.** $L(\pi \mid \text{data}) = P(\text{data} \mid \pi)$. The numbers are calculated the same way. What is different is [what is fixed and what varies]{.blank width="6cm"}.
+
+| Feature | Probability | Likelihood |
+|---|---|---|
+| Notation | $P(\text{data} \mid \pi)$ | $L(\pi \mid \text{data})$ |
+| What is fixed? | [the parameter $\pi$]{.blank width="3.5cm"} | [the observed data]{.blank width="3.5cm"} |
+| What varies? | [the data]{.blank width="3.5cm"} | [the parameter $\pi$]{.blank width="3.5cm"} |
+| Adds up to 1? | [Yes]{.blank width="3.5cm"} | [Not necessarily]{.blank width="3.5cm"} |
+| Question it answers | How probable is this data if $\pi$ were this value? | How well does this value of $\pi$ explain the data we saw? |
+
+: Comparison of probability and likelihood
+
+```{=latex}
+\needspace{12.2cm}
+```
+
+**More flips, more focused likelihood.** What if we flipped the coin 40 times and got 30 heads? Same proportion, $\frac{30}{40} = 0.75$, more data.
+
+```{r}
+#| label: more-flips
+#| fig-width: 6.5
+#| fig-height: 2.5
+#| fig-align: center
+#| fig-alt: "Two likelihood curves of pi, each rescaled so its peak is 1, both peaking at 0.75. The curve for 4 flips (3 heads), green and solid, is wide and is still fairly high at pi = 0.5. The curve for 40 flips (30 heads), pink and dashed, is narrow, spanning roughly 0.6 to 0.88, and is almost zero at pi = 0.5, marked with a dashed line."
+bind_rows(
+  tibble(pi = seq(0.001, 0.999, length.out = 999), n = "4 flips (3 heads)",
+         loglik = 3 * log(pi) + 1 * log(1 - pi)),
+  tibble(pi = seq(0.001, 0.999, length.out = 999), n = "40 flips (30 heads)",
+         loglik = 30 * log(pi) + 10 * log(1 - pi))
+) |>
+  group_by(n) |>
+  mutate(rel_lik = exp(loglik - max(loglik))) |>
+  ggplot(aes(pi, rel_lik, color = n, linetype = n)) +
+  geom_vline(xintercept = 0.5, linetype = "dotted") +
+  annotate("text", x = 0.49, y = 0.95, label = "fair coin", hjust = 1, size = 3.5) +
+  geom_line(linewidth = 1.1) +
+  scale_color_manual(values = c(green, pink), name = NULL) +
+  scale_linetype_manual(values = c("solid", "dashed"), name = NULL) +
+  labs(x = expression(pi), y = "Relative likelihood") +
+  theme(legend.position = "top")
+```
+
+What happens to the likelihood with more data?
+
+::: {.answer lines="2"}
+It gets narrower. With 40 flips, a fair coin explains the data very poorly compared to $\pi = 0.75$. More data rule out more values of $\pi$.
+:::
+
+```{=latex}
+\needspace{4.7cm}
+```
+
+**Your turn.** Your friend has a different coin and suspects it lands tails more often. You flip it 5 times: T, H, T, T, T.
+
+a. Write $P(\text{T, H, T, T, T} \mid \pi)$ in terms of $\pi$, the probability of heads.
+
+::: {.answer lines="1.5"}
+$(1 - \pi) \times \pi \times (1 - \pi) \times (1 - \pi) \times (1 - \pi) = \pi (1 - \pi)^4$
+:::
+
+```{=latex}
+\needspace{3.7cm}
+```
+
+b. Calculate the likelihood for $\pi = 0.5$ (fair) and for $\pi = 0.25$. Hint: $0.5^5 \approx 0.031$ and $0.75^4 \approx 0.32$.
+
+::: {.answer lines="1.5"}
+$L(0.5 \mid \text{data}) = 0.5 \times 0.5^4 \approx 0.031$ and $L(0.25 \mid \text{data}) = 0.25 \times 0.75^4 \approx 0.079$
+:::
+
+c. How many times more likely is $\pi = 0.25$ than a fair coin? [$\frac{0.079}{0.031} \approx 2.5$]{.blank width="3.5cm"}
+d. Add the two likelihoods. Should the sum be 1? [About 0.11. No: likelihoods do not need to add up to 1.]{.blank width="8cm"}
+e. Which value of $\pi$ has the highest likelihood? [$\pi = \frac{1}{5} = 0.2$, the sample proportion of heads]{.blank width="7cm"}
+
+```{=latex}
+\needspace{5.3cm}
+```
+
+**What is wrong here?** A friend says: "We flipped H, H, T, H. The likelihood of $\pi = 0.5$ is 0.0625, so there is a 6.25% chance that the coin is fair."
+
+::: {.answer lines="3"}
+0.0625 is $P(\text{HHTH} \mid \pi = 0.5)$: the probability of the __data__ if the coin were fair. It is not $P(\pi = 0.5 \mid \text{HHTH})$, the probability that the coin is fair. $P(A \mid B) \neq P(B \mid A)$! To get the probability of a parameter given the data, we need Bayesian inference.
+:::
+
+```{=latex}
+\needspace{10.0cm}
+```
+
+# Bayesian inference
+
+Remember from last week:
+
+- __Frequentist:__ the probability of an event is [the proportion of times it happens in the long run]{.blank width="8cm"}, over many, many repetitions.
+- __Bayesian:__ the probability of an event is [how plausible it is, based on the information we have, including prior information]{.blank width="11cm"}. When we get new data, we [update]{.blank width="2.5cm"} the probability.
+
+```{=latex}
+\needspace{9.5cm}
+```
+
+On Monday we did frequentist inference: $\pi$ was a fixed number, and all of our probabilities were about sample statistics, like $P(\text{data this extreme} \mid \pi = 0.5)$. Today: __Bayesian inference__, where the parameter is a [random variable]{.blank width="3.5cm"}.
+
+| Inference | What we find | Read it as |
+|---|---|---|
+| Frequentist (Monday) | [$P(\text{data} \mid \text{parameter})$]{.blank width="4cm"} | How surprising is the data, if the parameter were this value? |
+| Bayesian (today) | [$P(\text{parameter} \mid \text{data})$]{.blank width="4cm"} | How plausible is each value of the parameter, now that we have seen the data? |
+
+: What frequentist and Bayesian inference find
+
+**The Bayesian recipe.**
+
+1. [Prior]{.blank width="2.5cm"}: what you believe about the parameter __before__ seeing the data, as a probability distribution. $\quad P(\mu)$
+2. [Likelihood]{.blank width="2.5cm"}: collect data. How well does each value of the parameter explain the data? $\quad L(\mu \mid \text{data})$
+3. [Posterior]{.blank width="2.5cm"}: the updated belief __after__ seeing the data. $\quad P(\mu \mid \text{data})$
+
+$$\text{posterior} \ \propto \ \text{prior} \times \text{likelihood}$$
+
+$\propto$ is read "is proportional to." Values of $\mu$ that were plausible before __and__ explain the data well become the most plausible after.
+
+```{=latex}
+\needspace{10.0cm}
+```
+
+# How much do college students sleep?
+
+Researchers asked 253 college students to keep a __sleep diary__ for two weeks. For each student, we have their average hours of sleep on weekdays (`WeekdaySleep`).
+
+<small>Data: [SleepStudy](https://cran.r-project.org/package=Lock5Data) in the `Lock5Data` package. Onyper, S. V., Thacher, P. V., Gilbert, J. W., & Gradess, S. G. (2012). [Class start times, sleep, and academic performance in college: A path analysis](https://doi.org/10.3109/07420528.2012.655868). *Chronobiology International*, 29(3), 318–335.</small>
+
+Let $\mu$ be the average weekday hours of sleep of __all__ college students like the ones in the study. Sleep experts recommend that adults sleep __at least 7 hours__ a night ([Watson et al., 2015](https://doi.org/10.5665/sleep.4716)).
+
+```{=latex}
+\needspace{3.5cm}
+```
+
+Do you think $\mu$ is less than 7 hours? Why?
+
+::: {.answer lines="2"}
+Answers vary.
+:::
+
+**Step 1: prior.** Earlier today, Alex described their belief about $\mu$ as $\mu \sim N(7, 0.5^2)$. This is Alex's [prior]{.blank width="2.5cm"} distribution.
+
+According to Alex's prior, what is the probability that $\mu$ is less than 7 hours? [0.50]{.blank width="2cm"}
+
+```{=latex}
+\needspace{6.2cm}
+```
+
+**Step 2: data.** Suppose the researchers had entered only the __first 10__ sleep diaries so far.
+
+```{r}
+#| label: first10
+#| fig-width: 6.5
+#| fig-height: 1.5
+#| fig-align: center
+#| fig-alt: !expr glue::glue("Dot plot of the weekday sleep of the first 10 students, in hours, {paste(sort(first10$WeekdaySleep), collapse = ', ')}. Most are between 6 and 9.1 hours; one student slept 3 hours. A dashed vertical line marks the sample mean, {round(d10$x_bar, 2)} hours.")
+ggplot(first10, aes(WeekdaySleep, 0)) +
+  geom_vline(xintercept = d10$x_bar, linetype = "dashed") +
+  geom_point(size = 3.5, color = green, alpha = 0.8) +
+  annotate("label", x = d10$x_bar, y = 0.6, size = 3.5,
+           label = paste0("sample mean = ", f2(d10$x_bar))) +
+  scale_x_continuous(limits = c(2.5, 10), breaks = 3:10) +
+  scale_y_continuous(limits = c(-0.5, 1)) +
+  labs(x = "Weekday hours of sleep", y = NULL) +
+  theme(axis.text.y = element_blank(), panel.grid.major.y = element_blank(),
+        panel.grid.minor = element_blank())
+```
+
+Sample mean: $\bar{x} = `r f2(d10$x_bar)`$ hours. Standard error: `r f2(d10$se)` (given to you, like on Monday).
+
+```{=latex}
+\needspace{8.1cm}
+```
+
+**Likelihood of $\mu$.** Just like the coin: the data are [fixed]{.blank width="2cm"}, $\mu$ [varies]{.blank width="2cm"}. How well does each value of $\mu$ explain $\bar{x} = `r f2(d10$x_bar)`$? Each curve below is the sampling distribution of $\bar{x}$ if $\mu$ were 6, 7, or 8.
+
+```{r}
+#| label: lik-panels
+#| fig-width: 7
+#| fig-height: 2
+#| fig-align: center
+#| fig-alt: !expr glue::glue("Three normal curves for the sample mean, x-bar, each with standard error {f2(d10$se)}, if mu were 6, 7, or 8. A dashed vertical line marks the observed sample mean, {f2(d10$x_bar)}, in all three. The height of the curve at the dashed line is marked with a pink point. The point is highest when mu is 7, a bit lower when mu is 8, and lowest when mu is 6.")
+lik_panel <- function(m) {
+  tibble(x = seq(4, 10, length.out = 500), y = dnorm(x, m, d10$se)) |>
+    ggplot(aes(x, y)) +
+    geom_line(color = green, linewidth = 1) +
+    geom_vline(xintercept = d10$x_bar, linetype = "dashed") +
+    annotate("segment", x = d10$x_bar, xend = d10$x_bar, y = 0,
+             yend = dnorm(d10$x_bar, m, d10$se), color = pink, linewidth = 1.5) +
+    annotate("point", x = d10$x_bar, y = dnorm(d10$x_bar, m, d10$se),
+             color = pink, size = 2.5) +
+    scale_x_continuous(breaks = 4:10) +
+    scale_y_continuous(limits = c(0, 0.75)) +
+    labs(x = expression(bar(x)), title = bquote("If" ~ mu == .(m))) +
+    theme_curve +
+    theme(plot.title = element_text(hjust = 0.5, size = 11))
+}
+lik_panel(6) | lik_panel(7) | lik_panel(8)
+```
+
+The [height of the curve]{.blank width="4cm"} at the observed $\bar{x}$ is the likelihood of that value of $\mu$. Which of the three values of $\mu$ explains the data best? [7]{.blank width="1.5cm"} Worst? [6]{.blank width="1.5cm"}
+
+Doing this for every possible value of $\mu$ gives the likelihood curve. The likelihood of $\mu$ is shaped like a normal curve, centered at [the sample mean $\bar{x}$]{.blank width="4cm"}, with spread equal to [the standard error]{.blank width="4cm"}.
+
+```{=latex}
+\needspace{8.2cm}
+```
+
+**Step 3: posterior.**
+
+```{r}
+#| label: alex-posterior
+#| fig-width: 6.5
+#| fig-height: 2.6
+#| fig-align: center
+#| fig-alt: !expr glue::glue("Three curves for mu. Alex's prior is a green dashed curve centered at 7 with standard deviation 0.5. The likelihood is a gray dotted curve centered at {f2(d10$x_bar)} with spread {f2(d10$se)}. The posterior is a pink solid curve centered at {f2(alex10$mean)} with standard deviation {f2(alex10$sd)}; it is between the other two and taller and narrower than both.")
+plot_bayes(alex$mean, alex$sd, d10$x_bar, d10$se)
+```
+
+Alex's __posterior__: $\mu \mid \text{data} \sim N(`r r2(alex10$mean)`, `r r2(alex10$sd)`^2)$
+
+**The posterior is a compromise.** The posterior mean is a [weighted average]{.blank width="3.5cm"} of the prior mean and the sample mean:
+
+$$`r r2(alex10$w_prior)` \times \underbrace{7}_{\text{prior mean}} + `r r2(1 - alex10$w_prior)` \times \underbrace{`r f2(d10$x_bar)`}_{\text{sample mean}} \approx `r r2(alex10$mean)`$$
+
+- The weights depend on [how certain each one is]{.blank width="5cm"}. Alex's prior (standard deviation 0.5) and the 10 diaries (standard error `r f2(d10$se)`) are about equally certain, so they get about equal weight.
+- The posterior is [narrower]{.blank width="2.5cm"} than both the prior and the likelihood: combining two sources of information makes us more certain.
+
+You will not need to calculate the posterior in this course. We will give you its mean and standard deviation.
+
+```{=latex}
+\needspace{5.5cm}
+```
+
+**A different prior.** Sam's prior was $\mu \sim N(6.5, 1^2)$: "around 6.5 hours, not very sure." Sam sees the same 10 sleep diaries. Compared to Alex's posterior, will Sam's posterior be centered closer to Sam's prior mean or closer to the sample mean? Why?
+
+::: {.answer lines="2.5"}
+Closer to the sample mean. Sam was not very sure (standard deviation 1), so the data get more weight: `r r2(1 - sam10$w_prior)` for the sample mean and only `r r2(sam10$w_prior)` for the prior mean.
+:::
+
+```{=latex}
+\needspace{7.2cm}
+```
+
+```{r}
+#| label: sam-posterior
+#| fig-width: 6.5
+#| fig-height: 2.6
+#| fig-align: center
+#| fig-alt: !expr glue::glue("Three curves for mu. Sam's prior is a green dashed curve centered at 6.5, short and wide, with standard deviation 1. The likelihood is a gray dotted curve centered at {f2(d10$x_bar)}. The posterior is a pink solid curve centered at {f2(sam10$mean)} with standard deviation {f2(sam10$sd)}, much closer to the likelihood than to Sam's prior.")
+plot_bayes(sam$mean, sam$sd, d10$x_bar, d10$se)
+```
+
+Sam's posterior: $\mu \mid \text{data} \sim N(`r r2(sam10$mean)`, `r r2(sam10$sd)`^2)$.
+
+```{=latex}
+\needspace{5.3cm}
+```
+
+Alex and Sam saw the same data but ended up with different posteriors. Is this a problem? What could make their posteriors closer to each other?
+
+::: {.answer lines="3"}
+With little data, the prior matters, so different people can reach different conclusions. That is why we state the prior openly. More data would bring their posteriors closer together.
+:::
+
+```{=latex}
+\needspace{8.9cm}
+```
+
+**All 253 sleep diaries.** Now the researchers have entered all 253 diaries: $\bar{x} = `r f2(d253$x_bar)`$ hours, standard error `r sprintf("%.3f", d253$se)`.
+
+```{r}
+#| label: all-253
+#| fig-width: 6.5
+#| fig-height: 2.6
+#| fig-align: center
+#| fig-alt: !expr glue::glue("Alex's prior (green dashed, centered at 7) and Sam's prior (dark green dotted, centered at 6.5) are short and wide. Alex's posterior (pink solid) and Sam's posterior (dark pink long dashes) after all 253 diaries are two tall, narrow curves centered at {f2(alex253$mean)} and {f2(sam253$mean)} hours; they lie almost on top of each other.")
+tibble(mu = seq(4.5, 9.5, length.out = 1500)) |>
+  mutate(`Alex's prior` = dnorm(mu, alex$mean, alex$sd),
+         `Sam's prior` = dnorm(mu, sam$mean, sam$sd),
+         `Alex's posterior` = dnorm(mu, alex253$mean, alex253$sd),
+         `Sam's posterior` = dnorm(mu, sam253$mean, sam253$sd)) |>
+  pivot_longer(-mu, names_to = "curve", values_to = "y") |>
+  mutate(curve = fct_inorder(curve)) |>
+  ggplot(aes(mu, y, color = curve, linetype = curve)) +
+  geom_line(linewidth = 1) +
+  scale_color_manual(values = c(green, "#00664A", pink, "#7A2E5C"), name = NULL) +
+  scale_linetype_manual(values = c("dashed", "dotted", "solid", "longdash"), name = NULL) +
+  scale_x_continuous(breaks = seq(5, 9.5, 0.5)) +
+  labs(x = expression(mu * ": average weekday hours of sleep")) +
+  theme_curve +
+  theme(legend.position = "top", legend.key.width = unit(1.2, "cm"))
+```
+
+```{=latex}
+\needspace{7.0cm}
+```
+
+| Person | Prior | Posterior after 253 diaries |
+|---|---|---|
+| Alex | $N(7, 0.5^2)$ | $N(`r r2(alex253$mean)`, `r sprintf("%.3f", alex253$sd)`^2)$ |
+| Sam | $N(6.5, 1^2)$ | $N(`r r2(sam253$mean)`, `r sprintf("%.3f", sam253$sd)`^2)$ |
+
+: Alex's and Sam's priors and posteriors for mu after all 253 sleep diaries
+
+```{=latex}
+\needspace{4.1cm}
+```
+
+What happened to the two posteriors? Why?
+
+::: {.answer lines="2.5"}
+They are almost the same. With a lot of data, the likelihood is very narrow and gets almost all of the weight: the data speak louder than the prior.
+:::
+
+```{=latex}
+\needspace{10.0cm}
+```
+
+# Using the posterior
+
+**Probability of a parameter.** In Bayesian inference, $\mu$ is a random variable, so we can find probabilities __about $\mu$__, given the data, as areas under the posterior. We will use Alex's posterior after all 253 diaries, $\mu \mid \text{data} \sim N(7.85, 0.073^2)$.
+
+```{=latex}
+\needspace{8.2cm}
+```
+
+What is the probability that $\mu$ is between 7.75 and 7.95 hours? The plot below shows the area. Write the probability in notation and give its value.
+
+```{r}
+#| label: p-mid
+#| fig-width: 5.5
+#| fig-height: 2.3
+#| fig-align: center
+#| fig-alt: !expr glue::glue("Normal curve for mu with mean 7.85 and standard deviation 0.073. The area between 7.75 and 7.95 is shaded pink and covers most of the curve; the label reads Area = {sprintf('%.4f', p_mid)}.")
+plot_normal("mu", mean = 7.85, sd = 0.073, lower = 7.75, upper = 7.95)
+```
+
+::: {.answer lines="1.5"}
+$P(7.75 < \mu < 7.95 \mid \text{data}) \approx `r f2(p_mid)`$
+:::
+
+This is a probability about the [parameter]{.blank width="3cm"}, the kind of statement we could __not__ make on Monday.
+
+```{=latex}
+\needspace{10.0cm}
+```
+
+# Bayesian hypothesis testing
+
+Do college students like these get enough sleep on weekdays, on average?
+
+- __Null hypothesis__ $H_0$: [$\mu \ge 7$]{.blank width="2.5cm"}. They get enough sleep.
+- __Alternative hypothesis__ $H_A$: [$\mu < 7$]{.blank width="2.5cm"}. They do __not__ get enough sleep.
+
+On Monday, we [assumed $H_0$ was true]{.blank width="4.5cm"} and asked how surprising the data would be: $P(\text{data this extreme} \mid H_0)$, the p-value.
+
+In Bayesian hypothesis testing, we do __not__ assume either hypothesis is true. $\mu$ is a random variable, so [each hypothesis has a probability]{.blank width="6.5cm"}:
+
+$$P(H_0 \mid \text{data}) = P(\mu \ge 7 \mid \text{data}) \qquad P(H_A \mid \text{data}) = P(\mu < 7 \mid \text{data})$$
+
+**The steps.**
+
+1. State $H_0$ and $H_A$.
+2. Find the [prior]{.blank width="2cm"} probability of each hypothesis: area under the prior.
+3. Find the [posterior]{.blank width="2.5cm"} probability of each hypothesis: area under the posterior.
+4. Compare: which hypothesis is more probable, and by how much? $\frac{P(H_0 \mid \text{data})}{P(H_A \mid \text{data})}$ is how many times as probable $H_0$ is as $H_A$.
+
+The two probabilities always add up to [1]{.blank width="1.5cm"}: $\mu$ is either less than 7 or not.
+
+```{=latex}
+\needspace{7.7cm}
+```
+
+**Before the data: prior probabilities.** Fill in the "?" in the plot with Alex's prior probabilities $P(H_0)$ and $P(H_A)$. How do you know, without any calculation?
+
+```{r}
+#| label: hyp-prior
+#| fig-width: 6
+#| fig-height: 2.1
+#| fig-align: center
+#| fig-alt: !expr glue::glue("Alex's prior for mu, a normal curve with mean 7 and standard deviation 0.5. A dashed line at 7 splits it in half. The right half, mu at least 7, is shaded green and labeled H0. The left half, mu less than 7, is shaded pink and labeled HA. In the answer key, both are labeled {f2(alex_prior_ha)}; in the student version, the probabilities are question marks.")
+shade_hypotheses(7, 0.5, "Alex's prior:", hide = if (key) "none" else "both")
+```
+
+::: {.answer lines="2"}
+$P(H_0) = P(H_A) = 0.5$. The prior is a normal curve centered at 7, and a normal curve is symmetric, so half of the area is on each side of 7. The two hypotheses are equally probable.
+:::
+
+```{=latex}
+\needspace{7.7cm}
+```
+
+**After 10 diaries: posterior probabilities.** Alex's posterior is $N(7.05, 0.37^2)$. The plot gives $P(H_A \mid \text{data})$. Use it to find $P(H_0 \mid \text{data})$.
+
+```{r}
+#| label: hyp-10
+#| fig-width: 6
+#| fig-height: 2.1
+#| fig-align: center
+#| fig-alt: !expr glue::glue("Alex's posterior after 10 diaries, a normal curve with mean 7.05 and standard deviation 0.37. A dashed line at 7 is just left of the center. The right part, mu at least 7, is shaded green and labeled H0. The left part, mu less than 7, is shaded pink and labeled HA, {f2(alex10_ha)}. In the answer key, H0 is labeled {f2(1 - alex10_ha)}; in the student version, it is a question mark.")
+shade_hypotheses(7.05, 0.37, "Alex's posterior after 10 diaries:", hide = if (key) "none" else "H0")
+```
+
+$P(H_0 \mid \text{data}) \approx$ [`r f2(1 - alex10_ha)`]{.blank width="2cm"} $\qquad P(H_A \mid \text{data}) \approx$ [`r f2(alex10_ha)`]{.blank width="2cm"}
+
+```{=latex}
+\needspace{5.0cm}
+```
+
+$H_0$ is [$\frac{`r f2(1 - alex10_ha)`}{`r f2(alex10_ha)`} \approx `r f1((1 - alex10_ha) / alex10_ha)`$]{.blank width="4cm"} times as probable as $H_A$. Would you conclude that college students like these get enough sleep, based on these 10 diaries?
+
+::: {.answer lines="2"}
+Not really: the two hypotheses are still almost equally probable. 10 diaries are not enough data to tell them apart.
+:::
+
+```{=latex}
+\needspace{7.7cm}
+```
+
+**After all 253 diaries.** Alex's posterior is $N(7.85, 0.073^2)$. Use the plot to find $P(H_0 \mid \text{data})$.
+
+```{r}
+#| label: hyp-253
+#| fig-width: 6
+#| fig-height: 2.1
+#| fig-align: center
+#| fig-alt: "Alex's posterior after all 253 diaries, a tall, narrow normal curve with mean 7.85 and standard deviation 0.073. The dashed line at 7 is far to its left, so the whole curve is shaded green. HA, mu less than 7, is labeled with probability less than 0.0001. In the answer key, H0, mu at least 7, is labeled with probability greater than 0.9999; in the student version, it is a question mark."
+shade_hypotheses(7.85, 0.073, "Alex's posterior after 253 diaries:", hide = if (key) "none" else "H0")
+```
+
+```{=latex}
+\needspace{9.4cm}
+```
+
+Complete the table.
+
+| | $P(H_0)$: $\mu \ge 7$ | $P(H_A)$: $\mu < 7$ | Which is more probable? |
+|---|---|---|---|
+| Prior (before any data) | [`r f2(1 - alex_prior_ha)`]{.blank width="2cm"} | [`r f2(alex_prior_ha)`]{.blank width="2cm"} | [equally probable]{.blank width="3.5cm"} |
+| Posterior after 10 diaries | [`r f2(1 - alex10_ha)`]{.blank width="2cm"} | [`r f2(alex10_ha)`]{.blank width="2cm"} | [$H_0$, `r f1((1 - alex10_ha) / alex10_ha)` times as probable]{.blank width="3.5cm"} |
+| Posterior after 253 diaries | [more than 0.9999]{.blank width="2cm"} | [less than 0.0001]{.blank width="2cm"} | [$H_0$, by far]{.blank width="3.5cm"} |
+
+: Alex's prior and posterior probabilities of the null and alternative hypotheses
+
+```{=latex}
+\needspace{4.6cm}
+```
+
+**Conclusion** after all 253 diaries:
+
+::: {.answer lines="3"}
+Given all 253 diaries, the posterior probability that college students like these average at least 7 hours of sleep on weekdays is more than 0.9999. We have very strong evidence __for__ $H_0$: they get enough sleep, on average.
+:::
+
+**How is this different from Monday?**
+
+- On Monday, we could only [reject or fail to reject]{.blank width="4.5cm"} $H_0$. Failing to reject $H_0$ is __not__ evidence for $H_0$.
+- Today, both hypotheses get a probability, so the data can give evidence [for either one]{.blank width="3cm"}, including $H_0$.
+- The p-value, $P(\text{data this extreme} \mid H_0)$, is a probability about the [data]{.blank width="2.5cm"}. $P(H_0 \mid \text{data})$ is a probability about the [hypothesis]{.blank width="2.5cm"}.
+
+Bayesian statisticians also compare hypotheses with the __Bayes factor__: how much the data changed the odds of one hypothesis against the other. We will not calculate it in this course.
+
+```{=latex}
+\needspace{10.0cm}
+```
+
+# Credible intervals
+
+A __95% credible interval__ is the [middle 95% of the posterior]{.blank width="5cm"}: 2.5% of the area below it and 2.5% above it.
+
+```{=latex}
+\needspace{8.2cm}
+```
+
+The plot shows Alex's posterior after all 253 diaries with the middle 95% shaded. What is Alex's 95% credible interval?
+
+```{r}
+#| label: ci-alex
+#| fig-width: 5.5
+#| fig-height: 2.3
+#| fig-align: center
+#| fig-alt: !expr glue::glue("Normal curve for mu with mean 7.85 and standard deviation 0.073. The middle 95 percent of the area is shaded pink, between dashed lines labeled {f2(qnorm(0.025, 7.85, 0.073))} and {f2(qnorm(0.975, 7.85, 0.073))}.")
+shade_middle(7.85, 0.073, "Alex's posterior after 253 diaries:")
+```
+
+::: {.answer lines="1.5"}
+From `r f2(qnorm(0.025, 7.85, 0.073))` to `r f2(qnorm(0.975, 7.85, 0.073))` hours.
+:::
+
+```{=latex}
+\needspace{4.6cm}
+```
+
+**Interpretation:**
+
+::: {.answer lines="3"}
+Given the data (and Alex's prior), there is a __95% probability__ that the average weekday sleep of college students like these is between `r f2(qnorm(0.025, 7.85, 0.073))` and `r f2(qnorm(0.975, 7.85, 0.073))` hours.
+:::
+
+In Bayesian inference, $\mu$ is a random variable, so "95% probability that $\mu$ is in the interval" is exactly what the interval means:
+
+$$P(`r f2(qnorm(0.025, 7.85, 0.073))` < \mu < `r f2(qnorm(0.975, 7.85, 0.073))` \mid \text{data}) = 0.95$$
+
+```{=latex}
+\needspace{12.4cm}
+```
+
+**Your turn.** After the first 10 sleep diaries, Sam's posterior was $\mu \mid \text{data} \sim N(`r r2(sam10$mean)`, `r r2(sam10$sd)`^2)$.
+
+```{r}
+#| label: sam-plots
+#| fig-width: 7
+#| fig-height: 2.3
+#| fig-align: center
+#| fig-alt: !expr glue::glue("Two plots of Sam's posterior, a normal curve with mean {r2(sam10$mean)} and standard deviation {r2(sam10$sd)}. On the left, the area to the left of 7 is shaded pink, and the label reads Area = {sprintf('%.4f', sam10_ha)}. On the right, the middle 95 percent is shaded pink, between dashed lines labeled {f2(qnorm(0.025, r2(sam10$mean), r2(sam10$sd)))} and {f2(qnorm(0.975, r2(sam10$mean), r2(sam10$sd)))}.")
+(.draw_normal(quote(mu), r2(sam10$mean), r2(sam10$sd), -Inf, 7, sam10_ha) +
+   labs(title = "Sam's posterior: area below 7") +
+   theme(plot.title = element_text(size = 12))) |
+  shade_middle(r2(sam10$mean), r2(sam10$sd), "Sam's posterior:")
+```
+
+a. $H_0: \mu \ge 7$ and $H_A: \mu < 7$. Use the left plot to find Sam's posterior probabilities $P(H_0 \mid \text{data})$ and $P(H_A \mid \text{data})$.
+
+::: {.answer lines="2"}
+$P(H_A \mid \text{data}) \approx `r f2(sam10_ha)`$ (the shaded area), so $P(H_0 \mid \text{data}) \approx 1 - `r f2(sam10_ha)` = `r f2(1 - sam10_ha)`$.
+:::
+
+```{=latex}
+\needspace{6.6cm}
+```
+
+b. Sam's prior probabilities were $P(H_0) = `r f2(1 - sam_prior_ha)`$ and $P(H_A) = `r f2(sam_prior_ha)`$. Which hypothesis was more probable before the data, and how many times as probable? What about after the data? What do you conclude?
+
+::: {.answer lines="3.5"}
+Before: $H_A$ was `r f1(sam_prior_ha / (1 - sam_prior_ha))` times as probable as $H_0$. After: $H_A$ is only `r f1(sam10_ha / (1 - sam10_ha))` times as probable. The sample mean, `r f2(d10$x_bar)`, is higher than Sam's prior mean, 6.5, so the data moved Sam toward $H_0$. With 10 diaries, neither hypothesis is clearly more probable, so we cannot conclude either one yet.
+:::
+
+```{=latex}
+\needspace{6.2cm}
+```
+
+c. Use the right plot to write Sam's 95% credible interval. [from about `r f2(qnorm(0.025, r2(sam10$mean), r2(sam10$sd)))` to `r f2(qnorm(0.975, r2(sam10$mean), r2(sam10$sd)))` hours]{.blank width="7cm"}
+d. Interpret the interval in (c) in context.
+
+::: {.answer lines="2.5"}
+Given the first 10 diaries (and Sam's prior), there is a 95% probability that the average weekday sleep of college students like these is between `r f2(qnorm(0.025, r2(sam10$mean), r2(sam10$sd)))` and `r f2(qnorm(0.975, r2(sam10$mean), r2(sam10$sd)))` hours.
+:::
+
+```{=latex}
+\needspace{3.5cm}
+```
+
+e. Is Sam's interval wider or narrower than an interval from all 253 diaries? Why?
+
+::: {.answer lines="2"}
+Wider. 10 diaries are much less data than 253, so the posterior is more spread out.
+:::
+
+```{=latex}
+\needspace{10.0cm}
+```
+
+# Frequentist vs. Bayesian
+
+```{r}
+#| label: two-intervals
+ci_freq <- d253$x_bar + c(-1, 1) * qnorm(0.975) * d253$se
+ci_alex <- qnorm(c(0.025, 0.975), 7.85, 0.073)
+```
+
+```{=latex}
+\needspace{6.2cm}
+```
+
+For all 253 diaries:
+
+| Interval | From | To |
+|---|---|---|
+| 95% confidence interval (frequentist) | `r f2(ci_freq[1])` | `r f2(ci_freq[2])` |
+| 95% credible interval (Bayesian, Alex's prior) | `r f2(ci_alex[1])` | `r f2(ci_alex[2])` |
+
+: Frequentist and Bayesian 95% intervals for mu from all 253 sleep diaries
+
+```{=latex}
+\needspace{5.9cm}
+```
+
+Almost the same numbers! With a lot of data, the prior matters very little. But they __mean__ different things. Interpret each one.
+
+::: {.answer lines="3.5"}
+Confidence: if we took many samples, 95% of the intervals would capture $\mu$. $P(\text{interval captures } \mu \mid \mu) = 0.95$. Credible: there is a 95% probability that $\mu$ is in this interval. $P(\text{interval contains } \mu \mid \text{data}) = 0.95$.
+:::
+
+```{=latex}
+\needspace{12.5cm}
+```
+
+Complete the table.
+
+| Feature | Frequentist (Monday) | Bayesian (today) |
+|---|---|---|
+| The parameter is | [a fixed, unknown number]{.blank width="4cm"} | [a random variable]{.blank width="4cm"} |
+| Probability means | long-run proportion over many samples | how plausible something is, given what we know |
+| Uses a prior? | [No]{.blank width="4cm"} | [Yes]{.blank width="4cm"} |
+| What we find | [$P(\text{data} \mid \text{parameter})$]{.blank width="4cm"} | [$P(\text{parameter} \mid \text{data})$]{.blank width="4cm"} |
+| Hypothesis testing | [assume $H_0$; p-value; reject or fail to reject $H_0$]{.blank width="4cm"} | [compare $P(H_0 \mid \text{data})$ and $P(H_A \mid \text{data})$]{.blank width="4cm"} |
+| Interval | [confidence interval]{.blank width="4cm"} | [credible interval]{.blank width="4cm"} |
+| "95% probability that the parameter is in the interval" | [Not correct]{.blank width="4cm"} | [Correct]{.blank width="4cm"} |
+
+: Comparison of frequentist and Bayesian inference
+
+**Correct or not?** Write "correct" or "not correct" and explain.
+
+a. Alex's posterior probability that $\mu$ is less than 7 hours, after all 253 diaries, is less than 0.0001. [Correct: a probability about $\mu$, given the data.]{.blank width="8cm"}
+b. In frequentist inference, we can find the probability that $\mu$ is less than 7 hours. [Not correct: $\mu$ is a fixed number.]{.blank width="8cm"}
+c. There is a 95% probability that $\mu$ is between `r f2(ci_alex[1])` and `r f2(ci_alex[2])`, according to Alex's posterior. [Correct: this is what a credible interval means.]{.blank width="8cm"}
+d. The posterior always ends up exactly at the prior mean. [Not correct: it is a compromise between the prior and the likelihood.]{.blank width="8cm"}
+e. With more data, the prior has less influence on the posterior. [Correct: with 253 diaries, Alex's and Sam's posteriors were almost the same.]{.blank width="8cm"}
+f. The likelihood $L(\mu \mid \text{data})$ is a probability distribution of $\mu$. [Not correct: the __posterior__ is.]{.blank width="8cm"}
+g. In Bayesian hypothesis testing, we start by assuming that the null hypothesis is true. [Not correct: each hypothesis gets a probability.]{.blank width="8cm"}
+h. After 10 diaries, Alex's $P(H_0 \mid \text{data}) \approx `r f2(1 - alex10_ha)`$ and $P(H_A \mid \text{data}) \approx `r f2(alex10_ha)`$, so the data give strong evidence for $H_0$. [Not correct: $H_0$ is only `r f1((1 - alex10_ha) / alex10_ha)` times as probable. That is weak evidence.]{.blank width="8cm"}
+
+```{=latex}
+\needspace{5.9cm}
+```
+
+**Scope of the conclusions.** Can we use these results to describe how much __Harvard__ students sleep? The students wrote their own sleep diaries. How might this affect the data?
+
+::: {.answer lines="3.5"}
+The 253 students were from __one__ college and were __not a random sample__ of all college students, so the conclusions are about college students __like the ones in the study__, not necessarily Harvard students. Self-reported diaries may be inaccurate (for example, rounding or forgetting). Just like on Monday, the study design matters no matter which kind of inference we use.
+:::
+
+```{=latex}
+\needspace{12.0cm}
+```
+
+# Summary
+
+- Likelihood $L(\pi \mid \text{data})$: [data fixed, parameter varies]{.blank width="5cm"}, does __not__ need to add up to 1. Probability $P(\text{data} \mid \pi)$: [parameter fixed, data vary]{.blank width="5cm"}, adds up to 1.
+- Bayesian inference: [prior]{.blank width="2cm"} $\times$ [likelihood]{.blank width="2.5cm"} $\propto$ [posterior]{.blank width="2.5cm"}. The posterior mean is a compromise between the prior mean and the sample mean, weighted by how certain each one is.
+- Different priors can give different posteriors. With more data, [the prior matters less]{.blank width="4cm"}.
+- __Bayesian hypothesis testing:__ no hypothesis is assumed true. Find [the posterior probability of each hypothesis]{.blank width="7cm"} and conclude in favor of the much more probable one.
+- A 95% __credible interval__ has a [95% posterior probability]{.blank width="4.5cm"} of containing $\mu$.
+- Frequentist: $P(\text{data} \mid \text{parameter})$. Bayesian: $P(\text{parameter} \mid \text{data})$. Remember: $P(A \mid B) \neq P(B \mid A)$!
