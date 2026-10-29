@@ -1,0 +1,712 @@
+---
+title: "Frequentist and Bayesian Inference: Practice"
+subtitle: "Section 10 handout (answer key)"
+author: "Name: SOLUTIONS"
+lang: en
+key: true
+filters:
+  - style-handout.lua
+  - quarto
+  - a11y-tables.lua
+execute:
+  echo: false
+  warning: false
+  message: false
+format:
+  html:
+    toc: false
+    embed-resources: true
+    css: style-handout.css
+  pdf:
+    documentclass: article
+    fontsize: 11pt
+    linestretch: 1.5
+    geometry:
+      - margin=0.9in
+    colorlinks: true
+    linkcolor: harvardcrimson
+    urlcolor: harvardcrimson
+    include-in-header:
+      - style-handout-header.tex
+      - text: |
+          \usepackage{needspace}
+---
+
+```{r}
+#| label: setup
+#| include: false
+# `key` in the YAML above: true shows the answers, false leaves blanks.
+key <- isTRUE(rmarkdown::metadata$key)
+library(tidyverse)
+library(Lock5Data)
+options(scipen = 999)
+
+source("R/plot-normal.R")
+
+green <- hds_colors[["green"]]
+yellow <- hds_colors[["yellow"]]
+pink <- hds_colors[["pink"]]
+
+theme_set(theme_minimal(base_size = 12))
+
+# A normal curve with no y-axis (we only care about the shape and areas)
+theme_curve <- theme(axis.text.y = element_blank(),
+                     axis.title.y = element_blank(),
+                     panel.grid.major.y = element_blank(),
+                     panel.grid.minor = element_blank())
+
+f1 <- function(x) sprintf("%.1f", x)
+f2 <- function(x) sprintf("%.2f", x)
+f3 <- function(x) sprintf("%.3f", x)
+
+# ---- Mercury in Florida bass (Lange, Royals, and Connor, 1993) -------------
+# FloridaLakes in Lock5Data: average mercury (ppm) in largemouth bass from
+# each of 53 Florida lakes
+lakes <- FloridaLakes |> select(Lake, AvgMercury)
+n_lakes <- nrow(lakes)
+x_bar <- round(mean(lakes$AvgMercury), 3)
+# Students do not calculate standard errors: we give them the rounded value.
+se <- round(sd(lakes$AvgMercury) / sqrt(n_lakes), 3)
+mu0 <- 0.3                       # EPA criterion for methylmercury in fish
+mirror <- mu0 - (x_bar - mu0)    # as far below 0.3 as x_bar is above it
+
+# Frequentist: null sampling distribution x_bar | mu = 0.3 ~ N(0.3, se^2)
+upper_tail <- calc_prob_normal("x_bar", mean = mu0, sd = se, lower = x_bar)
+p_value <- 2 * upper_tail
+margin <- round(qnorm(0.975) * se, 3)
+ci <- x_bar + c(-1, 1) * margin
+
+# Bayesian: normal prior for mu + normal likelihood -> normal posterior
+# (not shown to students). The likelihood is centered at x_bar with spread se.
+update_normal <- function(prior_mean, prior_sd, x_bar, se) {
+  prec_prior <- 1 / prior_sd^2
+  prec_data <- 1 / se^2
+  list(mean = (prec_prior * prior_mean + prec_data * x_bar) / (prec_prior + prec_data),
+       sd = sqrt(1 / (prec_prior + prec_data)),
+       w_prior = prec_prior / (prec_prior + prec_data))
+}
+jordan_prior <- list(mean = 0.3, sd = 0.1)
+riley_prior <- list(mean = 0.7, sd = se)   # as certain as the data
+jordan_exact <- update_normal(jordan_prior$mean, jordan_prior$sd, x_bar, se)
+riley_exact <- update_normal(riley_prior$mean, riley_prior$sd, x_bar, se)
+# rounded values that students see; all probabilities below use these
+jordan <- list(mean = round(jordan_exact$mean, 3), sd = round(jordan_exact$sd, 3))
+riley <- list(mean = round(riley_exact$mean, 3), sd = round(riley_exact$sd, 3))
+
+# H0: mu <= 0.3, HA: mu > 0.3
+jordan_ha <- calc_prob_normal("mu", mean = jordan$mean, sd = jordan$sd, lower = mu0)
+jordan_h0 <- 1 - jordan_ha
+cred <- qnorm(c(0.025, 0.975), jordan$mean, jordan$sd)
+
+# A second threshold, 0.5 ppm (multiple choice questions 4 and 7)
+p_value_05 <- 2 * calc_prob_normal("x_bar", mean = 0.5, sd = se,
+                                   lower = 0.5 + abs(x_bar - 0.5))
+jordan_gt05 <- round(calc_prob_normal("mu", mean = jordan$mean, sd = jordan$sd,
+                                      lower = 0.5), 2)
+jordan_le05 <- 1 - jordan_gt05
+
+# First 5 lakes, above 0.3 or not (multiple choice question 8)
+first5 <- lakes |> slice_head(n = 5)
+above5 <- if_else(first5$AvgMercury > mu0, "A", "N")
+k5 <- sum(first5$AvgMercury > mu0)
+lik <- function(p) p^k5 * (1 - p)^(5 - k5)
+
+# Posterior with the middle 95% shaded and the two ends labeled
+shade_middle <- function(mean, sd, who, digits = 3) {
+  ends <- qnorm(c(0.025, 0.975), mean, sd)
+  curve <- tibble(x = seq(mean - 4 * sd, mean + 4 * sd, length.out = 800),
+                  y = dnorm(x, mean, sd))
+  ggplot(curve, aes(x, y)) +
+    geom_area(data = filter(curve, x >= ends[1], x <= ends[2]), fill = pink, alpha = 0.9) +
+    geom_line(color = green, linewidth = 1) +
+    geom_vline(xintercept = ends, linetype = "dashed") +
+    annotate("label", x = ends, y = 0.5 * dnorm(mean, mean, sd), size = 3.5,
+             label = sprintf(paste0("%.", digits, "f"), ends)) +
+    annotate("label", x = mean, y = 0.15 * dnorm(mean, mean, sd), size = 3.5,
+             label = "middle 95%", fill = yellow) +
+    labs(x = expression(mu), title = bquote(.(who) ~ N(.(mean), .(sd)^2))) +
+    theme_curve +
+    theme(plot.title = element_text(hjust = 0.5, size = 12))
+}
+```
+
+```{=latex}
+\needspace{10.0cm}
+```
+
+# Is the bass safe to eat?
+
+Mercury builds up in fish, and people who eat a lot of fish with high mercury levels can be harmed. The U.S. Environmental Protection Agency (EPA) set __0.3 ppm__ (parts per million, or mg of methylmercury per kg of fish) as the level of mercury in fish tissue that protects the health of people who eat fish.
+
+Researchers caught __largemouth bass__ from `r n_lakes` lakes in Florida and measured the mercury in each fish. For each lake, we have the __average mercury level__ (in ppm) of the bass from that lake.
+
+<small>Data: `FloridaLakes` in the [`Lock5Data`](https://cran.r-project.org/package=Lock5Data) package. Lange, T. R., Royals, H. E., & Connor, L. L. (1993). Influence of water chemistry on mercury concentration in largemouth bass from Florida lakes. *Transactions of the American Fisheries Society*, 122(1), 74–84. U.S. EPA (2001). *Water Quality Criterion for the Protection of Human Health: Methylmercury* (EPA-823-R-01-001).</small>
+
+```{r}
+#| label: lakes-plot
+#| fig-width: 6.5
+#| fig-height: 2.2
+#| fig-align: center
+#| fig-alt: !expr glue::glue("Dot plot of the average mercury level in largemouth bass from {n_lakes} Florida lakes, in ppm. The values are spread out from {min(lakes$AvgMercury)} to {max(lakes$AvgMercury)}, with most between 0.1 and 1. A dotted vertical line marks the EPA level, 0.3, and a dashed vertical line marks the sample mean, {x_bar}, to the right of 0.3.")
+ggplot(lakes, aes(AvgMercury)) +
+  geom_dotplot(binwidth = 0.04, fill = green, color = "white", stackratio = 1.1,
+               dotsize = 1) +
+  geom_vline(xintercept = x_bar, linetype = "dashed") +
+  geom_vline(xintercept = mu0, linetype = "dotted", color = pink, linewidth = 1) +
+  annotate("label", x = x_bar, y = 1.12, size = 3.3, hjust = -0.05,
+           label = paste0("sample mean = ", x_bar)) +
+  annotate("label", x = mu0, y = 1.12, size = 3.3, hjust = 1.05, label = "EPA: 0.3") +
+  scale_x_continuous(breaks = seq(0, 1.4, 0.1)) +
+  coord_cartesian(ylim = c(0, 1.2)) +
+  labs(x = "Average mercury in largemouth bass (ppm)", y = NULL) +
+  theme(axis.text.y = element_blank(), panel.grid.major.y = element_blank(),
+        panel.grid.minor = element_blank())
+```
+
+Sample mean: $\bar{x} = `r x_bar`$ ppm. Standard error: `r se` (given to you).
+
+Let $\mu$ be the mean of the average mercury levels in largemouth bass across __all__ Florida lakes (like the ones in the study).
+
+Is $\bar{x}$ a statistic or a parameter? [a statistic: it describes the sample of `r n_lakes` lakes]{.blank width="8cm"}
+
+Is $\mu$ a statistic or a parameter? [a parameter: it describes all lakes]{.blank width="8cm"}
+
+Today we will analyze the same data in two ways: first the __frequentist__ way (Week 9), then the __Bayesian__ way (Week 10). Pay attention to __what is random__ and __what each probability is about__.
+
+```{=latex}
+\needspace{10.0cm}
+```
+
+# Part 1: The frequentist analysis
+
+**Hypotheses.**
+
+- $H_0$: the mean mercury level is at the EPA level. $\quad \mu =$ [0.3]{.blank width="2cm"}
+- $H_A$: the mean mercury level is not at the EPA level. $\quad \mu$ [$\neq 0.3$]{.blank width="2cm"}
+
+In frequentist inference, $\mu$ is a [fixed, unknown number]{.blank width="5cm"}, and we start by [assuming $H_0$ is true]{.blank width="4.5cm"}.
+
+```{=latex}
+\needspace{9.0cm}
+```
+
+**Null sampling distribution.** If $\mu$ were 0.3, the sample mean of `r n_lakes` lakes would be approximately $\bar{X} \mid \mu = 0.3 \sim N(0.3, `r se`^2)$. The plot shows this distribution with the area above `r x_bar` shaded.
+
+```{r}
+#| label: null-plot
+#| fig-width: 5.5
+#| fig-height: 2.4
+#| fig-align: center
+#| fig-alt: !expr glue::glue("Normal curve for X-bar with mean 0.3 and standard deviation {se}. The curve covers about 0.11 to 0.49. The area to the right of {x_bar} is so small that nothing is visibly shaded; the label reads Area < 0.0001.")
+plot_normal("x_bar", mean = mu0, sd = se, lower = x_bar)
+```
+
+a. Where is $\bar{x} = `r x_bar`$ on this plot? About how many standard errors is it above 0.3?
+
+::: {.answer lines="1.5"}
+It is off the right side of the plot: $\frac{`r x_bar` - 0.3}{`r se`} \approx `r f1((x_bar - mu0) / se)`$ standard errors above 0.3.
+:::
+
+b. Write the p-value in conditional probability notation. Remember to count both tails.
+
+::: {.answer lines="1.5"}
+$P(\bar{X} \ge `r x_bar` \text{ or } \bar{X} \le `r mirror` \mid \mu = 0.3)$
+:::
+
+c. Use the plot to find the p-value. [$2 \times$ (less than 0.0001), so less than 0.001]{.blank width="7cm"}
+
+```{=latex}
+\needspace{4.5cm}
+```
+
+d. What is your conclusion at $\alpha = 0.05$? Write it in context.
+
+::: {.answer lines="3"}
+The p-value is less than 0.05, so we reject $H_0$. If the mean mercury level of bass across Florida lakes were 0.3 ppm, a sample mean as far from 0.3 as `r x_bar` would be extremely unlikely. The data provide convincing evidence that the mean mercury level is not 0.3 ppm.
+:::
+
+```{=latex}
+\needspace{4.0cm}
+```
+
+e. Which type of error could you have made? Describe it in context.
+
+::: {.answer lines="2.5"}
+A Type I error: the mean mercury level actually __is__ 0.3 ppm, but we concluded that it is not.
+:::
+
+```{=latex}
+\needspace{8.0cm}
+```
+
+**Confidence interval.** The margin of error for a 95% confidence interval is `r margin`.
+
+f. Write the 95% confidence interval. [from `r f3(ci[1])` to `r f3(ci[2])` ppm]{.blank width="5cm"}
+
+g. Interpret the interval in context.
+
+::: {.answer lines="2.5"}
+We are 95% confident that the mean of the average mercury levels in largemouth bass across all Florida lakes (like the ones in the study) is between `r f3(ci[1])` and `r f3(ci[2])` ppm.
+:::
+
+h. Is 0.3 inside the interval? How does this agree with your conclusion in (d)?
+
+::: {.answer lines="2"}
+No. 0.3 is not a plausible value of $\mu$, which agrees with rejecting $H_0: \mu = 0.3$.
+:::
+
+```{=latex}
+\needspace{4.0cm}
+```
+
+i. What does "95%" in "95% confidence" describe: this one interval, or the method? Explain.
+
+::: {.answer lines="2.5"}
+The method. If we took many samples of `r n_lakes` lakes and built an interval from each one, about 95% of the intervals would capture $\mu$. This one interval either captures $\mu$ or it does not.
+:::
+
+```{=latex}
+\needspace{4.5cm}
+```
+
+j. Is the result practically significant? Does it mean that the bass in __every__ Florida lake is unsafe to eat? Explain.
+
+::: {.answer lines="3.5"}
+Yes, it is practically significant: the sample mean is almost twice the EPA level. But $\mu$ is a mean across lakes. The dot plot shows that some lakes have bass well below 0.3 ppm and some well above, so the result does not tell us about any single lake.
+:::
+
+```{=latex}
+\needspace{10.0cm}
+```
+
+# Part 2: The Bayesian analysis
+
+Jordan, a state official, analyzes the same data the Bayesian way. Before seeing the data, Jordan believes that the bass are probably close to the EPA level. Jordan's [prior]{.blank width="2.5cm"} is
+
+$$\mu \sim N(0.3, 0.1^2)$$
+
+In Bayesian inference, $\mu$ is a [random variable]{.blank width="3.5cm"}: its distribution describes what we believe about it.
+
+**Hypotheses.** The Bayesian question: is the mean mercury level __above__ the EPA level?
+
+- $H_0$: $\mu \le 0.3$. The mean mercury level is at or below the EPA level.
+- $H_A$: $\mu > 0.3$. The mean mercury level is above the EPA level.
+
+```{=latex}
+\needspace{3.5cm}
+```
+
+a. What is Jordan's __prior__ probability of $H_A$, $P(\mu > 0.3)$? How do you know without a calculation?
+
+::: {.answer lines="2"}
+0.5. Jordan's prior is a normal curve centered at 0.3, so half of the area is above 0.3. $H_0$ and $H_A$ are equally probable before the data.
+:::
+
+```{=latex}
+\needspace{9.5cm}
+```
+
+After seeing the `r n_lakes` lakes, Jordan's [posterior]{.blank width="2.5cm"} is $\mu \mid \text{data} \sim N(`r jordan$mean`, `r jordan$sd`^2)$. The plot shows this distribution with the area above 0.3 shaded.
+
+```{r}
+#| label: jordan-ha
+#| fig-width: 5.5
+#| fig-height: 2.4
+#| fig-align: center
+#| fig-alt: !expr glue::glue("Normal curve for mu with mean {jordan$mean} and standard deviation {jordan$sd}. The area to the right of 0.3 is shaded pink and covers the whole curve; the label reads Area = 1.0000.")
+plot_normal("mu", mean = jordan$mean, sd = jordan$sd, lower = mu0)
+```
+
+b. Fill in: $P(H_A \mid \text{data}) = P(\mu > 0.3 \mid \text{data})$ [is more than 0.9999]{.blank width="3.5cm"} and $P(H_0 \mid \text{data})$ [is less than 0.0001]{.blank width="3.5cm"}
+
+```{=latex}
+\needspace{4.0cm}
+```
+
+c. Write a conclusion in context.
+
+::: {.answer lines="3"}
+Given the data and Jordan's prior, the probability that the mean mercury level of bass across Florida lakes is above the EPA level of 0.3 ppm is more than 0.9999. The data moved Jordan from "equally probable" to very strong evidence for $H_A$.
+:::
+
+```{=latex}
+\needspace{8.0cm}
+```
+
+**Credible interval.** The plot shows Jordan's posterior with the middle 95% shaded.
+
+```{r}
+#| label: jordan-ci
+#| fig-width: 5.5
+#| fig-height: 2.3
+#| fig-align: center
+#| fig-alt: !expr glue::glue("Normal curve for mu with mean {jordan$mean} and standard deviation {jordan$sd}. The middle 95 percent of the area is shaded pink, between dashed lines labeled {f3(cred[1])} and {f3(cred[2])}.")
+shade_middle(jordan$mean, jordan$sd, "Jordan's posterior:")
+```
+
+d. Jordan's 95% credible interval is from [`r f3(cred[1])`]{.blank width="2cm"} to [`r f3(cred[2])`]{.blank width="2cm"} ppm.
+
+e. Interpret the interval in context, and write it in probability notation.
+
+::: {.answer lines="3"}
+Given the data (and Jordan's prior), there is a 95% probability that the mean of the average mercury levels in bass across Florida lakes is between `r f3(cred[1])` and `r f3(cred[2])` ppm. $P(`r f3(cred[1])` < \mu < `r f3(cred[2])` \mid \text{data}) = 0.95$.
+:::
+
+```{=latex}
+\needspace{4.0cm}
+```
+
+f. Jordan's posterior mean, `r jordan$mean`, is between the prior mean, 0.3, and the sample mean, `r x_bar`. Which one is it closer to? Why?
+
+::: {.answer lines="2.5"}
+The sample mean. The data (standard error `r se`) are more certain than Jordan's prior (standard deviation 0.1), so the data get more weight: about `r f2(1 - jordan_exact$w_prior)` for the sample mean and `r f2(jordan_exact$w_prior)` for the prior mean.
+:::
+
+```{=latex}
+\needspace{10.0cm}
+```
+
+**A different prior.** Riley, an environmental scientist, expects mercury in Florida bass to be high. Riley's prior is $\mu \sim N(`r riley_prior$mean`, `r riley_prior$sd`^2)$. Riley sees the same `r n_lakes` lakes.
+
+The plot shows Riley's prior, the likelihood, and Riley's posterior, labeled A, B, and C (not in that order).
+
+```{r}
+#| label: riley-curves
+#| fig-width: 6.5
+#| fig-height: 2.6
+#| fig-align: center
+#| fig-alt: !expr glue::glue("Three normal curves for mu, drawn in the same color. Curve A is centered at {x_bar} with standard deviation {se}. Curve B is centered at {riley_prior$mean} with standard deviation {se}; A and B have the same width and height. Curve C is centered at {riley$mean}, between A and B, and is the tallest and narrowest, with standard deviation {riley$sd}.")
+riley_curves <- tibble(x = seq(0.35, 0.85, length.out = 800)) |>
+  mutate(A = dnorm(x, x_bar, se),
+         B = dnorm(x, riley_prior$mean, riley_prior$sd),
+         C = dnorm(x, riley$mean, riley$sd)) |>
+  pivot_longer(-x, names_to = "curve", values_to = "y")
+peaks <- tibble(curve = c("A", "B", "C"), x = c(x_bar, riley_prior$mean, riley$mean)) |>
+  mutate(y = c(dnorm(0, 0, se), dnorm(0, 0, riley_prior$sd), dnorm(0, 0, riley$sd)))
+ggplot(riley_curves, aes(x, y, group = curve)) +
+  geom_line(linewidth = 1, color = "gray20") +
+  geom_label(data = peaks, aes(label = curve), vjust = -0.3, size = 4.5,
+             fill = yellow) +
+  scale_x_continuous(breaks = seq(0.35, 0.85, 0.05)) +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.2))) +
+  labs(x = expression(mu)) +
+  theme_curve
+```
+
+g. Which curve is Riley's prior? [B]{.blank width="1.5cm"} The likelihood? [A]{.blank width="1.5cm"} Riley's posterior? [C]{.blank width="1.5cm"}
+
+```{=latex}
+\needspace{4.0cm}
+```
+
+h. Explain how you decided.
+
+::: {.answer lines="3"}
+The prior is centered at Riley's prior mean, `r riley_prior$mean` (B). The likelihood is centered at the sample mean, `r x_bar` (A). The posterior is a compromise between the two, so it is in between, and it is narrower than both because it combines two sources of information (C).
+:::
+
+```{=latex}
+\needspace{4.0cm}
+```
+
+i. Riley's prior (standard deviation `r se`) and the likelihood (standard error `r se`) are equally certain. Riley's posterior mean is the weighted average [$0.5 \times `r riley_prior$mean` + 0.5 \times `r x_bar` \approx `r riley$mean`$]{.blank width="6.5cm"}.
+
+```{=latex}
+\needspace{5.0cm}
+```
+
+j. Jordan's posterior mean is `r jordan$mean` and Riley's is `r riley$mean`. They saw the same data. Why are their posteriors different? What would bring them closer together?
+
+::: {.answer lines="3"}
+They started with different priors: Jordan believed $\mu$ was around 0.3 and Riley believed it was around `r riley_prior$mean`. With `r n_lakes` lakes, the prior still matters. With data from many more lakes, the likelihood would get narrower and dominate, and their posteriors would become almost the same.
+:::
+
+```{=latex}
+\newpage
+```
+
+# Part 3: Same data, two kinds of answers
+
+**Which inference?** For each statement about the mercury data, write __F__ (frequentist) or __B__ (Bayesian), and write the probability in notation.
+
+| Statement | F or B? | In notation |
+|-----------------------------------|-------|-------------------------------|
+| If $\mu$ were 0.3, there would be less than a 0.1% chance of a sample mean as far from 0.3 as `r x_bar`. | [F]{.blank width="1.2cm"} | [$P(\bar{X} \ge `r x_bar` \text{ or } \bar{X} \le `r mirror` \mid \mu = 0.3)$]{.blank width="5.5cm"} |
+| Given the data, it is almost certain (probability more than 0.9999) that the mean mercury level is above 0.3 ppm. | [B]{.blank width="1.2cm"} | [$P(\mu > 0.3 \mid \text{data})$]{.blank width="5.5cm"} |
+| Before seeing the data, Jordan thought there was a 50% chance that the mean mercury level is above 0.3 ppm. | [B]{.blank width="1.2cm"} | [$P(\mu > 0.3)$, the prior]{.blank width="5.5cm"} |
+| If we repeated the study many times, about 95% of the intervals built this way would capture $\mu$. | [F]{.blank width="1.2cm"} | [$P(\text{interval captures } \mu \mid \mu) = 0.95$]{.blank width="5.5cm"} |
+| There is a 95% probability that $\mu$ is between `r f3(cred[1])` and `r f3(cred[2])` ppm. | [B]{.blank width="1.2cm"} | [$P(`r f3(cred[1])` < \mu < `r f3(cred[2])` \mid \text{data}) = 0.95$]{.blank width="5.5cm"} |
+| If $\mu$ were 0.3, there would be a 5% chance that we wrongly reject $H_0$. | [F]{.blank width="1.2cm"} | [$P(\text{reject } H_0 \mid H_0 \text{ is true}) = 0.05$]{.blank width="5.5cm"} |
+
+: Frequentist or Bayesian? Statements about the mercury data
+
+```{=latex}
+\needspace{4.0cm}
+```
+
+Look at your notation column. What do all of the frequentist probabilities have in common? What about the Bayesian ones?
+
+::: {.answer lines="3"}
+Frequentist probabilities are about the __data__ (sample statistics, intervals, decisions), assuming a value of $\mu$: $P(\text{data} \mid \text{parameter})$. Bayesian probabilities are about the __parameter__ $\mu$, given the data: $P(\text{parameter} \mid \text{data})$ (or $P(\text{parameter})$ for the prior).
+:::
+
+```{=latex}
+\needspace{12.0cm}
+```
+
+**Same curve, different meaning.** Both of these are normal curves that we used today. Complete the table.
+
+| | $\bar{X} \mid \mu = 0.3 \sim N(0.3, `r se`^2)$ | $\mu \mid \text{data} \sim N(`r jordan$mean`, `r jordan$sd`^2)$ |
+|---|---|---|
+| Name of this distribution | [null sampling distribution]{.blank width="4cm"} | [posterior distribution]{.blank width="4cm"} |
+| What is on the x-axis (what is random)? | [the sample mean $\bar{X}$]{.blank width="4cm"} | [the parameter $\mu$]{.blank width="4cm"} |
+| What is fixed (after the $\mid$)? | [$\mu = 0.3$]{.blank width="4cm"} | [the observed data]{.blank width="4cm"} |
+| Frequentist or Bayesian? | [frequentist]{.blank width="4cm"} | [Bayesian]{.blank width="4cm"} |
+| An area under it is a probability about | [the data (if $\mu = 0.3$)]{.blank width="4cm"} | [$\mu$ (given the data)]{.blank width="4cm"} |
+
+: Comparing the null sampling distribution and the posterior distribution
+
+```{=latex}
+\needspace{6.0cm}
+```
+
+**Two tiny numbers.** The p-value is less than 0.001, and Jordan's $P(H_0 \mid \text{data})$ is less than 0.0001. A classmate says: "Both are tiny, so they mean the same thing: there is almost no chance that $H_0$ is true." Do you agree? Explain.
+
+::: {.answer lines="5"}
+No. Only the Bayesian $P(H_0 \mid \text{data}) = P(\mu \le 0.3 \mid \text{data})$ is a probability that $H_0$ is true, and it depends on Jordan's prior. The p-value is $P(\text{data this extreme} \mid \mu = 0.3)$: a probability about the __data__, assuming $H_0$ is true. $P(A \mid B) \neq P(B \mid A)$! (The hypotheses are also different: the frequentist $H_0$ was $\mu = 0.3$, the Bayesian $H_0$ was $\mu \le 0.3$.)
+:::
+
+```{=latex}
+\needspace{10.0cm}
+```
+
+# Part 4: Spot the error
+
+Each statement about the mercury data is __not correct__. Explain what is wrong, and fix it.
+
+a. "The p-value is less than 0.001, so there is less than a 0.1% chance that the mean mercury level is 0.3 ppm."
+
+::: {.answer lines="3"}
+The p-value is $P(\text{data this extreme} \mid \mu = 0.3)$, not $P(\mu = 0.3 \mid \text{data})$. Fix: "If the mean mercury level were 0.3 ppm, there would be less than a 0.1% chance of a sample mean as far from 0.3 as `r x_bar`." In frequentist inference, we cannot give a probability that $H_0$ is true.
+:::
+
+```{=latex}
+\needspace{4.5cm}
+```
+
+b. "We rejected $H_0$, so we have proven that the mean mercury level is not 0.3 ppm."
+
+::: {.answer lines="3"}
+A hypothesis test does not prove anything. If $H_0$ were true, results like ours would be extremely rare, but not impossible: we could have made a Type I error. Fix: "The data provide convincing evidence that the mean mercury level is not 0.3 ppm."
+:::
+
+```{=latex}
+\needspace{4.5cm}
+```
+
+c. "There is a 95% probability that $\mu$ is between `r f3(ci[1])` and `r f3(ci[2])` ppm." (This is the frequentist confidence interval.)
+
+::: {.answer lines="3"}
+In frequentist inference, $\mu$ is fixed, so this interval either contains $\mu$ or it does not. Fix: "We are 95% confident that $\mu$ is between `r f3(ci[1])` and `r f3(ci[2])` ppm": 95% of intervals built this way would capture $\mu$. The "95% probability" interpretation belongs to a Bayesian __credible__ interval.
+:::
+
+```{=latex}
+\needspace{4.5cm}
+```
+
+d. "95% of Florida lakes have bass with an average mercury level between `r f3(ci[1])` and `r f3(ci[2])` ppm."
+
+::: {.answer lines="3"}
+The interval is about $\mu$, the __mean__ across all lakes, not about individual lakes. The dot plot shows that many lakes are far outside this interval, for example `r sum(lakes$AvgMercury < ci[1])` of the `r n_lakes` lakes are below `r f3(ci[1])`.
+:::
+
+```{=latex}
+\needspace{4.5cm}
+```
+
+e. "In Bayesian hypothesis testing, Jordan started by assuming $H_0: \mu \le 0.3$ was true."
+
+::: {.answer lines="2.5"}
+Bayesian hypothesis testing does not assume either hypothesis is true. Each hypothesis gets a probability: before the data from the prior, after the data from the posterior. Assuming $H_0$ is true is the frequentist approach.
+:::
+
+```{=latex}
+\needspace{4.5cm}
+```
+
+f. "The likelihood is highest at $\mu = `r x_bar`$, so there is a 100% probability that $\mu = `r x_bar`$."
+
+::: {.answer lines="2.5"}
+The likelihood $L(\mu \mid \text{data})$ is not a probability distribution of $\mu$. The highest likelihood means `r x_bar` explains the data best (the maximum likelihood estimate), not that it is certain. To get probabilities of $\mu$, we need a prior and the posterior.
+:::
+
+```{=latex}
+\needspace{10.0cm}
+```
+
+# Part 5: Multiple choice
+
+Write the letter of the best answer. Then explain your choice in one sentence.
+
+**1.** Which of these is the p-value for the mercury test in Part 1?
+
+(A) $P(\mu = 0.3 \mid \text{data})$
+(B) $P(\mu > 0.3 \mid \text{data})$
+(C) $P(\bar{X} \ge `r x_bar` \text{ or } \bar{X} \le `r mirror` \mid \mu = 0.3)$
+(D) $P(\bar{X} = `r x_bar`)$
+
+Answer: [C]{.blank width="1.5cm"}
+
+::: {.answer lines="1.5"}
+The p-value is a probability about the data (the sample statistic), assuming $H_0$ is true.
+:::
+
+```{=latex}
+\needspace{5.5cm}
+```
+
+**2.** In frequentist inference, what is random?
+
+(A) The parameter $\mu$
+(B) The sample mean $\bar{X}$, and intervals built from samples
+(C) Both $\mu$ and $\bar{X}$
+(D) Neither
+
+Answer: [B]{.blank width="1.5cm"}
+
+::: {.answer lines="1.5"}
+In frequentist inference, $\mu$ is a fixed number; what changes from sample to sample is $\bar{X}$ (and the interval).
+:::
+
+```{=latex}
+\needspace{6.5cm}
+```
+
+**3.** Jordan's 95% __credible__ interval for $\mu$ is (`r f3(cred[1])`, `r f3(cred[2])`). Which interpretation is correct?
+
+(A) 95% of all samples of lakes would give an interval that captures $\mu$.
+(B) 95% of Florida lakes have bass with an average mercury level between `r f3(cred[1])` and `r f3(cred[2])` ppm.
+(C) There is a 95% probability that the sample mean is between `r f3(cred[1])` and `r f3(cred[2])`.
+(D) Given the data and Jordan's prior, there is a 95% probability that $\mu$ is between `r f3(cred[1])` and `r f3(cred[2])`.
+
+Answer: [D]{.blank width="1.5cm"}
+
+::: {.answer lines="1.5"}
+A credible interval comes from the posterior, so it is a probability statement about $\mu$ given the data. (A) describes a confidence interval, and (B) is about individual lakes, not the mean.
+:::
+
+```{=latex}
+\needspace{7.0cm}
+```
+
+**4.** Jordan also asks whether $\mu$ is above 0.5 ppm. From Jordan's posterior, $P(\mu > 0.5 \mid \text{data}) \approx `r f2(jordan_gt05)`$ and $P(\mu \le 0.5 \mid \text{data}) \approx `r f2(jordan_le05)`$. Which is correct?
+
+(A) Given the data and Jordan's prior, $\mu \le 0.5$ is about `r f1(jordan_le05 / jordan_gt05)` times as probable as $\mu > 0.5$: weak evidence either way.
+(B) Jordan fails to reject $\mu \le 0.5$ because $`r f2(jordan_gt05)` > 0.05$.
+(C) If $\mu$ were 0.5, there would be a `r round(100 * jordan_gt05)`% chance of data this extreme.
+(D) The data prove that $\mu \le 0.5$, because $`r f2(jordan_le05)` > 0.5$.
+
+Answer: [A]{.blank width="1.5cm"}
+
+::: {.answer lines="2"}
+These are posterior probabilities of the two hypotheses: $\frac{`r f2(jordan_le05)`}{`r f2(jordan_gt05)`} \approx `r f1(jordan_le05 / jordan_gt05)`$. (B) and (C) treat a posterior probability like a p-value.
+:::
+
+```{=latex}
+\needspace{6.0cm}
+```
+
+**5.** Two researchers with very different priors analyze mercury data from a very large number of lakes. Their posteriors will most likely be
+
+(A) still very different, because their priors were very different.
+(B) almost the same.
+(C) the same as their priors.
+(D) impossible to find, because Bayesians must agree on a prior.
+
+Answer: [B]{.blank width="1.5cm"}
+
+::: {.answer lines="1.5"}
+With a lot of data, the likelihood is very narrow and gets almost all of the weight, so the prior matters very little.
+:::
+
+```{=latex}
+\needspace{6.0cm}
+```
+
+**6.** A significance level of $\alpha = 0.05$ means
+
+(A) $P(H_0 \text{ is true} \mid \text{reject } H_0) = 0.05$
+(B) $P(H_A \text{ is true}) = 0.95$
+(C) $P(\text{reject } H_0 \mid H_0 \text{ is true}) = 0.05$
+(D) $P(\text{Type II error}) = 0.05$
+
+Answer: [C]{.blank width="1.5cm"}
+
+::: {.answer lines="1.5"}
+$\alpha$ is the probability of a Type I error: rejecting $H_0$ when it is true. $P(A \mid B) \neq P(B \mid A)$, so (A) is a different probability.
+:::
+
+```{=latex}
+\needspace{7.0cm}
+```
+
+**7.** With the same `r n_lakes` lakes ($\bar{x} = `r x_bar`$, standard error `r se`), a frequentist test of $H_0: \mu = 0.5$ vs. $H_A: \mu \neq 0.5$ gives a p-value of about `r f2(p_value_05)`. Which is correct?
+
+(A) The data prove that the mean mercury level is 0.5 ppm.
+(B) If $\mu$ were 0.5, results like these would not be surprising, so there is not convincing evidence that $\mu$ is different from 0.5.
+(C) There is a `r round(100 * p_value_05)`% probability that $\mu = 0.5$.
+(D) There is a `r 100 - round(100 * p_value_05)`% probability that $\mu \neq 0.5$.
+
+Answer: [B]{.blank width="1.5cm"}
+
+::: {.answer lines="2"}
+Failing to reject $H_0$ is not evidence for $H_0$, and a p-value is not a probability that a hypothesis is true. Values other than 0.5 are also plausible: the confidence interval is from `r f3(ci[1])` to `r f3(ci[2])`.
+:::
+
+```{=latex}
+\needspace{6.5cm}
+```
+
+**8.** The first 5 lakes in the data have average mercury levels `r paste(sprintf("%.2f", first5$AvgMercury), collapse = ", ")` ppm. Mark each one A if it is above 0.3 and N if not: [`r paste(above5, collapse = ", ")`]{.blank width="4cm"}. Let $\pi$ be the proportion of __all__ Florida lakes whose bass average above 0.3 ppm. Which value of $\pi$ has the highest likelihood?
+
+(A) 0.2
+(B) 0.5
+(C) 0.6
+(D) `r k5 / 5`
+
+Answer: [D]{.blank width="1.5cm"}
+
+$L(\pi \mid \text{data}) =$ [$\pi^`r k5` (1 - \pi)^`r 5 - k5`$]{.blank width="3cm"}. $\quad L(0.5 \mid \text{data}) \approx$ [`r f3(lik(0.5))`]{.blank width="2cm"} and $L(`r k5 / 5` \mid \text{data}) \approx$ [`r f3(lik(k5 / 5))`]{.blank width="2cm"}. (Hint: $0.8^4 \approx 0.41$.)
+
+::: {.answer lines="2"}
+The maximum likelihood estimate is the sample proportion, $\frac{`r k5`}{5} = `r k5 / 5`$. But it is only about `r f1(lik(k5 / 5) / lik(0.5))` times as likely as $\pi = 0.5$: with 5 lakes, the likelihood is very spread out. (In all `r n_lakes` lakes, the proportion is `r f2(mean(lakes$AvgMercury > mu0))`.) The likelihoods do not add up to 1.
+:::
+
+```{=latex}
+\needspace{6.0cm}
+```
+
+**9.** In our course notation, $\mu \sim N(0.3, 0.1^2)$, with nothing after a $\mid$, most likely describes
+
+(A) a prior distribution.
+(B) a null sampling distribution.
+(C) a posterior distribution.
+(D) the sampling distribution of a sample mean.
+
+Answer: [A]{.blank width="1.5cm"}
+
+::: {.answer lines="1.5"}
+The random variable is the parameter $\mu$ (so it is Bayesian), and nothing is given yet: no data. A posterior would be $\mu \mid \text{data}$; (B) and (D) would be about $\bar{X}$.
+:::
+
+```{=latex}
+\needspace{10.0cm}
+```
+
+# Exit ticket
+
+Explain to a friend who missed class the difference between the frequentist 95% __confidence__ interval (`r f3(ci[1])`, `r f3(ci[2])`) and Jordan's 95% __credible__ interval (`r f3(cred[1])`, `r f3(cred[2])`) for the mean mercury level. Use the words __random__ and __fixed__. Why is Jordan's interval shifted toward 0.3?
+
+::: {.answer lines="5"}
+For the confidence interval, $\mu$ is __fixed__ and the interval is __random__: it changes from sample to sample, and 95% of intervals built this way would capture $\mu$. Our one interval either contains $\mu$ or not. For the credible interval, the data are __fixed__ (we condition on them) and $\mu$ is __random__: given the data and Jordan's prior, there is a 95% probability that $\mu$ is between `r f3(cred[1])` and `r f3(cred[2])` ppm. Jordan's interval is shifted toward 0.3 because Jordan's prior was centered at 0.3, and the posterior is a compromise between the prior and the likelihood.
+:::

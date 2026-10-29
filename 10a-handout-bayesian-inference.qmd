@@ -1,6 +1,6 @@
 ---
 title: "Likelihood and Bayesian Inference"
-subtitle: "Lecture 9B handout"
+subtitle: "Lecture 10A handout"
 author: "Name: _________________"
 lang: en
 key: false

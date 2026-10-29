@@ -1,6 +1,6 @@
 ---
 title: "Likelihood and Bayesian Inference"
-subtitle: "Lecture 9B handout (answer key)"
+subtitle: "Lecture 10A handout (answer key)"
 author: "Name: SOLUTIONS"
 lang: en
 key: true
