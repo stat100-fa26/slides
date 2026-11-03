@@ -1,0 +1,349 @@
+---
+title: "Simple Linear Regression: Frequentist Inference"
+subtitle: "Lecture 11A handout (answer key)"
+author: "Name: SOLUTIONS"
+lang: en
+key: true
+filters:
+  - style-handout.lua
+  - quarto
+  - a11y-tables.lua
+execute:
+  echo: false
+  warning: false
+  message: false
+format:
+  html:
+    toc: false
+    embed-resources: true
+    css: style-handout.css
+  pdf:
+    documentclass: article
+    fontsize: 11pt
+    linestretch: 1.5
+    geometry:
+      - margin=0.9in
+    colorlinks: true
+    linkcolor: harvardcrimson
+    urlcolor: harvardcrimson
+    include-in-header:
+      - style-handout-header.tex
+      - text: |
+          \usepackage{needspace}
+---
+
+```{r}
+#| label: setup
+#| include: false
+# `key` in the YAML above: true shows the answers, false leaves blanks.
+key <- isTRUE(rmarkdown::metadata$key)
+library(tidyverse)
+library(patchwork)
+library(openintro)
+library(broom)
+options(scipen = 999)
+
+source("R/plot-normal.R")
+
+green <- hds_colors[["green"]]
+pink <- hds_colors[["pink"]]
+
+theme_set(theme_minimal(base_size = 12))
+
+f1 <- function(x) sprintf("%.1f", x)
+f2 <- function(x) sprintf("%.2f", x)
+
+# ---- Baby weights (Child Health and Development Studies) --------------------
+# babies in openintro: 1,236 babies born at Kaiser Foundation hospitals in the
+# East Bay, 1960-1967. bwt: birth weight (oz), gestation: length of pregnancy
+# (days), smoke: 1 if the mother smoked during pregnancy, 0 if not.
+
+# Gestation model (rounded values are the ones students see in the output)
+model_g <- lm(bwt ~ gestation, data = babies)
+tidy_g <- tidy(model_g)
+ci_g <- confint(model_g)
+b0 <- round(tidy_g$estimate[1], 1)   # -10.1
+b1 <- round(tidy_g$estimate[2], 3)   # 0.464
+pred_300 <- b0 + b1 * 300            # prediction students calculate by hand
+gest_range <- range(babies$gestation, na.rm = TRUE)
+
+# Centered gestation (centering section)
+gest_mean <- mean(babies$gestation, na.rm = TRUE)
+model_c <- lm(bwt ~ I(gestation - gest_mean), data = babies)
+c0 <- signif(coef(model_c)[1], 3)    # 120, as printed by tidy()
+c0_exact <- coef(model_c)[1]
+
+# Baby number 148: gestation 300 days, bwt 160 oz
+baby148 <- babies |> filter(case == 148)
+resid148 <- baby148$bwt - pred_300
+
+# Smoking model
+model_s <- lm(bwt ~ smoke, data = babies)
+tidy_s <- tidy(model_s)
+ci_s <- confint(model_s)
+s0 <- signif(tidy_s$estimate[1], 3)   # 123, as printed by tidy()
+s1 <- signif(tidy_s$estimate[2], 3)   # -8.94
+```
+
+# Baby weights
+
+The `babies` data in the `openintro` package has `r format(nrow(babies), big.mark = ",")` babies born at Kaiser Foundation hospitals in the East Bay (San Francisco area) between 1960 and 1967. Today we use `bwt` (birth weight, in ounces), `gestation` (length of the pregnancy, in days), and `smoke` (1 if the mother smoked during pregnancy, 0 if not).
+
+```{=latex}
+\needspace{7.5cm}
+```
+
+```{r}
+#| label: scatter
+#| echo: true
+#| fig-width: 6
+#| fig-height: 2.8
+#| fig-align: center
+#| fig-alt: "Scatterplot of birth weight in ounces against gestation in days, with the least squares line. Most points are between 250 and 300 days and between 90 and 150 ounces. Birth weight tends to increase with gestation, but the points are widely scattered around the upward-sloping line."
+ggplot(babies, aes(x = gestation, y = bwt)) +
+  geom_point(alpha = 0.4) +
+  geom_smooth(method = "lm", se = FALSE)
+```
+
+Response variable ($y$): [`bwt`]{.blank width="2.5cm"} $\qquad$ Explanatory variable ($x$): [`gestation`]{.blank width="2.5cm"}
+
+{{< pagebreak >}}
+
+**Math class vs. statistics class.** Real data do not fall exactly on a line, so the statistics equation has one more term. Name each term.
+
+| Math class | Name | Statistics class | Name |
+|---|---|---|---|
+| $y = b + mx$ | | $y_i = \beta_0 + \beta_1 x_i + \epsilon_i$ | |
+| $y$ | [$y$ value (output)]{.blank width="3cm"} | $y_i$ | [response: birth weight of baby $i$]{.blank width="3.8cm"} |
+| $b$ | [intercept]{.blank width="3cm"} | $\beta_0$ | [intercept]{.blank width="3.8cm"} |
+| $m$ | [slope]{.blank width="3cm"} | $\beta_1$ | [slope]{.blank width="3.8cm"} |
+| $x$ | [$x$ value (input)]{.blank width="3cm"} | $x_i$ | [explanatory: gestation of baby $i$]{.blank width="3.8cm"} |
+| | | $\epsilon_i$ | [error: how far baby $i$ is from the line]{.blank width="3.8cm"} |
+
+: Equation of a line in math class and in statistics class {.no-row-headers}
+
+Just like $\pi$ and $p$, $\beta_0$ and $\beta_1$ are population [parameters]{.blank width="2.5cm"}. From the sample, we estimate $\beta_0$ with [$b_0$]{.blank width="1.5cm"}, $\beta_1$ with [$b_1$]{.blank width="1.5cm"}, and the error $\epsilon_i$ with the [residual]{.blank width="2cm"} $e_i$. The fitted line is $\hat{y} = b_0 + b_1 x$, where $\hat{y}$ is the [expected (predicted) value]{.blank width="4cm"} of $y$.
+
+```{=latex}
+\needspace{6.5cm}
+```
+
+# Fitting the model
+
+```{r}
+#| label: model-g
+#| echo: true
+model_g <- lm(bwt ~ gestation, data = babies)
+tidy(model_g)
+```
+
+Fitted equation: $\widehat{\text{bwt}} =$ [`r b0`]{.blank width="2cm"} $+$ [`r b1`]{.blank width="2cm"} $\times$ gestation
+
+{{< pagebreak >}}
+
+a. Expected birth weight of a baby born after 300 days of gestation: [$`r b0` + `r b1` \times 300 = `r f1(pred_300)`$ ounces]{.blank width="6.5cm"}
+
+b. Interpret the slope in context.
+
+::: {.answer lines="2"}
+For each additional day of gestation, birth weight is expected to be `r b1` ounces higher, on average.
+:::
+
+```{=latex}
+\needspace{3.5cm}
+```
+
+c. Interpret the intercept. Does it make sense? (We will come back to this at the end of class.)
+
+::: {.answer lines="2"}
+A baby with 0 days of gestation is expected to weigh `r b0` ounces. No: 0 days is far outside the data (`r gest_range[1]` to `r gest_range[2]` days). Predicting outside the range of the data is called __extrapolation__.
+:::
+
+```{=latex}
+\needspace{10.5cm}
+```
+
+d. Baby number 148 had a gestation of 300 days and weighed `r baby148$bwt` ounces (the pink point below). Find the __residual__, $e_{148} = y_{148} - \hat{y}_{148}$. Is the baby above or below the line?
+
+```{r}
+#| label: residual-plot
+#| fig-width: 5.5
+#| fig-height: 2.5
+#| fig-align: center
+#| fig-alt: !expr glue::glue("Scatterplot of birth weight against gestation with the regression line. Baby number 148, at 300 days and {baby148$bwt} ounces, is a large pink point above the line. A dashed vertical segment connects the point to the line at {f1(pred_300)} ounces.")
+ggplot(babies, aes(gestation, bwt)) +
+  geom_point(alpha = 0.25, color = "gray40") +
+  geom_abline(intercept = b0, slope = b1, color = green, linewidth = 1) +
+  annotate("segment", x = 300, xend = 300, y = pred_300, yend = baby148$bwt,
+           color = pink, linewidth = 1, linetype = "dashed") +
+  annotate("point", x = 300, y = baby148$bwt, color = pink, size = 4) +
+  annotate("label", x = 318, y = baby148$bwt + 8, label = "baby 148", size = 3.5) +
+  coord_cartesian(xlim = c(220, 340)) +
+  labs(x = "gestation", y = "bwt")
+```
+
+::: {.answer lines="1.5"}
+$e_{148} = `r baby148$bwt` - `r f1(pred_300)` = `r f1(resid148)`$ ounces. Positive, so the baby is above the line.
+:::
+
+`lm()` finds the __least squares__ line: the line with the smallest [sum of squared residuals]{.blank width="4.5cm"}, $\sum e_i^2$.
+
+{{< pagebreak >}}
+
+# Inference for the slope
+
+If there were __no__ relationship between gestation and birth weight, the population slope would be [0]{.blank width="1.5cm"}.
+
+$H_0$: [$\beta_1 = 0$]{.blank width="2.5cm"} $\qquad H_A$: [$\beta_1 \neq 0$]{.blank width="2.5cm"}
+
+The `p.value` in the `gestation` row of `tidy(model_g)` is [$P(\text{a slope as extreme as } `r b1` \mid \beta_1 = 0)$]{.blank width="6.5cm"}.
+
+```{r}
+#| label: confint-g
+#| echo: true
+confint(model_g)
+```
+
+```{=latex}
+\needspace{3.5cm}
+```
+
+What do you conclude at $\alpha = 0.05$? Interpret the 95% confidence interval for the slope.
+
+::: {.answer lines="3.5"}
+The p-value ($3 \times 10^{-50}$) is less than 0.05, so we reject $H_0$: there is convincing evidence of a linear relationship. We are 95% confident that for each additional day of gestation, birth weight is expected to be between `r f2(ci_g[2, 1])` and `r f2(ci_g[2, 2])` ounces higher, on average. The interval does not include 0.
+:::
+
+{{< pagebreak >}}
+
+# A categorical (binary) explanatory variable: smoking
+
+```{r}
+#| label: model-s
+#| echo: true
+model_s <- lm(bwt ~ smoke, data = babies)
+tidy(model_s)
+confint(model_s)
+```
+
+```{=latex}
+\needspace{5.5cm}
+```
+
+$\widehat{\text{bwt}} =$ [`r s0`]{.blank width="2cm"} $+$ [(`r s1`)]{.blank width="2cm"} $\times$ smoke. `smoke` can only be 0 or 1:
+
+- Expected birth weight, mother did not smoke (smoke = 0): [$`r s0`$ ounces]{.blank width="3.5cm"}
+- Expected birth weight, mother smoked (smoke = 1): [$`r s0` + (`r s1`) = `r f2(s0 + s1)`$ ounces]{.blank width="5cm"}
+
+So the intercept is [the mean of the non-smokers]{.blank width="5cm"} and the slope is [the difference between the two group means]{.blank width="6.5cm"}.
+
+```{=latex}
+\needspace{4.0cm}
+```
+
+Interpret the slope and its 95% confidence interval. Is there a difference?
+
+::: {.answer lines="3"}
+Babies of mothers who smoked are expected to weigh `r abs(s1)` ounces less, on average, than babies of mothers who did not. We are 95% confident that the difference is between `r f2(abs(ci_s[2, 2]))` and `r f2(abs(ci_s[2, 1]))` ounces. The interval does not include 0 (and the p-value is tiny), so there is convincing evidence of a difference.
+:::
+
+```{=latex}
+\needspace{4.0cm}
+```
+
+Can we conclude that smoking __causes__ lower birth weight? Can we generalize to babies born today?
+
+::: {.answer lines="3"}
+No: this is an observational study, and smokers and non-smokers may differ in other ways (confounding variables). The babies were born in the 1960s at Kaiser hospitals in the East Bay, not a random sample of babies today.
+:::
+
+{{< pagebreak >}}
+
+# Centering
+
+The intercept of `model_g`, `r b0` ounces, is the expected birth weight at 0 days of gestation. That does not make sense. A common fix is to __center__ the explanatory variable: subtract its mean from every value.
+
+$$\text{gestation\_c} = \text{gestation} - \overline{\text{gestation}}$$
+
+```{r}
+#| label: centering
+#| echo: true
+mean(babies$gestation, na.rm = TRUE)
+
+babies <- babies |>
+  mutate(gestation_c = gestation - mean(gestation, na.rm = TRUE))
+
+model_c <- lm(bwt ~ gestation_c, data = babies)
+tidy(model_c)
+```
+
+```{=latex}
+\needspace{3.5cm}
+```
+
+a. What is `gestation_c` for a baby born after `r round(gest_mean)` days (about average)? After 300 days? After 260 days?
+
+::: {.answer lines="1.5"}
+About 0, $300 - `r f1(gest_mean)` = `r f1(300 - gest_mean)`$, and $260 - `r f1(gest_mean)` = `r f1(260 - gest_mean)`$. A positive value means longer than average; a negative value means shorter than average.
+:::
+
+```{=latex}
+\needspace{9.0cm}
+```
+
+```{r}
+#| label: centering-plot
+#| fig-width: 7
+#| fig-height: 2.4
+#| fig-align: center
+#| fig-alt: !expr glue::glue("Two scatterplots of birth weight with the same regression line. On the left, the x-axis is gestation in days from 0 to 360. The data are all on the right, and a pink point marks where the line crosses x = 0, far from the data, at {b0} ounces. On the right, the x-axis is centered gestation, from about -130 to 75 days, and a dashed vertical line at 0 is in the middle of the data, where the line is at about {c0} ounces, marked with a pink point.")
+p_raw <- ggplot(babies, aes(gestation, bwt)) +
+  geom_point(alpha = 0.2, size = 0.7, color = "gray40") +
+  geom_vline(xintercept = 0, linetype = "dashed") +
+  geom_abline(intercept = b0, slope = b1, color = green, linewidth = 1) +
+  annotate("point", x = 0, y = b0, color = pink, size = 3.5) +
+  scale_x_continuous(limits = c(0, 360)) +
+  scale_y_continuous(limits = c(-20, 180)) +
+  labs(x = "gestation", y = "bwt", title = "Not centered")
+p_cen <- ggplot(babies, aes(gestation_c, bwt)) +
+  geom_point(alpha = 0.2, size = 0.7, color = "gray40") +
+  geom_vline(xintercept = 0, linetype = "dashed") +
+  geom_abline(intercept = c0_exact, slope = b1, color = green, linewidth = 1) +
+  annotate("point", x = 0, y = c0_exact, color = pink, size = 3.5) +
+  labs(x = "gestation_c", y = "bwt", title = "Centered")
+(p_raw | p_cen) & theme(plot.title = element_text(hjust = 0.5, size = 11))
+```
+
+```{=latex}
+\needspace{3.5cm}
+```
+
+b. Interpret the new intercept, `r c0`, in context. Does it make sense now?
+
+::: {.answer lines="2"}
+A baby with an average gestation (about `r round(gest_mean)` days) is expected to weigh about `r c0` ounces. Yes: average gestation is right in the middle of the data.
+:::
+
+```{=latex}
+\needspace{3.5cm}
+```
+
+c. Compare the slope of `model_c` with the slope of `model_g`. Why did it not change?
+
+::: {.answer lines="2"}
+Both are `r b1`. Centering only shifts the $x$-axis (it moves where $x = 0$ is). The line is the same, so it is just as steep.
+:::
+
+People often center so that the intercept describes a typical value of $x$. We will see this again on Wednesday!
+
+```{=latex}
+\needspace{6.0cm}
+```
+
+# Summary
+
+- Model: $y_i = \beta_0 + \beta_1 x_i + \epsilon_i$; in R, [`lm(y ~ x, data = ...)`]{.blank width="4cm"} with `tidy()` and `confint()`.
+- Slope (numeric $x$): expected change in $y$ for [a one-unit increase in $x$]{.blank width="4.5cm"}. Binary $x$: the slope is [the difference between the group means]{.blank width="5.5cm"}.
+- Residual: [observed $-$ expected]{.blank width="3.5cm"}. Do not [extrapolate]{.blank width="2.5cm"}.
+- Centering $x$ (subtracting its mean) changes the intercept to [the expected $y$ at the average $x$]{.blank width="5.5cm"}; the slope [stays the same]{.blank width="3cm"}.
+- $H_0: \beta_1 = 0$. A small p-value, or a confidence interval that does not include [0]{.blank width="1cm"}, is evidence of a relationship, but not of [causation]{.blank width="2.5cm"}.

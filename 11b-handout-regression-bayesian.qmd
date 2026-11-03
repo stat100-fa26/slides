@@ -1,0 +1,355 @@
+---
+title: "Simple Linear Regression: Bayesian Inference"
+subtitle: "Lecture 11B handout"
+author: "Name: _________________"
+lang: en
+key: false
+filters:
+  - style-handout.lua
+  - quarto
+  - a11y-tables.lua
+execute:
+  echo: false
+  warning: false
+  message: false
+format:
+  html:
+    toc: false
+    embed-resources: true
+    css: style-handout.css
+  pdf:
+    documentclass: article
+    fontsize: 11pt
+    linestretch: 1.5
+    geometry:
+      - margin=0.9in
+    colorlinks: true
+    linkcolor: harvardcrimson
+    urlcolor: harvardcrimson
+    include-in-header:
+      - style-handout-header.tex
+      - text: |
+          \usepackage{needspace}
+---
+
+```{r}
+#| label: setup
+#| include: false
+# `key` in the YAML above: true shows the answers, false leaves blanks.
+key <- isTRUE(rmarkdown::metadata$key)
+library(tidyverse)
+library(bayesrules)
+library(brms)
+options(scipen = 999)
+
+source("R/plot-normal.R")
+
+green <- hds_colors[["green"]]
+pink <- hds_colors[["pink"]]
+
+theme_set(theme_minimal(base_size = 12))
+
+f0 <- function(x) format(round(x), big.mark = ",")
+f1 <- function(x) sprintf("%.1f", x)
+
+# ---- Capital Bikeshare (bikes in bayesrules) --------------------------------
+# 500 days of Capital Bikeshare data, Washington, D.C., 2011-2012.
+# Example and priors follow Bayes Rules! Chapter 9 (Johnson, Ott, and Dogucu).
+mean_temp <- mean(bikes$temp_feel)
+
+# Prior plausible lines (not shown to students). brms puts the Intercept prior
+# on the centered intercept: the typical ridership on an average temperature
+# day.
+set.seed(84735)
+prior_lines <- tibble(b0c = rnorm(100, 5000, 1000),
+                      b1 = rnorm(100, 100, 40)) |>
+  mutate(b0 = b0c - b1 * mean_temp)
+
+# Probabilities from draws, written for students
+fmt_p <- function(p) if (p == 1) "more than 0.9999" else if (p == 0) "less than 0.0001" else sprintf("%.2f", p)
+```
+
+# Capital Bikeshare
+
+The `bikes` data in the `bayesrules` package has `r nrow(bikes)` days of Capital Bikeshare data from Washington, D.C. (2011–2012): `rides` (number of rides that day), `temp_feel` (what the temperature felt like, in °F), and `weekend` (`TRUE` for Saturday or Sunday).
+
+<small>Example from Johnson, Ott, & Dogucu (2022), [*Bayes Rules!*](https://www.bayesrulesbook.com/chapter-9), Chapter 9.</small>
+
+**Same model, different view.** On Monday, $\beta_0$ and $\beta_1$ were [fixed, unknown numbers]{.blank width="4cm"}. Today they are [random variables]{.blank width="3.5cm"} with a prior and a posterior:
+
+$$Y_i \mid \beta_0, \beta_1, \sigma \ \sim \ N(\beta_0 + \beta_1 X_i, \ \sigma^2)$$
+
+$\beta_0 + \beta_1 X_i$ is the [typical number of rides]{.blank width="4cm"} on days with temperature $X_i$, and $\sigma$ is how far a single day typically is [from the line]{.blank width="2.5cm"}.
+
+```{=latex}
+\needspace{9.0cm}
+```
+
+# Step 1: prior
+
+| Parameter | Prior understanding | Prior |
+|---|---|---|
+| Centered intercept | On an __average temperature__ day (`r f1(mean_temp)` °F), typically about 5,000 rides (between 3,000 and 7,000). | $N(5000, 1000^2)$ |
+| $\beta_1$ | Each extra degree, about 100 more rides (between 20 and 180). | $N(100, 40^2)$ |
+: Prior understanding of bikeshare ridership
+
+We set priors for the centered intercept and the slope. For $\sigma$, we let `brm()` choose the prior.^[It is usually not a good idea to leave a prior unspecified: we should say what we believe about every parameter. We do it here to keep our first Bayesian regression model simple. $\sigma$ can only be positive, so a normal prior does not fit it well. In more advanced classes, you will see other probability distributions that are useful for setting a prior for $\sigma$.]
+
+**Centered intercept.** Remember centering from Monday! In `brm()`, the prior for the `Intercept` is a prior for the __centered__ intercept: the typical number of rides on an average temperature day, not on a 0 °F day. Why is it easier to set a prior for the centered intercept?
+
+[We can imagine a typical day. 0 °F is far outside the data, like 0 days of gestation.]{.blank width="13cm"}
+
+```{=latex}
+\needspace{7.0cm}
+```
+
+```{r}
+#| label: prior-lines
+#| fig-width: 6
+#| fig-height: 2.4
+#| fig-align: center
+#| fig-alt: "100 straight lines for rides against temperature, from 45 to 90 degrees, simulated from the priors. Almost all of the lines go up, but they vary a lot in steepness and height."
+ggplot(prior_lines) +
+  geom_abline(aes(intercept = b0, slope = b1), color = green, alpha = 0.35) +
+  scale_x_continuous(limits = c(45, 90)) +
+  scale_y_continuous(limits = c(-2000, 12000), labels = scales::comma) +
+  labs(x = "temp_feel", y = "rides", title = "100 plausible lines from the prior") +
+  theme(plot.title = element_text(hjust = 0.5, size = 11))
+```
+
+```{=latex}
+\needspace{9.0cm}
+```
+
+# Steps 2 and 3: data and posterior
+
+```{r}
+#| label: bike-model
+#| echo: true
+library(brms)
+
+bike_model <- brm(rides ~ temp_feel, data = bikes, family = gaussian(),
+                  prior = c(prior(normal(5000, 1000), class = Intercept),
+                            prior(normal(100, 40), class = b)),
+                  chains = 4, iter = 5000 * 2, seed = 84735, refresh = 0)
+
+bike_draws <- as_draws_df(bike_model)
+head(bike_draws, 3)
+```
+
+```{r}
+#| label: bike-numbers
+bike_draws <- as.data.frame(bike_draws)
+n_draws <- nrow(bike_draws)
+post_b0 <- mean(bike_draws$b_Intercept)
+post_b1 <- mean(bike_draws$b_temp_feel)
+post_sigma <- mean(bike_draws$sigma)
+ci_b1 <- quantile(bike_draws$b_temp_feel, c(0.025, 0.975))
+p_b1_pos <- mean(bike_draws$b_temp_feel > 0)
+pred_75 <- post_b0 + post_b1 * 75
+```
+
+The posterior has no simple formula, so `brm()` __simulates__ `r f0(n_draws)` plausible values of $(\beta_0, \beta_1, \sigma)$ from it. Each [row]{.blank width="1.5cm"} of `bike_draws` is one plausible line.
+
+```{=latex}
+\needspace{7.0cm}
+```
+
+```{r}
+#| label: post-lines
+#| fig-width: 6
+#| fig-height: 2.4
+#| fig-align: center
+#| fig-alt: !expr glue::glue("Scatterplot of rides against temperature with 50 posterior plausible lines in pink. The lines are almost on top of each other, and all go up with a slope of about {round(post_b1)} rides per degree.")
+set.seed(84735)
+bike_draws |>
+  slice_sample(n = 50) |>
+  ggplot() +
+  geom_point(data = bikes, aes(temp_feel, rides), alpha = 0.3, size = 1) +
+  geom_abline(aes(intercept = b_Intercept, slope = b_temp_feel), color = pink, alpha = 0.4) +
+  scale_x_continuous(limits = c(45, 90)) +
+  scale_y_continuous(limits = c(-2000, 12000), labels = scales::comma) +
+  labs(x = "temp_feel", y = "rides", title = "50 plausible lines from the posterior") +
+  theme(plot.title = element_text(hjust = 0.5, size = 11))
+```
+
+Compared to the prior lines, the posterior lines are [much closer together: we are more certain after seeing the data]{.blank width="10cm"}.
+
+{{< pagebreak >}}
+
+# Using the posterior
+
+**Two intercepts.** `bike_draws` has two intercept columns:
+
+- `Intercept`: the [centered]{.blank width="2cm"} intercept, the typical number of rides on an average temperature day. This is the one our prior was for.
+- `b_Intercept`: the usual [uncentered]{.blank width="2.5cm"} intercept, $\beta_0$, the typical number of rides on a [0 °F]{.blank width="1.5cm"} day. That is why it is negative.
+
+```{r}
+#| label: centered-intercept
+#| echo: true
+bike_draws |>
+  summarize(posterior_mean_centered = mean(Intercept),
+            posterior_mean_uncentered = mean(b_Intercept))
+```
+
+```{r}
+#| label: centered-numbers
+post_c0 <- mean(bike_draws$Intercept)
+```
+
+Our prior said about 5,000 rides on an average temperature day. What does the posterior say? [About `r f0(post_c0)` rides: fewer than we expected.]{.blank width="8cm"}
+
+```{r}
+#| label: summary
+#| echo: true
+bike_draws |>
+  summarize(posterior_mean_b1 = mean(b_temp_feel),
+            posterior_lower_b1 = quantile(b_temp_feel, 0.025),
+            posterior_upper_b1 = quantile(b_temp_feel, 0.975))
+```
+
+```{=latex}
+\needspace{4.0cm}
+```
+
+a. Interpret the posterior mean of $\beta_1$ in context.
+
+::: {.answer lines="1.5"}
+For every one degree increase in temperature, we expect about `r round(post_b1)` more rides, on average.
+:::
+
+```{=latex}
+\needspace{4.0cm}
+```
+
+b. The 95% __posterior credible interval__ for $\beta_1$ is the middle 95% of the posterior draws. Interpret it in context.
+
+::: {.answer lines="2"}
+Given the data (and our prior), there is a 95% posterior probability that each one degree increase in temperature is associated with between `r f1(ci_b1[1])` and `r f1(ci_b1[2])` more rides, on average.
+:::
+
+```{=latex}
+\needspace{4.0cm}
+```
+
+c. $H_0: \beta_1 \le 0$ and $H_A: \beta_1 > 0$. The __posterior probability__ of a hypothesis is the [proportion of posterior draws]{.blank width="4.5cm"} where it is true.
+
+```{r}
+#| label: prob-positive
+#| echo: true
+bike_draws |>
+  summarize(posterior_prob_positive = mean(b_temp_feel > 0))
+```
+
+$P(H_A \mid \text{data}) \approx$ [`r fmt_p(p_b1_pos)`]{.blank width="3.5cm"}. Conclusion:
+
+::: {.answer lines="1.5"}
+Given the data, it is almost certain that ridership is positively associated with temperature.
+:::
+
+```{=latex}
+\needspace{5.5cm}
+```
+
+d. **Prediction.** Using the posterior means, the typical number of rides on a 75 °F day is [`r f0(post_b0)` $+$ `r sprintf("%.2f", post_b1)` $\times 75 \approx$ `r f0(pred_75)`]{.blank width="6.5cm"}. A single 75 °F day could be quite different from this: individual days vary around the line by about $\sigma \approx$ [`r f0(post_sigma)`]{.blank width="2cm"} rides (the posterior mean of $\sigma$).
+
+```{=latex}
+\needspace{6.0cm}
+```
+
+# A binary explanatory variable: weekends
+
+$X_i = 1$ on weekends and 0 on weekdays. Typical rides on a weekday: [$\beta_0$]{.blank width="1.5cm"}. On a weekend day: [$\beta_0 + \beta_1$]{.blank width="2cm"}. So $\beta_1$ is the [difference, weekend $-$ weekday]{.blank width="4.5cm"}.
+
+We keep the same prior for the centered intercept (a typical day). We are not sure whether weekends have more or fewer rides, so the prior for $\beta_1$ is $N(0, 1000^2)$. Prior probability that $\beta_1 < 0$: [0.5]{.blank width="1.5cm"}
+
+```{r}
+#| label: week-model
+#| echo: true
+week_model <- brm(rides ~ weekend, data = bikes, family = gaussian(),
+                  prior = c(prior(normal(5000, 1000), class = Intercept),
+                            prior(normal(0, 1000), class = b)),
+                  chains = 4, iter = 5000 * 2, seed = 84735, refresh = 0)
+week_draws <- as_draws_df(week_model)
+```
+
+```{r}
+#| label: week-numbers
+week_df <- as.data.frame(week_draws)
+w_b0 <- mean(week_df$b_Intercept)
+w_b1 <- mean(week_df$b_weekendTRUE)
+ci_w1 <- quantile(week_df$b_weekendTRUE, c(0.025, 0.975))
+p_w1_neg <- mean(week_df$b_weekendTRUE < 0)
+```
+
+{{< pagebreak >}}
+
+```{r}
+#| label: week-means
+#| echo: true
+week_draws |>
+  summarize(posterior_mean_b0 = mean(b_Intercept),
+            posterior_mean_b1 = mean(b_weekendTRUE))
+```
+
+a. `b_Intercept` is the uncentered intercept, so it is the typical number of rides when $X = 0$. Posterior mean of the typical rides on a weekday: [`r f0(w_b0)`]{.blank width="2cm"}. On a weekend day: [`r f0(w_b0)` $+$ (`r f0(w_b1)`) $=$ `r f0(w_b0 + w_b1)`]{.blank width="5cm"}
+
+```{r}
+#| label: week-summary
+#| echo: true
+week_draws |>
+  summarize(posterior_lower_b1 = quantile(b_weekendTRUE, 0.025),
+            posterior_upper_b1 = quantile(b_weekendTRUE, 0.975),
+            posterior_prob_negative = mean(b_weekendTRUE < 0))
+```
+
+b. Interpret the 95% posterior credible interval for $\beta_1$ in context.
+
+::: {.answer lines="1.5"}
+Given the data, there is a 95% posterior probability that weekend days have between `r f0(abs(ci_w1[2]))` and `r f0(abs(ci_w1[1]))` fewer rides than weekdays, on average.
+:::
+
+```{=latex}
+\needspace{4.0cm}
+```
+
+c. $H_A: \beta_1 < 0$ (fewer rides on weekends). Prior probability: [0.5]{.blank width="1.5cm"}. Posterior probability: [`r fmt_p(p_w1_neg)`]{.blank width="3.5cm"}. What do you conclude? Can we say weekends __cause__ fewer rides?
+
+::: {.answer lines="1.5"}
+Given the data, it is almost certain that weekends have fewer rides, on average. This is observational data, so it is an association, not causation (for example, fewer people commute on weekends).
+:::
+
+{{< pagebreak >}}
+
+# Frequentist vs. Bayesian
+
+```{r}
+#| label: freq
+#| echo: true
+confint(lm(rides ~ temp_feel, data = bikes))
+```
+
+```{r}
+#| label: freq-numbers
+ci_freq <- confint(lm(rides ~ temp_feel, data = bikes))["temp_feel", ]
+```
+
+| | Frequentist (Monday) | Bayesian (today) |
+|---|---|---|
+| R function | [`lm()`]{.blank width="3cm"} | [`brm()`]{.blank width="3cm"} |
+| 95% interval for $\beta_1$ | [`r f1(ci_freq[1])` to `r f1(ci_freq[2])`: confidence interval]{.blank width="5cm"} | [`r f1(ci_b1[1])` to `r f1(ci_b1[2])`: posterior credible interval]{.blank width="5cm"} |
+| "95% probability that $\beta_1$ is in the interval" | [Not correct]{.blank width="3cm"} | [Correct]{.blank width="3cm"} |
+
+: Frequentist and Bayesian intervals for the slope
+
+Why are the two intervals so similar? [With 500 days of data, the prior has little influence on the posterior.]{.blank width="10cm"}
+
+```{=latex}
+\needspace{5.0cm}
+```
+
+# Summary
+
+- In R: [`brm()`]{.blank width="2cm"} with a prior for the `Intercept` and the slopes (`b`); here `brm()` chose the prior for `sigma`. The `Intercept` prior is for the centered intercept. In the draws, `Intercept` is the [centered]{.blank width="2cm"} intercept and `b_Intercept` is the [uncentered]{.blank width="2.5cm"} intercept. The posterior is a set of simulated [draws]{.blank width="2cm"}: `as_draws_df()`.
+- From the draws: the __posterior mean__ (`mean()`), the 95% __posterior credible interval__ ([`quantile()` at 0.025 and 0.975]{.blank width="5cm"}), and the __posterior probability__ of a hypothesis ([the proportion of draws where it is true]{.blank width="5.5cm"}).
+- With a lot of data, the posterior credible interval and the confidence interval are [similar]{.blank width="2cm"}, but only the posterior credible interval is a probability statement about $\beta_1$.
