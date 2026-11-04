@@ -1,0 +1,202 @@
+---
+title-meta: "Statistical Learning"
+lang: en
+format:
+  pdf:
+    documentclass: article
+    fontsize: 11pt
+    linestretch: 1.15
+    geometry:
+      - top=0.7in
+      - bottom=0.75in
+      - left=0.85in
+      - right=0.85in
+    colorlinks: true
+    linkcolor: harvardcrimson
+    urlcolor: harvardcrimson
+    include-in-header:
+      - style-handout-header.tex
+      - text: |
+          \usepackage{tikz}
+          \usetikzlibrary{shapes.symbols,positioning}
+          \usepackage[most]{tcolorbox}
+          \usepackage{array}
+          \usepackage{colortbl}
+          \usepackage{amssymb}
+          \definecolor{softcrimson}{HTML}{FBEDEF}
+          \definecolor{softteal}{HTML}{E6F2F4}
+          \definecolor{softgreen}{HTML}{E8F3EC}
+          \definecolor{softorange}{HTML}{FCEFE3}
+          \definecolor{orangeaccent}{HTML}{B5560B}
+          \definecolor{gridblue}{HTML}{9CC3D5}
+          \newtcolorbox{stepbox}[2]{enhanced, breakable=false,
+            colback=white, colframe=#1, boxrule=0.8pt, arc=3pt,
+            left=8pt, right=8pt, top=6pt, bottom=6pt,
+            fonttitle=\bfseries\large, coltitle=white, colbacktitle=#1,
+            title={#2}, before skip=6pt, after skip=8pt}
+          \newcommand{\fillline}[1]{\rule[-3pt]{#1}{0.5pt}}
+          \newcommand{\choice}{\ensuremath{\bigcirc}}
+          \setlength{\parindent}{0pt}
+---
+
+<!-- 30-minute version of the week 8 "First Steps in Machine Learning"
+     activity (stats6-slides-main/week08). Goes with the slides in
+     10b-extra-statistical-learning.qmd. PDF only, 2 pages. -->
+
+```{=latex}
+\vspace*{-1.6em}
+{\color{harvardcrimson}\fontsize{26}{30}\selectfont\bfseries Statistical Learning\par}
+\vspace{1pt}
+{\large\color{stattextmuted} Can we teach a computer to tell an open book from a closed one?\par}
+\vspace{10pt}
+Name: \fillline{6.4cm} \hfill Team: \fillline{5.6cm}\par
+\vspace{8pt}
+\begin{center}
+\begin{tikzpicture}[
+  step/.style={signal, signal to=east, signal from=west, draw=none,
+    fill=#1, text=white, font=\bfseries\small,
+    minimum height=0.8cm, minimum width=3.1cm, inner xsep=4pt},
+  node distance=0.08cm]
+\node[step=harvardcrimson, signal from=nowhere] (s1) {1. Draw};
+\node[step=harvardcrimson!80!black, right=of s1] (s2) {2. Pixelate};
+\node[step=tealaccent, right=of s2] (s3) {3. Train};
+\node[step=slateaccent, right=of s3] (s4) {4. Test};
+\node[step=emeraldaccent, right=of s4] (s5) {5. Evaluate};
+\end{tikzpicture}
+\end{center}
+\vspace{-4pt}
+
+\begin{stepbox}{harvardcrimson}{Steps 1 \& 2: Draw, then pixelate}
+\textbf{Draw} the object on the slide in \textbf{15 seconds}. Don't show your
+teammates yet. Then \textbf{pixelate}: shade every square that has any pencil
+mark in it, even a tiny one.
+\begin{center}
+\begin{tikzpicture}[x=0.74cm, y=0.74cm]
+  \fill[softteal!45] (0,0) rectangle (16,9);
+  \draw[gridblue, line width=0.35pt] (0,0) grid (16,9);
+  \draw[tealaccent, line width=1.4pt] (0,0) rectangle (16,9);
+  \foreach \l [count=\i] in {a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p}
+    \node[font=\scriptsize\sffamily, text=stattextmuted] at (\i-0.5, 9.32) {\l};
+  \foreach \r in {1,...,9}
+    \node[font=\scriptsize\sffamily, text=stattextmuted] at (-0.32, 9.5-\r) {\r};
+\end{tikzpicture}
+\end{center}
+\vspace{-6pt}
+{\small\color{stattextmuted} A computer does not see a picture. It sees a
+grid of $16 \times 9 = 144$ squares, each one \textit{shaded} (1) or
+\textit{empty} (0).\par}
+\end{stepbox}
+
+\begin{stepbox}{tealaccent}{Step 3: Train your algorithm}
+Look at your team's pixelated drawings (your \textbf{training data}). Write
+rules a computer could follow to decide whether a drawing is an
+\textbf{open} or a \textbf{closed} book. Use only the squares: no
+``it looks like\dots''
+
+\vspace{10pt}
+\textbf{Algorithm name:} \fillline{8.5cm}
+
+\vspace{12pt}
+\textbf{Rule 1:} \hrulefill
+
+\vspace{12pt}
+\textbf{Rule 2:} \hrulefill
+
+\vspace{12pt}
+\textbf{Rule 3:} \hrulefill
+
+\vspace{12pt}
+\begin{tcolorbox}[colback=softteal, colframe=softteal, arc=2pt,
+  left=6pt, right=6pt, top=6pt, bottom=6pt]
+\textbf{Decision:} \texttt{if} \fillline{8.4cm} \texttt{then} predict
+\textbf{open},\\[3pt]
+\phantom{\textbf{Decision:} }\texttt{else} predict \textbf{closed}.
+\end{tcolorbox}
+\end{stepbox}
+
+\newpage
+
+\begin{stepbox}{slateaccent}{Step 4: Test your algorithm on new drawings}
+You will see 10 drawings your team has never seen (the \textbf{testing data}).
+Apply your rules \textit{exactly as written} and circle the prediction. Then
+circle the actual class and mark whether you were correct.
+\begin{center}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{>{\centering\arraybackslash}p{1.4cm}
+                >{\centering\arraybackslash}p{4.1cm}
+                >{\centering\arraybackslash}p{4.1cm}
+                >{\centering\arraybackslash}p{2.4cm}}
+\rowcolor{slateaccent}
+\textcolor{white}{\textbf{Image}} &
+\textcolor{white}{\textbf{Predicted class}} &
+\textcolor{white}{\textbf{Actual class}} &
+\textcolor{white}{\textbf{Correct?}} \\
+1  & open \qquad closed & open \qquad closed & yes \quad no \\
+\rowcolor{slateaccent!8}
+2  & open \qquad closed & open \qquad closed & yes \quad no \\
+3  & open \qquad closed & open \qquad closed & yes \quad no \\
+\rowcolor{slateaccent!8}
+4  & open \qquad closed & open \qquad closed & yes \quad no \\
+5  & open \qquad closed & open \qquad closed & yes \quad no \\
+\rowcolor{slateaccent!8}
+6  & open \qquad closed & open \qquad closed & yes \quad no \\
+7  & open \qquad closed & open \qquad closed & yes \quad no \\
+\rowcolor{slateaccent!8}
+8  & open \qquad closed & open \qquad closed & yes \quad no \\
+9  & open \qquad closed & open \qquad closed & yes \quad no \\
+\rowcolor{slateaccent!8}
+10 & open \qquad closed & open \qquad closed & yes \quad no \\
+\end{tabular}
+\end{center}
+\vspace{-4pt}
+\end{stepbox}
+
+\begin{stepbox}{emeraldaccent}{Step 5: Evaluate your model}
+Count how many of the 10 test images land in each cell. We call
+\textbf{open} the \textit{positive} class.
+\begin{center}
+\begin{tikzpicture}[x=5.0cm, y=1.45cm,
+  cell/.style={minimum width=4.85cm, minimum height=1.35cm, align=center,
+    rounded corners=2pt, line width=0.8pt},
+  head/.style={font=\bfseries\small, align=center}]
+  \node[head] at (1,0.7) {Predicted: OPEN};
+  \node[head] at (2,0.7) {Predicted: CLOSED};
+  \node[head, anchor=east] at (0.5,0) {Actual: OPEN};
+  \node[head, anchor=east] at (0.5,-1) {Actual: CLOSED};
+  \node[cell, fill=softgreen, draw=emeraldaccent] at (1,0)
+    {\textcolor{emeraldaccent}{\textbf{True Positive (TP)}}\\[5pt] \fillline{1.4cm}};
+  \node[cell, fill=softorange, draw=orangeaccent] at (2,0)
+    {\textcolor{orangeaccent}{\textbf{False Negative (FN)}}\\[5pt] \fillline{1.4cm}};
+  \node[cell, fill=softcrimson, draw=harvardcrimson] at (1,-1)
+    {\textcolor{harvardcrimson}{\textbf{False Positive (FP)}}\\[5pt] \fillline{1.4cm}};
+  \node[cell, fill=softgreen, draw=emeraldaccent] at (2,-1)
+    {\textcolor{emeraldaccent}{\textbf{True Negative (TN)}}\\[5pt] \fillline{1.4cm}};
+\end{tikzpicture}
+\end{center}
+\vspace{-2pt}
+\textbf{Accuracy} $= \dfrac{\text{TP} + \text{TN}}{\text{total}} =
+\dfrac{\rule{1.2cm}{0.5pt}}{10} = $ \fillline{1.8cm}
+\end{stepbox}
+
+\begin{stepbox}{harvardcrimson}{Discuss with your team}
+\textbf{(a)} A medical test predicts \textit{disease} or \textit{no disease}.
+Which is worse here, a false positive or a false negative? Why?
+
+\vspace{1.0cm}
+\textbf{(b)} Your rules worked on your own team's drawings. Why might they do
+worse on new drawings? What do we call a model that fits its training data
+\textit{too} well?
+
+\vspace{1.0cm}
+\end{stepbox}
+
+\begin{tcolorbox}[colback=softcrimson, colframe=softcrimson, arc=3pt,
+  left=8pt, right=8pt, top=4pt, bottom=4pt, before skip=2pt]
+\small\linespread{1.05}\selectfont
+\textbf{Algorithm:} the recipe (a set of rules). \quad
+\textbf{Model:} the algorithm after it is trained on data. \quad
+\textbf{Training data:} the data the model learns from. \quad
+\textbf{Testing data:} new data we check the model on.\\[2pt]
+\textit{``All models are wrong, but some are useful.''} (George Box)
+\end{tcolorbox}
+```
