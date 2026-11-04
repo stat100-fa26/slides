@@ -38,7 +38,6 @@ jobs:
             hellodata-science/sfemergency25
             openintro
             patchwork
-            brms
             BH
             RcppEigen
           cache-version: 1
