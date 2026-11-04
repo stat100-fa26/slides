@@ -47,7 +47,7 @@ format:
 \vspace*{-1.6em}
 {\color{harvardcrimson}\fontsize{26}{30}\selectfont\bfseries Statistical Learning\par}
 \vspace{1pt}
-{\large\color{stattextmuted} Can we teach a computer to tell an open book from a closed one?\par}
+{\large\color{stattextmuted} Can we teach a computer to classify images?\par}
 \vspace{10pt}
 Name: \fillline{6.4cm} \hfill Team: \fillline{5.6cm}\par
 \vspace{8pt}
