@@ -32,7 +32,8 @@ format:
           \newtcolorbox{stepbox}[2]{enhanced, breakable=false,
             colback=white, colframe=#1, boxrule=0.8pt, arc=3pt,
             left=8pt, right=8pt, top=6pt, bottom=6pt,
-            fonttitle=\bfseries\large, coltitle=white, colbacktitle=#1,
+            fonttitle=\bfseries\large, coltitle=#1, colbacktitle=white,
+            titlerule=0.6pt, titlerule style={#1},
             title={#2}, before skip=6pt, after skip=8pt}
           \newcommand{\fillline}[1]{\rule[-3pt]{#1}{0.5pt}}
           \newcommand{\choice}{\ensuremath{\bigcirc}}
@@ -53,8 +54,8 @@ Name: \fillline{6.4cm} \hfill Team: \fillline{5.6cm}\par
 \vspace{8pt}
 \begin{center}
 \begin{tikzpicture}[
-  step/.style={signal, signal to=east, signal from=west, draw=none,
-    fill=#1, text=white, font=\bfseries\small,
+  step/.style={signal, signal to=east, signal from=west,
+    draw=#1, line width=0.9pt, fill=white, text=#1, font=\bfseries\small,
     minimum height=0.8cm, minimum width=3.1cm, inner xsep=4pt},
   node distance=0.08cm]
 \node[step=harvardcrimson, signal from=nowhere] (s1) {1. Draw};
@@ -71,10 +72,9 @@ Name: \fillline{6.4cm} \hfill Team: \fillline{5.6cm}\par
 teammates yet. Then \textbf{pixelate}: shade every square that has any pencil
 mark in it, even a tiny one.
 \begin{center}
-\begin{tikzpicture}[x=0.74cm, y=0.74cm]
-  \fill[softteal!45] (0,0) rectangle (16,9);
+\begin{tikzpicture}[x=0.7cm, y=0.7cm]
   \draw[gridblue, line width=0.35pt] (0,0) grid (16,9);
-  \draw[tealaccent, line width=1.4pt] (0,0) rectangle (16,9);
+  \draw[tealaccent, line width=0.9pt] (0,0) rectangle (16,9);
   \foreach \l [count=\i] in {a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p}
     \node[font=\scriptsize\sffamily, text=stattextmuted] at (\i-0.5, 9.32) {\l};
   \foreach \r in {1,...,9}
@@ -89,28 +89,30 @@ grid of $16 \times 9 = 144$ squares, each one \textit{shaded} (1) or
 
 \begin{stepbox}{tealaccent}{Step 3: Train your algorithm}
 Look at your team's pixelated drawings (your \textbf{training data}). Write
-rules a computer could follow to decide whether a drawing is an
-\textbf{open} or a \textbf{closed} book. Use only the squares: no
-``it looks like\dots''
+rules a computer could follow to sort a drawing into one of the two classes on
+the slide. Use only the squares: no ``it looks like\dots''
+
+\vspace{8pt}
+\textbf{The two classes:} \fillline{4.2cm} \quad and \quad \fillline{4.2cm}
 
 \vspace{10pt}
 \textbf{Algorithm name:} \fillline{8.5cm}
 
-\vspace{12pt}
+\vspace{10pt}
 \textbf{Rule 1:} \hrulefill
 
-\vspace{12pt}
+\vspace{10pt}
 \textbf{Rule 2:} \hrulefill
 
-\vspace{12pt}
+\vspace{10pt}
 \textbf{Rule 3:} \hrulefill
 
-\vspace{12pt}
-\begin{tcolorbox}[colback=softteal, colframe=softteal, arc=2pt,
+\vspace{10pt}
+\begin{tcolorbox}[colback=white, colframe=tealaccent, boxrule=0.5pt, arc=2pt,
   left=6pt, right=6pt, top=6pt, bottom=6pt]
-\textbf{Decision:} \texttt{if} \fillline{8.4cm} \texttt{then} predict
-\textbf{open},\\[3pt]
-\phantom{\textbf{Decision:} }\texttt{else} predict \textbf{closed}.
+\textbf{Decision:} \texttt{if} \fillline{7.6cm} \texttt{then} predict
+\fillline{2.6cm}\\[8pt]
+\phantom{\textbf{Decision:} }\texttt{else} predict \fillline{2.6cm}
 \end{tcolorbox}
 \end{stepbox}
 
@@ -118,58 +120,55 @@ rules a computer could follow to decide whether a drawing is an
 
 \begin{stepbox}{slateaccent}{Step 4: Test your algorithm on new drawings}
 You will see 10 drawings your team has never seen (the \textbf{testing data}).
-Apply your rules \textit{exactly as written} and circle the prediction. Then
-circle the actual class and mark whether you were correct.
+Apply your rules \textit{exactly as written} and write the predicted class.
+Then write the actual class and circle whether you were correct.
 \begin{center}
-\renewcommand{\arraystretch}{1.25}
-\begin{tabular}{>{\centering\arraybackslash}p{1.4cm}
-                >{\centering\arraybackslash}p{4.1cm}
-                >{\centering\arraybackslash}p{4.1cm}
-                >{\centering\arraybackslash}p{2.4cm}}
-\rowcolor{slateaccent}
-\textcolor{white}{\textbf{Image}} &
-\textcolor{white}{\textbf{Predicted class}} &
-\textcolor{white}{\textbf{Actual class}} &
-\textcolor{white}{\textbf{Correct?}} \\
-1  & open \qquad closed & open \qquad closed & yes \quad no \\
-\rowcolor{slateaccent!8}
-2  & open \qquad closed & open \qquad closed & yes \quad no \\
-3  & open \qquad closed & open \qquad closed & yes \quad no \\
-\rowcolor{slateaccent!8}
-4  & open \qquad closed & open \qquad closed & yes \quad no \\
-5  & open \qquad closed & open \qquad closed & yes \quad no \\
-\rowcolor{slateaccent!8}
-6  & open \qquad closed & open \qquad closed & yes \quad no \\
-7  & open \qquad closed & open \qquad closed & yes \quad no \\
-\rowcolor{slateaccent!8}
-8  & open \qquad closed & open \qquad closed & yes \quad no \\
-9  & open \qquad closed & open \qquad closed & yes \quad no \\
-\rowcolor{slateaccent!8}
-10 & open \qquad closed & open \qquad closed & yes \quad no \\
+\renewcommand{\arraystretch}{1.15}
+\arrayrulecolor{stattextmuted!60}
+\begin{tabular}{|>{\centering\arraybackslash}p{1.4cm}
+                |>{\centering\arraybackslash}p{4.1cm}
+                |>{\centering\arraybackslash}p{4.1cm}
+                |>{\centering\arraybackslash}p{2.4cm}|}
+\hline
+\textcolor{slateaccent}{\textbf{Image}} &
+\textcolor{slateaccent}{\textbf{Predicted class}} &
+\textcolor{slateaccent}{\textbf{Actual class}} &
+\textcolor{slateaccent}{\textbf{Correct?}} \\ \hline
+1 & & & yes \quad no \\ \hline
+2 & & & yes \quad no \\ \hline
+3 & & & yes \quad no \\ \hline
+4 & & & yes \quad no \\ \hline
+5 & & & yes \quad no \\ \hline
+6 & & & yes \quad no \\ \hline
+7 & & & yes \quad no \\ \hline
+8 & & & yes \quad no \\ \hline
+9 & & & yes \quad no \\ \hline
+10 & & & yes \quad no \\ \hline
 \end{tabular}
 \end{center}
 \vspace{-4pt}
 \end{stepbox}
 
 \begin{stepbox}{emeraldaccent}{Step 5: Evaluate your model}
-Count how many of the 10 test images land in each cell. We call
-\textbf{open} the \textit{positive} class.
+Pick one class to be the \textit{positive} class: \fillline{3.5cm}.
+Write the class names on the table, then count how many of the 10 test images
+land in each cell.
 \begin{center}
 \begin{tikzpicture}[x=5.0cm, y=1.45cm,
   cell/.style={minimum width=4.85cm, minimum height=1.35cm, align=center,
-    rounded corners=2pt, line width=0.8pt},
+    rounded corners=2pt, line width=0.7pt, fill=white},
   head/.style={font=\bfseries\small, align=center}]
-  \node[head] at (1,0.7) {Predicted: OPEN};
-  \node[head] at (2,0.7) {Predicted: CLOSED};
-  \node[head, anchor=east] at (0.5,0) {Actual: OPEN};
-  \node[head, anchor=east] at (0.5,-1) {Actual: CLOSED};
-  \node[cell, fill=softgreen, draw=emeraldaccent] at (1,0)
+  \node[head] at (1,0.7) {Predicted: \fillline{2.2cm}};
+  \node[head] at (2,0.7) {Predicted: \fillline{2.2cm}};
+  \node[head, anchor=east] at (0.5,0) {Actual: \fillline{1.9cm}};
+  \node[head, anchor=east] at (0.5,-1) {Actual: \fillline{1.9cm}};
+  \node[cell, draw=emeraldaccent] at (1,0)
     {\textcolor{emeraldaccent}{\textbf{True Positive (TP)}}\\[5pt] \fillline{1.4cm}};
-  \node[cell, fill=softorange, draw=orangeaccent] at (2,0)
+  \node[cell, draw=orangeaccent, dashed] at (2,0)
     {\textcolor{orangeaccent}{\textbf{False Negative (FN)}}\\[5pt] \fillline{1.4cm}};
-  \node[cell, fill=softcrimson, draw=harvardcrimson] at (1,-1)
+  \node[cell, draw=harvardcrimson, dashed] at (1,-1)
     {\textcolor{harvardcrimson}{\textbf{False Positive (FP)}}\\[5pt] \fillline{1.4cm}};
-  \node[cell, fill=softgreen, draw=emeraldaccent] at (2,-1)
+  \node[cell, draw=emeraldaccent] at (2,-1)
     {\textcolor{emeraldaccent}{\textbf{True Negative (TN)}}\\[5pt] \fillline{1.4cm}};
 \end{tikzpicture}
 \end{center}
@@ -182,15 +181,15 @@ Count how many of the 10 test images land in each cell. We call
 \textbf{(a)} A medical test predicts \textit{disease} or \textit{no disease}.
 Which is worse here, a false positive or a false negative? Why?
 
-\vspace{1.0cm}
+\vspace{0.9cm}
 \textbf{(b)} Your rules worked on your own team's drawings. Why might they do
 worse on new drawings? What do we call a model that fits its training data
 \textit{too} well?
 
-\vspace{1.0cm}
+\vspace{0.9cm}
 \end{stepbox}
 
-\begin{tcolorbox}[colback=softcrimson, colframe=softcrimson, arc=3pt,
+\begin{tcolorbox}[colback=white, colframe=harvardcrimson, boxrule=0.5pt, arc=3pt,
   left=8pt, right=8pt, top=4pt, bottom=4pt, before skip=2pt]
 \small\linespread{1.05}\selectfont
 \textbf{Algorithm:} the recipe (a set of rules). \quad
