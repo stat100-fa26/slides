@@ -21,6 +21,10 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
+    env:
+      # GitHub's automatic per-run token (not a personal token). pak uses it to
+      # download hellodata-science/sfemergency25 from GitHub.
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
