@@ -122,7 +122,7 @@ Response variable ($y$): [`bwt`]{.blank width="2.5cm"} $\qquad$ Explanatory vari
 
 : Equation of a line in math class and in statistics class {.no-row-headers}
 
-Just like $\pi$ and $p$, $\beta_0$ and $\beta_1$ are population [parameters]{.blank width="2.5cm"}. From the sample, we estimate $\beta_0$ with [$b_0$]{.blank width="1.5cm"}, $\beta_1$ with [$b_1$]{.blank width="1.5cm"}, and the error $\epsilon_i$ with the [residual]{.blank width="2cm"} $e_i$. The fitted line is $\hat{y} = b_0 + b_1 x$, where $\hat{y}$ is the [expected (predicted) value]{.blank width="4cm"} of $y$.
+Just like $\pi$ and $\mu$, $\beta_0$ and $\beta_1$ are population [parameters]{.blank width="2.5cm"}. From the sample, we estimate $\beta_0$ with [$b_0$]{.blank width="1.5cm"}, $\beta_1$ with [$b_1$]{.blank width="1.5cm"}, and the error $\epsilon_i$ with the [residual]{.blank width="2cm"} $e_i$. The fitted line is $\hat{y} = b_0 + b_1 x$, where $\hat{y}$ is the [expected (predicted) value]{.blank width="4cm"} of $y$.
 
 ```{=latex}
 \needspace{7.5cm}
