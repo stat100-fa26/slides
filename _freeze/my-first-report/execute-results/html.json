@@ -1,0 +1,17 @@
+{
+  "hash": "1d22bb116a8f9e776a58327d2f21a873",
+  "result": {
+    "engine": "knitr",
+    "markdown": "---\ntitle: \"My First Quarto File\"\nauthor: \"Mine Dogucu\"\nformat: html\n---\n\nIn this report I will talk about **my apples**. I will first define the object `my_apples`. \n\n\n::: {.cell}\n\n```{.r .cell-code}\nmy_apples <- 2\n```\n:::\n\n\nI have 2 apples in total.  ",
+    "supporting": [
+      "my-first-report_files"
+    ],
+    "filters": [
+      "rmarkdown/pagebreak.lua"
+    ],
+    "includes": {},
+    "engineDependencies": {},
+    "preserve": {},
+    "postProcess": true
+  }
+}

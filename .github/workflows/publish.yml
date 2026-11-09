@@ -25,15 +25,18 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      # 1. Install R
+      # 1. Install R (binary packages from Posit Public Package Manager)
       - name: Set up R
         uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
 
-      # 2. Automatically scan and install ALL packages used in your .qmd files
+      # 2. Install the R packages used in the .qmd files (cached between runs).
+      #    With _freeze/ committed, R only runs for documents whose source
+      #    changed since they were last rendered locally.
       - name: Install R Dependencies
         uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          needs: website
           extra-packages: |
             hellodata-science/sfemergency25
             openintro
@@ -46,11 +49,24 @@ jobs:
       - name: Set up Quarto
         uses: quarto-dev/quarto-actions/setup@v2
 
-      # 4. Install TinyTeX (needed for PDF output)
+      # 4. TinyTeX for PDF output. Cached so it (and the LaTeX packages
+      #    installed on demand during rendering) is not downloaded every run.
+      #    Bump v1 to v2 to force a fresh install.
+      - name: Cache TinyTeX
+        id: cache-tinytex
+        uses: actions/cache@v4
+        with:
+          path: ~/.TinyTeX
+          key: tinytex-${{ runner.os }}-v1
+
       - name: Install TinyTeX
+        if: steps.cache-tinytex.outputs.cache-hit != 'true'
         run: quarto install tinytex --no-prompt
 
-      # 5. Render Quarto
+      - name: Add TinyTeX to PATH
+        run: echo "$HOME/.TinyTeX/bin/x86_64-linux" >> "$GITHUB_PATH"
+
+      # 5. Render Quarto (frozen documents are not re-executed)
       - name: Render Quarto
         run: quarto render
 

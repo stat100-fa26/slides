@@ -9,9 +9,8 @@ _site
 *.html
 !a11y-revealjs.html
 
-# Quarto execution freeze cache
-/_freeze/
-!_freeze/04a-wrangle-variables/
+# Quarto execution freeze cache (_freeze/) is committed on purpose so that
+# GitHub Actions reuses the results instead of re-running every document.
 
 # Local rendered supporting files
 *_files/
