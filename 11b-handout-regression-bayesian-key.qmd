@@ -71,7 +71,9 @@ fmt_p <- function(p) if (p == 1) "more than 0.9999" else if (p == 0) "less than 
 
 # Capital Bikeshare
 
-The `bikes` data in the `bayesrules` package has `r nrow(bikes)` days of Capital Bikeshare data from Washington, D.C. (2011–2012): `rides` (number of rides that day), `temp_feel` (what the temperature felt like, in °F), and `weekend` (`TRUE` for Saturday or Sunday).
+The `bikes` data in the {bayesrules} package has `r nrow(bikes)` days of Capital Bikeshare data from Washington, D.C. (2011–2012): `rides` (number of rides that day), `temp_feel` (what the temperature felt like, in °F), and `weekend` (`TRUE` for Saturday or Sunday).
+
+We fit Bayesian regression models with `stan_glm()` from the {rstanarm} package.
 
 <small>Example from Johnson, Ott, & Dogucu (2022), [*Bayes Rules!*](https://www.bayesrulesbook.com/chapter-9), Chapter 9.</small>
 
@@ -322,6 +324,8 @@ Given the data, it is almost certain that weekends have fewer rides, on average.
 
 # Frequentist vs. Bayesian
 
+`lm()` and `confint()` are from Monday (the {stats} package, which loads automatically).
+
 ```{r}
 #| label: freq
 #| echo: true
@@ -335,7 +339,7 @@ ci_freq <- confint(lm(rides ~ temp_feel, data = bikes))["temp_feel", ]
 
 | | Frequentist (Monday) | Bayesian (today) |
 |---|---|---|
-| R function | [`lm()`]{.blank width="3cm"} | [`stan_glm()`]{.blank width="3cm"} |
+| R function (package) | [`lm()`]{.blank width="3cm"} ({stats}) | [`stan_glm()`]{.blank width="3cm"} ({rstanarm}) |
 | 95% interval for $\beta_1$ | [`r f1(ci_freq[1])` to `r f1(ci_freq[2])`: confidence interval]{.blank width="5cm"} | [`r f1(ci_b1[1])` to `r f1(ci_b1[2])`: posterior credible interval]{.blank width="5cm"} |
 | "95% probability that $\beta_1$ is in the interval" | [Not correct]{.blank width="3cm"} | [Correct]{.blank width="3cm"} |
 
@@ -349,6 +353,6 @@ Why are the two intervals so similar? [With 500 days of data, the prior has litt
 
 # Summary
 
-- In R: [`stan_glm()`]{.blank width="2.5cm"} with a prior for the intercept (`prior_intercept`) and the slope (`prior`); here `stan_glm()` chose the prior for `sigma`. `prior_intercept` is for the [centered]{.blank width="2cm"} intercept. In the draws, `(Intercept)` is the [uncentered]{.blank width="2.5cm"} intercept. The posterior is a set of simulated [draws]{.blank width="2cm"}: `as.data.frame()`.
+- In R: [`stan_glm()`]{.blank width="2.5cm"} from the {rstanarm} package, with a prior for the intercept (`prior_intercept`) and the slope (`prior`); here `stan_glm()` chose the prior for `sigma`. `prior_intercept` is for the [centered]{.blank width="2cm"} intercept. In the draws, `(Intercept)` is the [uncentered]{.blank width="2.5cm"} intercept. The posterior is a set of simulated [draws]{.blank width="2cm"}: `as.data.frame()`.
 - From the draws: the __posterior mean__ (`mean()`), the 95% __posterior credible interval__ ([`quantile()` at 0.025 and 0.975]{.blank width="5cm"}), and the __posterior probability__ of a hypothesis ([the proportion of draws where it is true]{.blank width="5.5cm"}).
 - With a lot of data, the posterior credible interval and the confidence interval are [similar]{.blank width="2cm"}, but only the posterior credible interval is a probability statement about $\beta_1$.

@@ -87,7 +87,7 @@ s1 <- signif(tidy_s$estimate[2], 3)   # -8.94
 
 # Baby weights
 
-The `babies` data in the `openintro` package has `r format(nrow(babies), big.mark = ",")` babies born at Kaiser Foundation hospitals in the East Bay (San Francisco area) between 1960 and 1967. Today we use `bwt` (birth weight, in ounces), `gestation` (length of the pregnancy, in days), and `smoke` (1 if the mother smoked during pregnancy, 0 if not).
+The `babies` data in the {openintro} package has `r format(nrow(babies), big.mark = ",")` babies born at Kaiser Foundation hospitals in the East Bay (San Francisco area) between 1960 and 1967. Today we use `bwt` (birth weight, in ounces), `gestation` (length of the pregnancy, in days), and `smoke` (1 if the mother smoked during pregnancy, 0 if not).
 
 ```{=latex}
 \needspace{7.5cm}
@@ -125,10 +125,12 @@ Response variable ($y$): [`bwt`]{.blank width="2.5cm"} $\qquad$ Explanatory vari
 Just like $\pi$ and $p$, $\beta_0$ and $\beta_1$ are population [parameters]{.blank width="2.5cm"}. From the sample, we estimate $\beta_0$ with [$b_0$]{.blank width="1.5cm"}, $\beta_1$ with [$b_1$]{.blank width="1.5cm"}, and the error $\epsilon_i$ with the [residual]{.blank width="2cm"} $e_i$. The fitted line is $\hat{y} = b_0 + b_1 x$, where $\hat{y}$ is the [expected (predicted) value]{.blank width="4cm"} of $y$.
 
 ```{=latex}
-\needspace{6.5cm}
+\needspace{7.5cm}
 ```
 
 # Fitting the model
+
+`lm()` (linear model) comes with R in the {stats} package, which loads automatically. `tidy()` is from the {broom} package: it shows the estimates as a table.
 
 ```{r}
 #| label: model-g
@@ -197,6 +199,8 @@ If there were __no__ relationship between gestation and birth weight, the popula
 $H_0$: [$\beta_1 = 0$]{.blank width="2.5cm"} $\qquad H_A$: [$\beta_1 \neq 0$]{.blank width="2.5cm"}
 
 The `p.value` in the `gestation` row of `tidy(model_g)` is [$P(\text{a slope as extreme as } `r b1` \mid \beta_1 = 0)$]{.blank width="6.5cm"}.
+
+`confint()` is also from the {stats} package. It gives 95% confidence intervals.
 
 ```{r}
 #| label: confint-g
@@ -342,7 +346,7 @@ People often center so that the intercept describes a typical value of $x$. We w
 
 # Summary
 
-- Model: $y_i = \beta_0 + \beta_1 x_i + \epsilon_i$; in R, [`lm(y ~ x, data = ...)`]{.blank width="4cm"} with `tidy()` and `confint()`.
+- Model: $y_i = \beta_0 + \beta_1 x_i + \epsilon_i$; in R, [`lm(y ~ x, data = ...)`]{.blank width="4cm"} ({stats}) with `tidy()` ({broom}) and `confint()` ({stats}).
 - Slope (numeric $x$): expected change in $y$ for [a one-unit increase in $x$]{.blank width="4.5cm"}. Binary $x$: the slope is [the difference between the group means]{.blank width="5.5cm"}.
 - Residual: [observed $-$ expected]{.blank width="3.5cm"}. Do not [extrapolate]{.blank width="2.5cm"}.
 - Centering $x$ (subtracting its mean) changes the intercept to [the expected $y$ at the average $x$]{.blank width="5.5cm"}; the slope [stays the same]{.blank width="3cm"}.
