@@ -85,3 +85,6 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+        with:
+          # Wait up to 20 minutes (default is 10) for GitHub to publish the files.
+          timeout: 1200000
