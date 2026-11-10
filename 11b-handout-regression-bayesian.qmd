@@ -129,11 +129,12 @@ ggplot(prior_lines) +
 #| label: bike-model
 #| echo: true
 library(rstanarm)
+library(bayesrules)
 
 bike_model <- stan_glm(rides ~ temp_feel, data = bikes, family = gaussian(),
                        prior_intercept = normal(5000, 1000),
                        prior = normal(100, 40),
-                       chains = 4, iter = 5000 * 2, seed = 84735, refresh = 0)
+                       seed = 84735, refresh = 0)
 
 bike_draws <- as.data.frame(bike_model)
 head(bike_draws, 3)
