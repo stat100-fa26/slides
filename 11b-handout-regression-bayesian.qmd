@@ -269,10 +269,10 @@ We keep the same prior for the centered intercept (a typical day). We are not su
 ```{r}
 #| label: week-model
 #| echo: true
-week_model <- stan_glm(rides ~ weekend, data = bikes, family = gaussian(),
+week_model <- stan_glm(rides ~ weekend, data = bikes,
                        prior_intercept = normal(5000, 1000),
                        prior = normal(0, 1000),
-                       chains = 4, iter = 5000 * 2, seed = 84735, refresh = 0)
+                       seed = 84735, refresh = 0)
 week_draws <- as.data.frame(week_model)
 ```
 
