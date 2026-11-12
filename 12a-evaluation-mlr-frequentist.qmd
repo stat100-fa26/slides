@@ -1,5 +1,5 @@
 ---
-title: "Evaluating Regression Models"
+title: "Evaluating Models and Multiple Regression: Frequentist"
 author: "Mine Doğucu"
 filters:
   - quarto
@@ -30,11 +30,13 @@ format:
 ---
 
 <!--
-Lecture 12A (Monday). Follows the three questions in Bayes Rules! Chapter 10:
-how fair, how wrong, how accurate. Uses the two models from week 11:
-babies (lm, 11a handout) and bikes (stan_glm, 11b handout), plus openintro
-mammals for the log transformation. Every topic is done frequentist and
-Bayesian. Adjusted R-squared is in 12B.
+Lecture 12A (Monday): frequentist day. Model evaluation (Bayes Rules! Ch 10's
+three questions: how fair, how wrong, how accurate) with lm() and openintro
+babies (plus mammals for the log transformation), then multiple linear
+regression, adjusted R-squared, overfitting, training and testing, and
+Occam's razor. Wednesday (12B) does the same for Bayesian models with bikes
+and only recaps the evaluation ideas. The jacket images are reused from the
+10b-extra statistical learning activity.
 -->
 
 ```{r}
@@ -44,8 +46,7 @@ library(tidyverse)
 library(openintro)
 library(broom)
 library(patchwork)
-library(rstanarm)
-library(bayesrules)
+library(rsample)
 options(scipen = 999)
 
 source("R/plot-normal.R")
@@ -54,61 +55,28 @@ green <- hds_colors[["green"]]
 pink <- hds_colors[["pink"]]
 
 theme_set(theme_minimal(base_size = 22))
-bayesplot::bayesplot_theme_set(theme_minimal(base_size = 22))
 
 f1 <- function(x) sprintf("%.1f", x)
 f2 <- function(x) sprintf("%.2f", x)
 f3 <- function(x) sprintf("%.3f", x)
 f0 <- function(x) format(round(x), big.mark = ",")
-
-```
-
-```{r}
-#| echo: false
-#| cache: true
-# Bayesian models (cached: they take a while)
-bike_model <- stan_glm(rides ~ temp_feel, data = bikes,
-                       prior_intercept = normal(5000, 1000),
-                       prior = normal(100, 40),
-                       seed = 84735, refresh = 0)
-
 ```
 
 # Is our model any good? {.inverse background-color="#A51C30"}
 
-## Our models from last week
-
-::: columns
-::: {.column width="50%"}
-**Frequentist** (Monday)
+## Our model from last week
 
 ```{r}
-model_g <- lm(bwt ~ gestation,
-              data = babies)
+model_g <- lm(bwt ~ gestation, data = babies)
 ```
 
 Birth weight (oz) and gestation (days) of babies born in the East Bay, 1960–1967.
-:::
-
-::: {.column width="50%"}
-**Bayesian** (Wednesday)
-
-```{r}
-#| eval: false
-bike_model <- stan_glm(rides ~ temp_feel,
-  data = bikes,
-  prior_intercept = normal(5000, 1000),
-  prior = normal(100, 40),
-  seed = 84735, refresh = 0)
-```
-
-Capital Bikeshare rides and "feels like" temperature (°F) in Washington, D.C., 2011–2012.
-:::
-:::
 
 . . .
 
 We can fit a model. But is it a __good__ model?
+
+Today: how to evaluate a regression model, and how to use __more than one__ explanatory variable. Everything today is __frequentist__. On Wednesday, we do the same for __Bayesian__ models.
 
 ## Three questions
 
@@ -120,7 +88,7 @@ To evaluate a model, we ask:
 2. __How wrong is the model?__
 3. __How accurate are the model's predictions?__
 
-<small>These three questions come from Johnson, Ott, & Dogucu (2022), [*Bayes Rules!*](https://www.bayesrulesbook.com/chapter-10), Chapter 10. They work for frequentist models too.</small>
+<small>These three questions come from Johnson, Ott, & Dogucu (2022), [*Bayes Rules!*](https://www.bayesrulesbook.com/chapter-10), Chapter 10. They work for both frequentist and Bayesian models.</small>
 
 # How fair is the model? {.inverse background-color="#A51C30"}
 
@@ -149,26 +117,6 @@ With your neighbor, discuss the four questions for the `babies` data.
 - Would it be fair to use a model fit to these babies for babies born today? For babies born somewhere else?
 :::
 
-## Bikeshare {.smaller}
-
-The `bikes` data come from Capital Bikeshare, which rents bikes from stations around Washington, D.C. Each row is a day: the number of rides that day and that day's "feels like" temperature, `temp_feel`.
-
-::: {.stat-callout .discussion}
-**Discussion**
-
-- Rides can only start at a bikeshare station. Whose rides are in the data, and whose are not? How could this change what our model says about rides and temperature?
-- `temp_feel` is one number for the whole city each day. Does every neighborhood feel the same temperature on the same day? Why might they differ?
-- Suppose the city used this model to decide where to add stations. Who could benefit? Who could be left out?
-:::
-
-. . .
-
-A model can be fair in one context and unfair in another. We evaluate the model __and__ how it will be used.
-
-::: notes
-Neighborhood heat (if students need a nudge after they discuss): across 108 US cities, formerly redlined neighborhoods are on average about 2.6 °C (4.7 °F) hotter in summer than other neighborhoods, with less tree canopy and more pavement (Hoffman, Shandas & Pendleton, 2020, Climate 8(1):12). In D.C., some neighborhoods feel almost 17 °F hotter than others (Axios D.C., July 17, 2024). One citywide temp_feel hides this. If stations are concentrated in some neighborhoods, the model describes how those riders respond to temperature.
-:::
-
 # How wrong is the model? {.inverse background-color="#A51C30"}
 
 ## What does our model assume?
@@ -186,7 +134,7 @@ The model makes four assumptions (__LINE__):
 
 . . .
 
-These are the same for frequentist and Bayesian regression.
+On Wednesday, we will see that Bayesian regression makes the same assumptions.
 
 ## Independence
 
@@ -218,20 +166,6 @@ The babies were born at a few Kaiser hospitals. If babies born at the same hospi
 
 What else could make some babies in the data more alike than two randomly chosen babies?
 :::
-
-## Independence: bikes
-
-Each row of `bikes` is a day, and the days come one after another. On its own, ridership is __not__ independent: the number of rides today is likely similar to the number of rides tomorrow.
-
-. . .
-
-But much of this similarity comes from the time of year, and our model includes temperature, which follows the time of year. If we know today's and tomorrow's temperatures, today's rides tell us little extra about tomorrow's rides.
-
-. . .
-
-So, __given temperature__, it is reasonable to treat the days as independent. "Reasonable" does not mean "perfect". It means "good enough to proceed."
-
-<small>This argument is from Johnson, Ott, & Dogucu (2022), [*Bayes Rules!*](https://www.bayesrulesbook.com/chapter-10), Chapter 10.</small>
 
 ## Fitted values and residuals
 
@@ -419,13 +353,13 @@ Much better!
 tidy_log <- tidy(model_log)
 l0 <- round(tidy_log$estimate[1], 2)
 l1 <- round(tidy_log$estimate[2], 2)
-human <- mammals |> filter(species == "Man")
+man <- mammals |> filter(species == "Man")
 e_l0 <- exp(l0)
-pred_human <- round(e_l0, 1) * human$body_wt^l1
+pred_man <- round(e_l0, 1) * man$body_wt^l1
 ```
 
 ```{r}
-tidy(model_log) |> select(term, estimate)
+tidy(model_log)
 ```
 
 $$\widehat{\log(\text{brain})} = `r l0` + `r l1` \times \log(\text{body})$$
@@ -474,39 +408,39 @@ ggplot(mammals, aes(body_wt, brain_wt)) +
 
 On the original scale, this is a __curve__, not a line. So "one more kilogram" does not always mean the same change in grams. Instead, we think in __multiplying__: if body weight doubles, the expected brain weight is multiplied by $2^{`r l1`} \approx `r f2(2^l1)`$, so it is about `r round(100 * (2^l1 - 1))`% heavier.
 
-## Prediction: a human
+## Prediction: a man
 
-The human in the data (listed as "Man") weighs `r human$body_wt` kg.
+The man in the data (listed as "Man") weighs `r man$body_wt` kg.
 
-$$\widehat{\text{brain}} = `r f1(e_l0)` \times `r human$body_wt`^{`r l1`} \approx `r f0(pred_human)` \text{ grams}$$
+$$\widehat{\text{brain}} = `r f1(e_l0)` \times `r man$body_wt`^{`r l1`} \approx `r f0(pred_man)` \text{ grams}$$
 
 . . .
 
-The human's actual brain weighs `r format(human$brain_wt, big.mark = ",")` grams. The residual is
+The man's actual brain weighs `r format(man$brain_wt, big.mark = ",")` grams. The residual is
 
-$$e = y - \hat{y} = `r format(human$brain_wt, big.mark = ",")` - `r f0(pred_human)` = `r f0(human$brain_wt - pred_human)` \text{ grams}$$
+$$e = y - \hat{y} = `r format(man$brain_wt, big.mark = ",")` - `r f0(pred_man)` = `r f0(man$brain_wt - pred_man)` \text{ grams}$$
 
-## The human's residual
+## The man's residual
 
 ```{r}
 #| echo: false
 #| fig-height: 4.6
 #| fig-width: 11
 #| fig-align: center
-#| fig-alt: !expr glue::glue("Scatterplot of brain weight in grams against body weight in kilograms for mammals up to 300 kilograms, with the curve brain = {f1(e_l0)} times body to the power {l1}. Most mammals are close to the curve. The human, labeled and shown as a large pink point at 62 kilograms and {format(human$brain_wt, big.mark = ',')} grams, is far above the curve. A dashed pink segment connects the human to the curve at about {f0(pred_human)} grams.")
+#| fig-alt: !expr glue::glue("Scatterplot of brain weight in grams against body weight in kilograms for mammals up to 300 kilograms, with the curve brain = {f1(e_l0)} times body to the power {l1}. Most mammals are close to the curve. The man, labeled and shown as a large pink point at 62 kilograms and {format(man$brain_wt, big.mark = ',')} grams, is far above the curve. A dashed pink segment connects the man to the curve at about {f0(pred_man)} grams.")
 ggplot(mammals, aes(body_wt, brain_wt)) +
   geom_point(alpha = 0.6) +
   geom_function(fun = function(x) e_l0 * x^l1, color = green, linewidth = 1.3, n = 1000) +
-  annotate("segment", x = human$body_wt, xend = human$body_wt,
-           y = e_l0 * human$body_wt^l1, yend = human$brain_wt,
+  annotate("segment", x = man$body_wt, xend = man$body_wt,
+           y = e_l0 * man$body_wt^l1, yend = man$brain_wt,
            color = pink, linewidth = 1, linetype = "dashed") +
-  annotate("point", x = human$body_wt, y = human$brain_wt, color = pink, size = 5) +
-  annotate("label", x = human$body_wt + 35, y = human$brain_wt, label = "human", size = 7) +
+  annotate("point", x = man$body_wt, y = man$brain_wt, color = pink, size = 5) +
+  annotate("label", x = man$body_wt + 35, y = man$brain_wt, label = "man", size = 7) +
   coord_cartesian(xlim = c(0, 300), ylim = c(0, 1500)) +
   labs(x = "body weight (kg)", y = "brain weight (g)")
 ```
 
-The residual is positive and large: humans have a much bigger brain than expected for a mammal of our size.
+The residual is positive and large: men have a much bigger brain than expected for a mammal of their size.
 
 <small>Zoomed in to mammals up to 300 kg.</small>
 
@@ -538,101 +472,7 @@ predict(model_log, newdata = tibble(log_body = log(62))) |>
   exp()
 ```
 
-<small>`r f0(exp(pred_log_62))` instead of `r f0(pred_human)`: R uses the unrounded estimates (`r sprintf("%.4f", coef(model_log)[1])` and `r sprintf("%.4f", coef(model_log)[2])`), while we rounded them to `r l0` and `r l1`.</small>
-
-## How wrong is a Bayesian model?
-
-The LINE conditions are the same, and so are the residual plots. For a `stan_glm()` model, `fitted()` gives $\hat{y}_i$ and `residuals()` gives $e_i$ (using the posterior median line).
-
-```{r}
-#| fig-height: 3.6
-#| fig-width: 10
-#| fig-align: center
-#| fig-alt: "Residual vs fitted plot for the Bayesian bikeshare model. The points are spread around 0 between about 1,500 and 5,000 fitted rides. The spread is similar from left to right."
-bikes |>
-  mutate(fitted = fitted(bike_model), residual = residuals(bike_model)) |>
-  ggplot(aes(x = fitted, y = residual)) +
-  geom_point(alpha = 0.4) +
-  geom_hline(yintercept = 0, linetype = "dashed")
-```
-
-## Posterior predictive check: the idea
-
-Remember our Bayesian model from the beginning of class:
-
-```{r}
-#| eval: false
-bike_model <- stan_glm(rides ~ temp_feel, data = bikes,
-                       prior_intercept = normal(5000, 1000),
-                       prior = normal(100, 40),
-                       seed = 84735, refresh = 0)
-```
-
-```{r}
-bike_draws <- as.data.frame(bike_model)
-```
-
-Each row of `bike_draws` is one plausible line ($\beta_0$, $\beta_1$) and one plausible $\sigma$: how far single days typically are from the line.
-
-. . .
-
-__The idea:__ if our model describes the real data well, then data __simulated__ from the model should look like the real data.
-
-## Simulating data with one plausible line
-
-```{r}
-one_line <- bike_draws |> slice(1)
-one_line
-```
-
-For each of the 500 real days, we start at this line's value for that day's temperature, then add random noise of about $\sigma$:
-
-```{r}
-set.seed(84735)
-simulated <- bikes |>
-  mutate(rides = rnorm(500,
-                       mean = one_line$`(Intercept)` + one_line$temp_feel * temp_feel,
-                       sd = one_line$sigma))
-```
-
-## Real data vs. simulated data
-
-```{r}
-#| echo: false
-#| fig-height: 4.6
-#| fig-width: 13
-#| fig-align: center
-#| fig-alt: "Two scatterplots of rides against temperature with the same axes. Left: the real 500 days. Right: 500 days simulated from one plausible line. Both clouds go up with temperature and have a similar overall spread, but at low temperatures the real days are packed closer together than the simulated days."
-yl <- range(c(bikes$rides, simulated$rides))
-p_real <- ggplot(bikes, aes(temp_feel, rides)) +
-  geom_point(alpha = 0.5) +
-  coord_cartesian(ylim = yl) +
-  scale_y_continuous(labels = scales::comma) +
-  labs(title = "Real data")
-p_made <- ggplot(simulated, aes(temp_feel, rides)) +
-  geom_point(alpha = 0.5, color = pink) +
-  coord_cartesian(ylim = yl) +
-  scale_y_continuous(labels = scales::comma) +
-  labs(title = "Simulated with one plausible line")
-(p_real | p_made) & theme(plot.title = element_text(size = 20))
-```
-
-Do the simulated data look like the real data? What looks different?
-
-## Posterior predictive check
-
-`pp_check()` from {rstanarm} repeats this with 50 rows of `bike_draws` and compares the __distributions__ of rides: the real rides (dark) and the 50 simulated data sets (light).
-
-```{r}
-#| fig-height: 3.6
-#| fig-width: 10
-#| out-width: 85%
-#| fig-align: center
-#| fig-alt: "Posterior predictive check for the bikeshare model. A dark curve shows the distribution of the real rides; 50 light curves show the distributions of 50 simulated data sets. The light curves have about the same center and spread as the dark curve, but the dark curve has a flatter, wider top."
-pp_check(bike_model)
-```
-
-Is our model reasonable? Is it perfect?
+<small>`r f0(exp(pred_log_62))` instead of `r f0(pred_man)`: R uses the unrounded estimates (`r sprintf("%.4f", coef(model_log)[1])` and `r sprintf("%.4f", coef(model_log)[2])`), while we rounded them to `r l0` and `r l1`.</small>
 
 # How accurate are the predictions? {.inverse background-color="#A51C30"}
 
@@ -717,30 +557,6 @@ $$b_1 = r \times \frac{s_y}{s_x} \qquad\qquad b_0 = \bar{y} - b_1 \bar{x}$$
 
 - Standard deviations are always positive, so the slope has the __same sign__ as the correlation.
 - Rearranging the second formula, $\bar{y} = b_0 + b_1 \bar{x}$: the line always goes through the point $(\bar{x}, \bar{y})$.
-
-## And Bayesian estimates?
-
-There is no formula for the posterior: `stan_glm()` __simulates__ it. The posterior combines
-
-- the __prior__ (what we believed before), and
-- the __data__ (through the likelihood).
-
-. . .
-
-```{r}
-#| echo: false
-bike_lm <- lm(rides ~ temp_feel, data = bikes)
-bike_draws <- as.data.frame(bike_model)
-```
-
-| | Least squares (`lm()`) | Posterior mean (`stan_glm()`) |
-|---|---|---|
-| $\beta_0$ | `r f1(coef(bike_lm)[1])` | `r f1(mean(bike_draws[["(Intercept)"]]))` |
-| $\beta_1$ | `r f2(coef(bike_lm)[2])` | `r f2(mean(bike_draws$temp_feel))` |
-
-: Bikeshare model estimates
-
-With 500 days of data, the data dominate the prior, and the two are close.
 
 ## Residuals measure prediction error
 
@@ -895,102 +711,514 @@ ggplot(babies, aes(gestation, bwt)) +
   coord_cartesian(xlim = c(220, 340))
 ```
 
-## Bayesian: an average day vs. a single day {.smaller}
+# More than one explanatory variable {.inverse background-color="#A51C30"}
 
-Last week, each row of `bike_draws` gave the __typical__ (average) number of rides on a 75 °F day: $\beta_0 + \beta_1 \times 75$.
-
-A __single__ 75 °F day also varies around the line, by about $\sigma$. So for each row, we add random noise of about that row's $\sigma$, just like when we simulated data.
+## Back to the babies
 
 ```{r}
-set.seed(84735)
-predict_75 <- bike_draws |>
-  mutate(average_day = `(Intercept)` + temp_feel * 75,
-         single_day = rnorm(n(), mean = average_day, sd = sigma))
+#| echo: false
+babies <- babies |> drop_na()
+r2_g <- glance(lm(bwt ~ gestation, data = babies))$r.squared
+```
+
+Earlier today, gestation explained only about `r round(100 * r2_g)`% of the variability in birth weight.
+
+Last week, we also saw that babies of mothers who smoked weighed about 8.9 ounces less, on average.
+
+. . .
+
+Can we use __both__ gestation and smoking in __one__ model?
+
+## Multiple linear regression
+
+$$y_i = \beta_0 + \beta_1 x_{1i} + \beta_2 x_{2i} + \dots + \beta_k x_{ki} + \epsilon_i$$
+
+- $k$ explanatory variables: $x_1, x_2, \dots, x_k$
+- one slope for each explanatory variable
+
+. . .
+
+For birth weight:
+
+$$\text{bwt}_i = \beta_0 + \beta_1 \text{gestation}_i + \beta_2 \text{smoke}_i + \epsilon_i$$
+
+## Missing values
+
+Some babies are missing some variables. Today we compare models with different variables, so every model should use the __same__ babies.
+
+```{r}
+#| eval: false
+babies <- babies |>
+  drop_na()
 ```
 
 ```{r}
 #| echo: false
-#| fig-height: 2.8
+n_babies <- nrow(babies)
+```
+
+`drop_na()` from the {tidyr} package (part of the tidyverse) keeps only the rows with no missing values. `r format(n_babies, big.mark = ",")` of the 1,236 babies are left.
+
+## Fitting the model
+
+In R, we add explanatory variables with `+`.
+
+```{r}
+model_gs <- lm(bwt ~ gestation + smoke, data = babies)
+tidy(model_gs)
+```
+
+```{r}
+#| echo: false
+gs <- tidy(model_gs)
+g0 <- round(gs$estimate[1], 2)
+g1 <- round(gs$estimate[2], 3)
+g2 <- round(gs$estimate[3], 2)
+```
+
+$$\widehat{\text{bwt}} = `r g0` + `r g1` \times \text{gestation} - `r abs(g2)` \times \text{smoke}$$
+
+## Two parallel lines
+
+`smoke` is 0 or 1, so the model is two lines with the same slope:
+
+- Did not smoke (smoke = 0): $\widehat{\text{bwt}} = `r g0` + `r g1` \times \text{gestation}$
+- Smoked (smoke = 1): $\widehat{\text{bwt}} = (`r g0` - `r abs(g2)`) + `r g1` \times \text{gestation}$
+
+```{r}
+#| echo: false
+#| fig-height: 3.6
 #| fig-width: 11
 #| fig-align: center
-#| fig-alt: "Two histograms on the same axis of rides on a 75 degree day. Two side by side histograms of rides on a 75 degree day, on the same x-axis. The green histogram of the typical (average) number of rides is very narrow, near 4,000. The pink histogram of the number of rides on a single day is centered at the same place but much wider, from about 1,000 to 7,000."
-predict_75 |>
-  select(average_day, single_day) |>
-  pivot_longer(everything(), names_to = "type", values_to = "rides") |>
-  ggplot(aes(rides, fill = type)) +
-  geom_histogram(bins = 60, color = "white") +
-  facet_wrap(~type, ncol = 2, scales = "free_y") +
-  scale_fill_manual(values = c(average_day = green, single_day = pink), guide = "none") +
-  scale_x_continuous(labels = scales::comma, breaks = c(0, 4000, 8000)) +
-  theme(axis.text.y = element_blank(), strip.text = element_text(size = 20))
+#| fig-alt: !expr glue::glue("Scatterplot of birth weight against gestation, with points colored by whether the mother smoked. Two parallel lines are drawn; the green line for mothers who did not smoke is about {abs(g2)} ounces above the pink line for mothers who smoked.")
+babies |>
+  mutate(smoke = factor(smoke, labels = c("did not smoke", "smoked"))) |>
+  ggplot(aes(gestation, bwt, color = smoke)) +
+  geom_point(alpha = 0.3) +
+  geom_abline(intercept = g0, slope = g1, color = green, linewidth = 1.5) +
+  geom_abline(intercept = g0 + g2, slope = g1, color = pink, linewidth = 1.5) +
+  scale_color_manual(values = c(green, pink)) +
+  coord_cartesian(xlim = c(220, 340)) +
+  labs(color = NULL)
 ```
 
-## Bayesian: an average day vs. a single day
+## Interpreting the slopes
 
-```{r}
-predict_75 |>
-  summarize(average_lower = quantile(average_day, 0.025),
-            average_upper = quantile(average_day, 0.975))
-predict_75 |>
-  summarize(single_lower = quantile(single_day, 0.025),
-            single_upper = quantile(single_day, 0.975))
-```
+Each slope is interpreted __holding the other variables constant__.
 
-```{r}
-#| echo: false
-avg_ci <- quantile(predict_75$average_day, c(0.025, 0.975))
-one_pi <- quantile(predict_75$single_day, c(0.025, 0.975))
-```
+. . .
 
-- 95% __posterior credible interval__ for the average 75 °F day: `r f0(avg_ci[1])` to `r f0(avg_ci[2])` rides.
-- 95% __posterior predictive interval__ for a single 75 °F day: `r f0(one_pi[1])` to `r f0(one_pi[2])` rides.
+- __gestation:__ for babies whose mothers have the same smoking status, each additional day of gestation is associated with `r g1` ounces higher birth weight, on average.
 
-## How accurate are the Bayesian predictions?
+. . .
 
-We can make a 95% posterior predictive interval for __each__ of the 500 days in the data, at that day's temperature. If the model is accurate, about 95% of the real days should fall inside their own intervals.
+- __smoke:__ for babies with the same gestation, babies of mothers who smoked are expected to weigh `r abs(g2)` ounces less, on average, than babies of mothers who did not smoke.
 
-`prediction_summary()` from the {bayesrules} package does this for us:
-
-```{r}
-set.seed(84735)
-prediction_summary(bike_model, data = bikes)
-```
-
-```{r}
-#| echo: false
-set.seed(84735)
-ps <- prediction_summary(bike_model, data = bikes)
-```
-
-## Bayesian prediction accuracy
-
-- `within_95`: `r round(100 * ps$within_95)`% of the real days fall inside their 95% posterior predictive interval (and `within_50`: `r round(100 * ps$within_50)`% inside their 50% interval).
-- `mae`: the typical distance between a day's real rides and its prediction is about `r f0(ps$mae)` rides.
+## Your turn
 
 ::: {.stat-callout .exercise}
 **Exercise**
 
-Based on `within_95` and `within_50`, are the model's posterior predictive intervals about right? Is a typical error of about `r f0(ps$mae)` rides a lot?
+$$\widehat{\text{bwt}} = `r g0` + `r g1` \times \text{gestation} - `r abs(g2)` \times \text{smoke}$$
+
+Predict the birth weight of a baby born after 280 days whose mother
+
+a. did not smoke.
+b. smoked.
+c. What is the difference between (a) and (b)? Where is it in the model?
 :::
 
-## Frequentist vs. Bayesian {.smaller}
+## The smoking slope changed
 
-| | Frequentist (`lm()`) | Bayesian (`stan_glm()`) |
+```{r}
+#| echo: false
+s_only <- tidy(lm(bwt ~ smoke, data = babies))$estimate[2]
+```
+
+| Model | Slope of `smoke` |
+|---|---|
+| `bwt ~ smoke` | `r f2(s_only)` |
+| `bwt ~ gestation + smoke` | `r f2(g2)` |
+
+: Slope of smoke with and without gestation in the model
+
+<small>Both models are fit to the same `r format(n_babies, big.mark = ",")` babies (after `drop_na()`), so the first slope is a little different from last week's.</small>
+
+::: {.stat-callout .discussion}
+**Discussion**
+
+Why might the slope of `smoke` change when gestation is in the model? (Hint: do mothers who smoke tend to have shorter or longer pregnancies?)
+:::
+
+## Inference for each slope
+
+```{r}
+confint(model_gs)
+```
+
+```{r}
+#| echo: false
+ci_gs <- confint(model_gs)
+```
+
+::: {.stat-callout .exercise}
+**Exercise**
+
+Interpret the 95% confidence interval for the slope of `smoke`. Is there convincing evidence that smoking is associated with birth weight, after taking gestation into account?
+:::
+
+## Still not causal
+
+"Holding gestation constant" sounds like an experiment, but it is not one.
+
+. . .
+
+- `babies` is still an __observational__ study: nobody assigned mothers to smoke or not.
+- Adding gestation to the model accounts for __one__ other variable. Mothers who smoked and mothers who did not could still differ in many ways that are not in the model.
+
+. . .
+
+So we can say smoking is __associated__ with lower birth weight, after taking gestation into account. From this model alone, we __cannot__ conclude that smoking __causes__ lower birth weight.
+
+# How many variables? {.inverse background-color="#A51C30"}
+
+## More explanatory variables
+
+```{r}
+model_all <- lm(bwt ~ gestation + smoke + parity + age + height + weight,
+                data = babies)
+tidy(model_all)
+```
+
+<small>`parity`: 0 for a first pregnancy, 1 otherwise. `age`: mother's age (years). `height`: mother's height (inches). `weight`: mother's pre-pregnancy weight (pounds).</small>
+
+## More explanatory variables
+
+```{r}
+#| echo: false
+ht <- tidy(model_all) |> filter(term == "height")
+```
+
+::: {.stat-callout .exercise}
+**Exercise**
+
+a. Interpret the slope of `height` (`r f3(ht$estimate)`) in context.
+b. Which variable does not seem to be associated with birth weight, after taking the others into account?
+:::
+
+## $R^2$ never goes down
+
+```{r}
+#| echo: false
+set.seed(84735)
+babies_random <- babies |> mutate(random = rnorm(n()))
+model_random <- lm(bwt ~ gestation + smoke + parity + age + height + weight + random,
+                   data = babies_random)
+model_g <- lm(bwt ~ gestation, data = babies)
+r2_tab <- tibble(model = c("gestation", "gestation + smoke",
+                           "all six variables",
+                           "all six + random"),
+                 fit = list(model_g, model_gs, model_all, model_random)) |>
+  mutate(r2 = map_dbl(fit, ~ glance(.x)$r.squared),
+         adj = map_dbl(fit, ~ glance(.x)$adj.r.squared))
+```
+
+| Explanatory variables | $R^2$ |
+|---|---|
+| `r r2_tab$model[1]` | `r f3(r2_tab$r2[1])` |
+| `r r2_tab$model[2]` | `r f3(r2_tab$r2[2])` |
+| `r r2_tab$model[3]` | `r f3(r2_tab$r2[3])` |
+| `r r2_tab$model[4]` | `r f3(r2_tab$r2[4])` |
+
+: R-squared for four models of birth weight
+
+. . .
+
+`random` is a column of __simulated random numbers__: `mutate(random = rnorm(n()))`. It has nothing to do with birth weight, but $R^2$ still went up!
+
+. . .
+
+Adding a variable can never make $R^2$ smaller. So $R^2$ cannot tell us whether a variable is worth adding.
+
+## Adjusted $R^2$
+
+__Adjusted $R^2$__ has a penalty for each of the $k$ explanatory variables ($n$: number of observations):
+
+$$R^2_{adj} = 1 - \frac{\sum (y_i - \hat{y}_i)^2 / (n - k - 1)}{\sum (y_i - \bar{y})^2 / (n - 1)}$$
+
+```{r}
+glance(model_all) |>
+  select(r.squared, adj.r.squared)
+```
+
+It goes up only if a new variable helps more than we would expect by chance. Use it to __compare__ models.
+
+## Adjusted $R^2$
+
+| Explanatory variables | $R^2$ | Adj. $R^2$ |
 |---|---|---|
-| How fair? | Questions about the data, the analysis, and its impact | The same questions |
-| How wrong? | LINE: residual plots with `augment()` | LINE: residual plots and `pp_check()` |
-| The average $y$ at $x$ | $\hat{y}$ and a 95% confidence interval | 95% posterior credible interval for $\beta_0 + \beta_1 x$ |
-| A single new $y$ at $x$ | 95% prediction interval | 95% posterior predictive interval |
-| How accurate? | RMSE and $R^2$ | `prediction_summary()`: observations inside their posterior predictive intervals |
+| `r r2_tab$model[1]` | `r f3(r2_tab$r2[1])` | `r f3(r2_tab$adj[1])` |
+| `r r2_tab$model[2]` | `r f3(r2_tab$r2[2])` | `r f3(r2_tab$adj[2])` |
+| `r r2_tab$model[3]` | `r f3(r2_tab$r2[3])` | `r f3(r2_tab$adj[3])` |
+| `r r2_tab$model[4]` | `r f3(r2_tab$r2[4])` | `r f3(r2_tab$adj[4])` |
 
-: Evaluating frequentist and Bayesian regression models
+: R-squared and adjusted R-squared for four models of birth weight
+
+## RMSE
+
+Remember __RMSE__ (root mean squared error) from earlier today: the typical size of a residual, $e_i = y_i - \hat{y}_i$.
+
+1. __Square__ each residual (so negative and positive errors do not cancel out).
+2. Take the __mean__ of the squared residuals.
+3. Take the square __root__ (to get back to the units of $y$).
+
+$$\text{RMSE} = \sqrt{\frac{1}{n}\sum e_i^2}$$
+
+## RMSE of the six-variable model
+
+```{r}
+augment(model_all) |>
+  summarize(rmse = sqrt(mean(.resid^2)))
+```
+
+```{r}
+#| echo: false
+rmse_all <- sqrt(mean(residuals(model_all)^2))
+```
+
+The six-variable model's predictions are typically off by about `r f1(rmse_all)` ounces. A __smaller__ RMSE means predictions closer to the observed birth weights.
+
+## Comparing the models
+
+```{r}
+#| echo: false
+r2_tab <- r2_tab |>
+  mutate(rmse = map_dbl(fit, ~ sqrt(mean(residuals(.x)^2))))
+```
+
+| Explanatory variables | Adj. $R^2$ | RMSE (oz) |
+|---|---|---|
+| `r r2_tab$model[1]` | `r f3(r2_tab$adj[1])` | `r f2(r2_tab$rmse[1])` |
+| `r r2_tab$model[2]` | `r f3(r2_tab$adj[2])` | `r f2(r2_tab$rmse[2])` |
+| `r r2_tab$model[3]` | `r f3(r2_tab$adj[3])` | `r f2(r2_tab$rmse[3])` |
+| `r r2_tab$model[4]` | `r f3(r2_tab$adj[4])` | `r f2(r2_tab$rmse[4])` |
+
+: Adjusted R-squared and RMSE for four models of birth weight
+
+Adjusted $R^2$: __higher__ is better. RMSE: __lower__ is better. Adding `random` did not change adjusted $R^2$, and RMSE went down by only `r sprintf("%.3f", r2_tab$rmse[3] - r2_tab$rmse[4])` ounces.
+
+
+## Occam's razor
+
+> Among models that explain the data about equally well, choose the __simpler__ one.
+
+This principle of __parsimony__ is called __Occam's razor__, after William of Ockham, a 14th-century philosopher.
+
+. . .
+
+Why prefer a simpler model?
+
+- It is easier to interpret and explain.
+- To predict for a new baby, we need to collect fewer variables.
+- It is less likely to be overfit.
+
+## Which model would you choose?
+
+| Explanatory variables | Adj. $R^2$ | RMSE (oz) |
+|---|---|---|
+| gestation + smoke | `r f3(r2_tab$adj[2])` | `r f2(r2_tab$rmse[2])` |
+| all six variables | `r f3(r2_tab$adj[3])` | `r f2(r2_tab$rmse[3])` |
+| all six + random | `r f3(r2_tab$adj[4])` | `r f2(r2_tab$rmse[4])` |
+
+: Adjusted R-squared and RMSE for three models of birth weight
+
+::: {.stat-callout .discussion}
+**Discussion**
+
+Using adjusted $R^2$, RMSE, and Occam's razor, which model would you choose? Are the extra variables worth collecting? Does it depend on what the model is for?
+:::
+
+
+# Training and testing {.inverse background-color="#A51C30"}
+
+## Why do we fit models?
+
+Often, to make predictions for __new__ data: babies who are not in our data yet.
+
+. . .
+
+So far, we evaluated each model on the __same__ data we used to fit it. That is like a clothing store checking whether a jacket fits... on the model it was tailored for.
+
+## A jacket made for its models
+
+::: columns
+::: {.column width="50%"}
+```{r}
+#| echo: false
+#| fig-alt: Illustration of 3 male looking models on a runway in exact same jacket, belt, pants, and shoes.
+knitr::include_graphics("images/lec10b-training-models.png")
+```
+__Training:__ fits perfectly.
+:::
+
+::: {.column width="50%"}
+```{r}
+#| echo: false
+#| fig-alt: The same jacket and pants worn by three different people with very different body types. The middle figure is tall, hence the jacket arms and pants legs are too short for them, the righ figure is short and the jacket arms and pants legs are too large for them.
+knitr::include_graphics("images/lec10b-testing-models.png")
+```
+__Testing:__ new people, not a good fit.
+:::
+:::
+
+## Overfitting
+
+```{r}
+#| echo: false
+set.seed(84735)
+small <- babies |>
+  filter(between(gestation, 255, 305)) |>
+  slice_sample(n = 15)
+rest <- babies |>
+  filter(!case %in% small$case,
+         between(gestation, min(small$gestation), max(small$gestation)))
+m_line <- lm(bwt ~ gestation, data = small)
+m_wiggly <- lm(bwt ~ poly(gestation, 9), data = small)
+rmse <- function(m, d) sqrt(mean((d$bwt - predict(m, d))^2))
+grid <- tibble(gestation = seq(min(small$gestation), max(small$gestation), length.out = 400)) |>
+  mutate(line = predict(m_line, pick(everything())),
+         wiggly = predict(m_wiggly, pick(everything())))
+```
+
+We fit two models to __`r nrow(small)` babies__: a straight line and a very wiggly curve.
+
+```{r}
+#| echo: false
+#| fig-height: 4.4
+#| fig-width: 13
+#| fig-align: center
+#| fig-alt: !expr glue::glue("Two scatterplots of the same 15 babies, birth weight against gestation. On the left, a straight line through the points. On the right, a wiggly curve that goes up and down to pass close to almost every point. The training RMSE is {f1(rmse(m_line, small))} ounces for the line and {f1(rmse(m_wiggly, small))} ounces for the wiggly curve.")
+yl <- c(60, 180)
+p_line <- ggplot(small, aes(gestation, bwt)) +
+  geom_line(data = grid, aes(y = line), color = green, linewidth = 1.3) +
+  geom_point(size = 3) +
+  coord_cartesian(ylim = yl) +
+  labs(title = paste0("Line: training RMSE = ", f1(rmse(m_line, small))))
+p_wig <- ggplot(small, aes(gestation, bwt)) +
+  geom_line(data = grid, aes(y = wiggly), color = pink, linewidth = 1.3) +
+  geom_point(size = 3) +
+  coord_cartesian(ylim = yl) +
+  labs(title = paste0("Wiggly: training RMSE = ", f1(rmse(m_wiggly, small))))
+(p_line | p_wig) & theme(plot.title = element_text(size = 20))
+```
+
+Which model looks better?
+
+## Overfitting
+
+Now we use both models to predict the __other `r format(nrow(rest), big.mark = ",")` babies__ (in the same range of gestation).
+
+```{r}
+#| echo: false
+#| fig-height: 4.4
+#| fig-width: 13
+#| fig-align: center
+#| fig-alt: !expr glue::glue("The same two models drawn over all the other babies, shown as light gray points. The straight line goes through the middle of the gray cloud. The wiggly curve swings far above and below the cloud. The testing RMSE is {f1(rmse(m_line, rest))} ounces for the line and {f1(rmse(m_wiggly, rest))} ounces for the wiggly curve.")
+yl2 <- c(20, 220)
+p_line2 <- ggplot(rest, aes(gestation, bwt)) +
+  geom_point(color = "gray60", alpha = 0.4) +
+  geom_line(data = grid, aes(y = line), color = green, linewidth = 1.3) +
+  coord_cartesian(ylim = yl2) +
+  labs(title = paste0("Line: testing RMSE = ", f1(rmse(m_line, rest))))
+p_wig2 <- ggplot(rest, aes(gestation, bwt)) +
+  geom_point(color = "gray60", alpha = 0.4) +
+  geom_line(data = grid, aes(y = wiggly), color = pink, linewidth = 1.3) +
+  coord_cartesian(ylim = yl2) +
+  labs(title = paste0("Wiggly: testing RMSE = ", f1(rmse(m_wiggly, rest))))
+(p_line2 | p_wig2) & theme(plot.title = element_text(size = 20))
+```
+
+The wiggly model learned the __noise__ in its 15 babies, not the pattern. It is __overfit__.
+
+## In practice: split the data first
+
+Today, we used __all__ the babies to learn one tool at a time. In a real analysis, __this is where we would have begun__:
+
+1. __First__, before fitting any model: randomly split the data into __training__ (often 80%) and __testing__ (20%) data. Put the testing data aside.
+2. Use __only the training data__ to fit, check, and compare models (residual plots, adjusted $R^2$, RMSE, Occam's razor).
+3. __At the end__, check the chosen model on the testing data.
+
+. . .
+
+The testing data play the role of __new__ babies that the model has never seen.
+
+## Step 1: split the data
+
+`initial_split()`, `training()`, and `testing()` are from the {rsample} package (part of the tidymodels family, which works well with the tidyverse).
+
+```{r}
+set.seed(84735)
+babies_split <- initial_split(babies, prop = 0.8)
+babies_train <- training(babies_split)
+babies_test <- testing(babies_split)
+```
+
+`r format(nrow(babies_train), big.mark = ",")` babies for training and `r nrow(babies_test)` babies for testing.
+
+## Steps 2 and 3: fit on training, check on testing
+
+```{r}
+model_train <- lm(bwt ~ gestation + smoke, data = babies_train)
+
+babies_test |>
+  mutate(prediction = predict(model_train, newdata = babies_test)) |>
+  summarize(test_rmse = sqrt(mean((bwt - prediction)^2)))
+```
+
+`predict()` from earlier today: here `newdata` is the whole testing data.
+
+## Comparing models on testing data
+
+```{r}
+#| echo: false
+test_rmse <- function(formula) {
+  m <- lm(formula, data = babies_train)
+  c(train = sqrt(mean(residuals(m)^2)),
+    test = sqrt(mean((babies_test$bwt - predict(m, newdata = babies_test))^2)))
+}
+tt <- list(bwt ~ gestation, bwt ~ gestation + smoke,
+           bwt ~ gestation + smoke + parity + age + height + weight) |>
+  map(test_rmse)
+```
+
+| Explanatory variables | Training RMSE | Testing RMSE |
+|---|---|---|
+| gestation | `r f2(tt[[1]]["train"])` | `r f2(tt[[1]]["test"])` |
+| gestation + smoke | `r f2(tt[[2]]["train"])` | `r f2(tt[[2]]["test"])` |
+| all six variables | `r f2(tt[[3]]["train"])` | `r f2(tt[[3]]["test"])` |
+
+: Training and testing RMSE (ounces) for three models of birth weight
+
+::: {.stat-callout .exercise}
+**Exercise**
+
+Which model predicts new babies best? Do the extra variables lead to overfitting here? Does this change which model you would choose with Occam's razor?
+:::
+
+## Cross-validation
+
+::: {.stat-callout .note-tip}
+**Note**
+
+With one split, the result depends on which rows happened to land in the testing data. *Cross-validation* repeats the split many times (each row gets a turn in the testing data) and averages the results. You will see it in more advanced classes.
+:::
 
 ## Summary {.smaller}
 
-- To evaluate a model, ask: __how fair__ is it, __how wrong__ is it, and __how accurate__ are its predictions?
-- Fairness: how and by whom the data were collected, for what purpose, the impact on individuals and society, and the biases and power structures baked in.
-- LINE: **L**inearity, **I**ndependence, **N**ormality, and **E**qual variance. Think about independence (clusters, time); check the rest with residual plots of $e_i$ against $\hat{y}_i$. For Bayesian models, also check whether data simulated from the model look like the real data (`pp_check()`).
-- A log transformation can help with right-skewed variables. Undo it with `exp()` and interpret on the original scale.
-- Correlation $r$: strength and direction of a __linear__ relationship. $b_1 = r \frac{s_y}{s_x}$ and the line goes through $(\bar{x}, \bar{y})$.
-- RMSE: typical distance from the line, in the units of $y$. $R^2$: the proportion of the variability in $y$ explained by the model. "Explains" is an association, not causation.
-- The average $y$ vs. a single $y$: confidence vs. prediction intervals; posterior credible vs. posterior predictive intervals.
+- Evaluate a model: __how fair__, __how wrong__, __how accurate__?
+- LINE: **L**inearity, **I**ndependence, **N**ormality, **E**qual variance. Think about independence (clusters, time); check the rest with residual plots of $e_i$ against $\hat{y}_i$. A log transformation can help with right-skewed variables.
+- Correlation $r$: strength and direction of a __linear__ relationship. $R^2$: the proportion of the variability in $y$ explained by the model; an association, not causation.
+- Average $y$ (confidence interval) vs. single $y$ (prediction interval).
+- Multiple linear regression: `lm(y ~ x1 + x2, ...)`. Each slope is interpreted __holding the other variables constant__; still not causal.
+- Compare models with __adjusted $R^2$__ (higher is better) and __RMSE__, the typical size of a residual (lower is better). __Occam's razor__: prefer the simpler model when two do about equally well.
+- In a real analysis, __first__ split the data into training and testing data, build the model on the training data, and check it on the testing data at the end.

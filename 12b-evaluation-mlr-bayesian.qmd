@@ -1,0 +1,553 @@
+---
+title: "Evaluating Models and Multiple Regression: Bayesian"
+author: "Mine Doğucu"
+filters:
+  - quarto
+  - a11y-tables.lua
+execute:
+  echo: true
+format:
+  revealjs:
+    menu:
+      openButton: false
+    footer: |
+      <span id="menu-toggle-box"></span> [stat-100.com](https://stat-100.com)
+    code-line-numbers: false
+    slide-number: true
+    incremental: false
+    theme: [default, style.scss]
+    logo:
+      path: images/00-stat100-logo-square.png
+      alt: "STAT 100 course square logo"
+    transition: fade
+    width: 1280
+    height: 720
+    title-slide-attributes:
+      data-background-image: "images/stat100-logo-rectangle.png"
+      data-background-size: 10%
+      data-background-position: 50% 85%
+      data-aria-label: "STAT 100 course logo"
+---
+
+<!--
+Lecture 12B (Wednesday): Bayesian day. Same structure as Monday (12A) with
+stan_glm() and bayesrules bikes: a short recap of Monday's evaluation ideas
+(not repeated), then fairness, how wrong (posterior predictive check), how
+accurate (posterior prediction), Bayesian multiple linear regression, and
+training and testing with prediction_summary().
+-->
+
+```{r}
+#| echo: false
+#| message: false
+library(tidyverse)
+library(broom)
+library(patchwork)
+library(rstanarm)
+library(bayesrules)
+library(rsample)
+options(scipen = 999)
+
+source("R/plot-normal.R")
+
+green <- hds_colors[["green"]]
+pink <- hds_colors[["pink"]]
+
+theme_set(theme_minimal(base_size = 22))
+bayesplot::bayesplot_theme_set(theme_minimal(base_size = 22))
+
+f1 <- function(x) sprintf("%.1f", x)
+f2 <- function(x) sprintf("%.2f", x)
+f3 <- function(x) sprintf("%.3f", x)
+f0 <- function(x) format(round(x), big.mark = ",")
+fmt_p <- function(p) if (p == 1) "more than 0.9999" else if (p == 0) "less than 0.0001" else sprintf("%.2f", p)
+```
+
+```{r}
+#| echo: false
+#| cache: true
+# Bayesian models (cached: they take a while)
+bike_model <- stan_glm(rides ~ temp_feel, data = bikes,
+                       prior_intercept = normal(5000, 1000),
+                       prior = normal(100, 40),
+                       seed = 84735, refresh = 0)
+
+bike_model_2 <- stan_glm(rides ~ temp_feel + weekend, data = bikes,
+                         prior_intercept = normal(5000, 1000),
+                         prior = normal(c(100, 0), c(40, 1000)),
+                         seed = 84735, refresh = 0)
+
+set.seed(84735)
+bike_split <- initial_split(bikes, prop = 0.8)
+bike_train <- training(bike_split)
+bike_test <- testing(bike_split)
+bike_train_1 <- stan_glm(rides ~ temp_feel, data = bike_train,
+                         prior_intercept = normal(5000, 1000),
+                         prior = normal(100, 40),
+                         seed = 84735, refresh = 0)
+bike_train_2 <- stan_glm(rides ~ temp_feel + weekend, data = bike_train,
+                         prior_intercept = normal(5000, 1000),
+                         prior = normal(c(100, 0), c(40, 1000)),
+                         seed = 84735, refresh = 0)
+```
+
+# Recap: Monday {.inverse background-color="#A51C30"}
+
+## What we did on Monday {.smaller}
+
+- __How fair?__ How and by whom were the data collected, and for what purpose? What is the impact on individuals and society? What biases or power structures are baked in?
+- __How wrong?__ LINE: **L**inearity, **I**ndependence, **N**ormality, **E**qual variance. Think about independence (clusters, time); check the rest with residual plots of $e_i$ against $\hat{y}_i$.
+- __How accurate?__ RMSE and $R^2$. The average $y$ at $x$ (confidence interval) vs. a single new $y$ (prediction interval).
+- __More variables:__ slopes are interpreted holding the other variables constant; still not causal with observational data. Adjusted $R^2$ and RMSE to compare models, Occam's razor, and training and testing data (split first!).
+
+. . .
+
+__Today:__ the same questions for __Bayesian__ models. Some tools are the same, and some are new.
+
+## Our model from last week
+
+```{r}
+#| eval: false
+bike_model <- stan_glm(rides ~ temp_feel, data = bikes,
+                       prior_intercept = normal(5000, 1000),
+                       prior = normal(100, 40),
+                       seed = 84735, refresh = 0)
+```
+
+Capital Bikeshare rides and "feels like" temperature (°F) in Washington, D.C., 2011–2012.
+
+# How fair is the model? {.inverse background-color="#A51C30"}
+
+## Bikeshare {.smaller}
+
+The `bikes` data come from Capital Bikeshare, which rents bikes from stations around Washington, D.C. Each row is a day: the number of rides that day and that day's "feels like" temperature, `temp_feel`.
+
+::: {.stat-callout .discussion}
+**Discussion**
+
+- Rides can only start at a bikeshare station. Whose rides are in the data, and whose are not? How could this change what our model says about rides and temperature?
+- `temp_feel` is one number for the whole city each day. Does every neighborhood feel the same temperature on the same day? Why might they differ?
+- Suppose the city used this model to decide where to add stations. Who could benefit? Who could be left out?
+:::
+
+. . .
+
+A model can be fair in one context and unfair in another. We evaluate the model __and__ how it will be used.
+
+::: notes
+Neighborhood heat (if students need a nudge after they discuss): across 108 US cities, formerly redlined neighborhoods are on average about 2.6 °C (4.7 °F) hotter in summer than other neighborhoods, with less tree canopy and more pavement (Hoffman, Shandas & Pendleton, 2020, Climate 8(1):12). In D.C., some neighborhoods feel almost 17 °F hotter than others (Axios D.C., July 17, 2024). One citywide temp_feel hides this. If stations are concentrated in some neighborhoods, the model describes how those riders respond to temperature.
+:::
+
+# How wrong is the model? {.inverse background-color="#A51C30"}
+
+## The same assumptions
+
+$$Y_i \mid \beta_0, \beta_1, \sigma \sim N(\beta_0 + \beta_1 X_i, \ \sigma^2)$$
+
+This says the same thing as Monday's $Y_i = \beta_0 + \beta_1 X_i + \epsilon_i$ with $\epsilon_i \sim N(0, \sigma^2)$: the same __LINE__ assumptions.
+
+## Independence: bikes
+
+Each row of `bikes` is a day, and the days come one after another. On its own, ridership is __not__ independent: the number of rides today is likely similar to the number of rides tomorrow.
+
+. . .
+
+But much of this similarity comes from the time of year, and our model includes temperature, which follows the time of year. If we know today's and tomorrow's temperatures, today's rides tell us little extra about tomorrow's rides.
+
+. . .
+
+So, __given temperature__, it is reasonable to treat the days as independent. "Reasonable" does not mean "perfect". It means "good enough to proceed."
+
+<small>This argument is from Johnson, Ott, & Dogucu (2022), [*Bayes Rules!*](https://www.bayesrulesbook.com/chapter-10), Chapter 10.</small>
+
+## How wrong is a Bayesian model?
+
+The residual plots are the same as on Monday. For a `stan_glm()` model, `fitted()` gives $\hat{y}_i$ and `residuals()` gives $e_i$ (using the posterior median line).
+
+```{r}
+#| fig-height: 3.6
+#| fig-width: 10
+#| fig-align: center
+#| fig-alt: "Residual vs fitted plot for the Bayesian bikeshare model. The points are spread around 0 between about 1,500 and 5,000 fitted rides. The spread is similar from left to right."
+bikes |>
+  mutate(fitted = fitted(bike_model), residual = residuals(bike_model)) |>
+  ggplot(aes(x = fitted, y = residual)) +
+  geom_point(alpha = 0.4) +
+  geom_hline(yintercept = 0, linetype = "dashed")
+```
+
+## Posterior predictive check: the idea
+
+Remember our Bayesian model:
+
+```{r}
+#| eval: false
+bike_model <- stan_glm(rides ~ temp_feel, data = bikes,
+                       prior_intercept = normal(5000, 1000),
+                       prior = normal(100, 40),
+                       seed = 84735, refresh = 0)
+```
+
+```{r}
+bike_draws <- as.data.frame(bike_model)
+```
+
+Each row of `bike_draws` is one plausible line ($\beta_0$, $\beta_1$) and one plausible $\sigma$: how far single days typically are from the line.
+
+. . .
+
+__The idea:__ if our model describes the real data well, then data __simulated__ from the model should look like the real data.
+
+## Simulating data with one plausible line
+
+```{r}
+one_line <- bike_draws |> slice(1)
+one_line
+```
+
+For each of the 500 real days, we start at this line's value for that day's temperature, then add random noise of about $\sigma$:
+
+```{r}
+set.seed(84735)
+simulated <- bikes |>
+  mutate(rides = rnorm(500,
+                       mean = one_line$`(Intercept)` + one_line$temp_feel * temp_feel,
+                       sd = one_line$sigma))
+```
+
+## Real data vs. simulated data
+
+```{r}
+#| echo: false
+#| fig-height: 4.6
+#| fig-width: 13
+#| fig-align: center
+#| fig-alt: "Two scatterplots of rides against temperature with the same axes. Left: the real 500 days. Right: 500 days simulated from one plausible line. Both clouds go up with temperature and have a similar overall spread, but at low temperatures the real days are packed closer together than the simulated days."
+yl <- range(c(bikes$rides, simulated$rides))
+p_real <- ggplot(bikes, aes(temp_feel, rides)) +
+  geom_point(alpha = 0.5) +
+  coord_cartesian(ylim = yl) +
+  scale_y_continuous(labels = scales::comma) +
+  labs(title = "Real data")
+p_made <- ggplot(simulated, aes(temp_feel, rides)) +
+  geom_point(alpha = 0.5, color = pink) +
+  coord_cartesian(ylim = yl) +
+  scale_y_continuous(labels = scales::comma) +
+  labs(title = "Simulated with one plausible line")
+(p_real | p_made) & theme(plot.title = element_text(size = 20))
+```
+
+Do the simulated data look like the real data? What looks different?
+
+## Posterior predictive check
+
+`pp_check()` from {rstanarm} repeats this with 50 rows of `bike_draws` and compares the __distributions__ of rides: the real rides (dark) and the 50 simulated data sets (light).
+
+```{r}
+#| fig-height: 3.6
+#| fig-width: 10
+#| out-width: 85%
+#| fig-align: center
+#| fig-alt: "Posterior predictive check for the bikeshare model. A dark curve shows the distribution of the real rides; 50 light curves show the distributions of 50 simulated data sets. The light curves have about the same center and spread as the dark curve, but the dark curve has a flatter, wider top."
+pp_check(bike_model)
+```
+
+Is our model reasonable? Is it perfect?
+
+# How accurate are the predictions? {.inverse background-color="#A51C30"}
+
+## And Bayesian estimates?
+
+On Monday, the least squares estimates had formulas. The posterior has no formula: `stan_glm()` __simulates__ it, combining
+
+- the __prior__ (what we believed before), and
+- the __data__ (through the likelihood).
+
+. . .
+
+```{r}
+#| echo: false
+bike_lm <- lm(rides ~ temp_feel, data = bikes)
+bike_draws <- as.data.frame(bike_model)
+```
+
+| | Least squares (`lm()`) | Posterior mean (`stan_glm()`) |
+|---|---|---|
+| $\beta_0$ | `r f1(coef(bike_lm)[1])` | `r f1(mean(bike_draws[["(Intercept)"]]))` |
+| $\beta_1$ | `r f2(coef(bike_lm)[2])` | `r f2(mean(bike_draws$temp_feel))` |
+
+: Bikeshare model estimates
+
+With 500 days of data, the data dominate the prior, and the two are close.
+
+## Bayesian: an average day vs. a single day {.smaller}
+
+On Monday: a confidence interval for the average baby vs. a prediction interval for a single baby. Bayesian version: last week, each row of `bike_draws` gave the __typical__ (average) number of rides on a 75 °F day: $\beta_0 + \beta_1 \times 75$.
+
+A __single__ 75 °F day also varies around the line, by about $\sigma$. So for each row, we add random noise of about that row's $\sigma$, just like when we simulated data.
+
+```{r}
+set.seed(84735)
+predict_75 <- bike_draws |>
+  mutate(average_day = `(Intercept)` + temp_feel * 75,
+         single_day = rnorm(n(), mean = average_day, sd = sigma))
+```
+
+```{r}
+#| echo: false
+#| fig-height: 2.8
+#| fig-width: 11
+#| fig-align: center
+#| fig-alt: "Two histograms on the same axis of rides on a 75 degree day. Two side by side histograms of rides on a 75 degree day, on the same x-axis. The green histogram of the typical (average) number of rides is very narrow, near 4,000. The pink histogram of the number of rides on a single day is centered at the same place but much wider, from about 1,000 to 7,000."
+predict_75 |>
+  select(average_day, single_day) |>
+  pivot_longer(everything(), names_to = "type", values_to = "rides") |>
+  ggplot(aes(rides, fill = type)) +
+  geom_histogram(bins = 60, color = "white") +
+  facet_wrap(~type, ncol = 2, scales = "free_y") +
+  scale_fill_manual(values = c(average_day = green, single_day = pink), guide = "none") +
+  scale_x_continuous(labels = scales::comma, breaks = c(0, 4000, 8000)) +
+  theme(axis.text.y = element_blank(), strip.text = element_text(size = 20))
+```
+
+## Bayesian: an average day vs. a single day
+
+```{r}
+predict_75 |>
+  summarize(average_lower = quantile(average_day, 0.025),
+            average_upper = quantile(average_day, 0.975))
+predict_75 |>
+  summarize(single_lower = quantile(single_day, 0.025),
+            single_upper = quantile(single_day, 0.975))
+```
+
+```{r}
+#| echo: false
+avg_ci <- quantile(predict_75$average_day, c(0.025, 0.975))
+one_pi <- quantile(predict_75$single_day, c(0.025, 0.975))
+```
+
+- 95% __posterior credible interval__ for the average 75 °F day: `r f0(avg_ci[1])` to `r f0(avg_ci[2])` rides.
+- 95% __posterior predictive interval__ for a single 75 °F day: `r f0(one_pi[1])` to `r f0(one_pi[2])` rides.
+
+## How accurate are the Bayesian predictions?
+
+We can make a 95% posterior predictive interval for __each__ of the 500 days in the data, at that day's temperature. If the model is accurate, about 95% of the real days should fall inside their own intervals.
+
+`prediction_summary()` from the {bayesrules} package does this for us:
+
+```{r}
+set.seed(84735)
+prediction_summary(bike_model, data = bikes)
+```
+
+```{r}
+#| echo: false
+set.seed(84735)
+ps <- prediction_summary(bike_model, data = bikes)
+```
+
+## Bayesian prediction accuracy
+
+- `within_95`: `r round(100 * ps$within_95)`% of the real days fall inside their 95% posterior predictive interval (and `within_50`: `r round(100 * ps$within_50)`% inside their 50% interval).
+- `mae`: the typical distance between a day's real rides and its prediction is about `r f0(ps$mae)` rides.
+
+::: {.stat-callout .exercise}
+**Exercise**
+
+Based on `within_95` and `within_50`, are the model's posterior predictive intervals about right? Is a typical error of about `r f0(ps$mae)` rides a lot?
+:::
+
+# Bayesian multiple linear regression {.inverse background-color="#A51C30"}
+
+## Bikeshare, again
+
+Last week: `rides ~ temp_feel` and `rides ~ weekend`, separately. Now both:
+
+$$Y_i \mid \beta_0, \beta_1, \beta_2, \sigma \sim N(\beta_0 + \beta_1 \text{temp\_feel}_i + \beta_2 \text{weekend}_i, \ \sigma^2)$$
+
+. . .
+
+We need a prior for each parameter. We keep the priors from last week:
+
+| Parameter | Prior |
+|---|---|
+| Centered intercept (an average temperature weekday) | $N(5000, 1000^2)$ |
+| $\beta_1$, `temp_feel` | $N(100, 40^2)$ |
+| $\beta_2$, `weekend` | $N(0, 1000^2)$ |
+
+: Priors for the bikeshare model
+
+## Fitting the model
+
+`prior` takes one normal distribution for each slope, in the same order as the variables.
+
+```{r}
+#| eval: false
+bike_model_2 <- stan_glm(rides ~ temp_feel + weekend, data = bikes,
+                         prior_intercept = normal(5000, 1000),
+                         prior = normal(c(100, 0), c(40, 1000)),
+                         seed = 84735, refresh = 0)
+```
+
+```{r}
+bike_draws_2 <- as.data.frame(bike_model_2)
+head(bike_draws_2, 3)
+```
+
+Each row is one plausible set of $(\beta_0, \beta_1, \beta_2, \sigma)$.
+
+## Posterior plausible lines
+
+```{r}
+#| echo: false
+#| fig-height: 5
+#| fig-width: 12
+#| fig-align: center
+#| fig-alt: "Scatterplot of rides against temperature with points colored by weekday or weekend. Fifty pink posterior lines for weekdays sit above fifty green posterior lines for weekends; within each group the lines are close together and all go up with temperature."
+set.seed(84735)
+lines_2 <- bike_draws_2 |> slice_sample(n = 50)
+ggplot(bikes, aes(temp_feel, rides)) +
+  geom_point(aes(color = weekend), alpha = 0.4) +
+  geom_abline(data = lines_2, aes(intercept = `(Intercept)`, slope = temp_feel),
+              color = pink, alpha = 0.3) +
+  geom_abline(data = lines_2, aes(intercept = `(Intercept)` + weekendTRUE, slope = temp_feel),
+              color = green, alpha = 0.3) +
+  scale_color_manual(values = c(`FALSE` = pink, `TRUE` = green),
+                     labels = c("weekday", "weekend"), name = NULL) +
+  scale_y_continuous(labels = scales::comma)
+```
+
+Two sets of parallel lines: weekdays (pink) and weekends (green).
+
+## Posterior summaries
+
+```{r}
+bike_draws_2 |>
+  summarize(posterior_mean_b1 = mean(temp_feel),
+            posterior_lower_b1 = quantile(temp_feel, 0.025),
+            posterior_upper_b1 = quantile(temp_feel, 0.975))
+bike_draws_2 |>
+  summarize(posterior_mean_b2 = mean(weekendTRUE),
+            posterior_lower_b2 = quantile(weekendTRUE, 0.025),
+            posterior_upper_b2 = quantile(weekendTRUE, 0.975))
+```
+
+```{r}
+#| echo: false
+b2_mean <- mean(bike_draws_2$weekendTRUE)
+b2_ci <- quantile(bike_draws_2$weekendTRUE, c(0.025, 0.975))
+b2_neg <- mean(bike_draws_2$weekendTRUE < 0)
+```
+
+## Your turn
+
+::: {.stat-callout .exercise}
+**Exercise**
+
+a. Interpret the posterior mean of $\beta_2$ (`weekendTRUE`) in context. Remember: holding temperature constant.
+b. Interpret the 95% posterior credible interval for $\beta_2$.
+c. What code would find the posterior probability that $\beta_2 < 0$?
+:::
+
+. . .
+
+```{r}
+bike_draws_2 |>
+  summarize(posterior_prob_negative = mean(weekendTRUE < 0))
+```
+
+## How wrong is the new model?
+
+The same tools as on Monday. Each row of `bike_draws_2` gives a plausible line for weekdays, one for weekends, and $\sigma$. `pp_check()` simulates 50 data sets and compares them with the real rides.
+
+```{r}
+#| fig-height: 3.6
+#| fig-width: 10
+#| out-width: 85%
+#| fig-align: center
+#| fig-alt: "Posterior predictive check for the model of rides with temperature and weekend. A dark curve shows the distribution of the real rides; 50 light curves show the distributions of 50 simulated data sets. The light curves have about the same center and spread as the dark curve."
+pp_check(bike_model_2)
+```
+
+Do the simulated data sets look like the real data?
+
+# Training and testing {.inverse background-color="#A51C30"}
+
+## Training and testing: reminder
+
+On Monday: in a real analysis, splitting the data is the __first__ step, not the last.
+
+1. __Before__ fitting any model, randomly split the data into __training__ (80%) and __testing__ (20%) data.
+2. Fit, check, and compare models on the training data only.
+3. __At the end__, check the chosen model's predictions on the testing data.
+
+For Bayesian models, we check the testing data against the posterior predictive intervals with `prediction_summary()`.
+
+## Training and testing: Bayesian
+
+Fit `stan_glm()` on the training data only. Then, as earlier today, check how many days in the __testing__ data fall inside their 95% posterior predictive intervals.
+
+```{r}
+#| eval: false
+set.seed(84735)
+bike_split <- initial_split(bikes, prop = 0.8)
+bike_train <- training(bike_split)
+bike_test <- testing(bike_split)
+bike_train_2 <- stan_glm(rides ~ temp_feel + weekend, data = bike_train,
+                         prior_intercept = normal(5000, 1000),
+                         prior = normal(c(100, 0), c(40, 1000)),
+                         seed = 84735, refresh = 0)
+```
+
+```{r}
+set.seed(84735)
+prediction_summary(bike_train_2, data = bike_test)
+```
+
+<small>`data = bike_test`: the model never saw these days.</small>
+
+## Training and testing: Bayesian
+
+```{r}
+#| echo: false
+set.seed(84735)
+ps1 <- prediction_summary(bike_train_1, data = bike_test)
+set.seed(84735)
+ps2 <- prediction_summary(bike_train_2, data = bike_test)
+```
+
+| Explanatory variables | `mae` (rides) | `within_50` | `within_95` |
+|---|---|---|---|
+| temp_feel | `r f0(ps1$mae)` | `r f2(ps1$within_50)` | `r f2(ps1$within_95)` |
+| temp_feel + weekend | `r f0(ps2$mae)` | `r f2(ps2$within_50)` | `r f2(ps2$within_95)` |
+
+: Posterior prediction on the testing data for two Bayesian bikeshare models
+
+::: {.stat-callout .exercise}
+**Exercise**
+
+Which model predicts new days better? Are the posterior predictive intervals about right for both models?
+:::
+
+## Frequentist vs. Bayesian {.smaller}
+
+| | Frequentist (`lm()`) | Bayesian (`stan_glm()`) |
+|---|---|---|
+| How wrong? | LINE: residual plots with `augment()` | LINE: residual plots and `pp_check()` |
+| The average $y$ at $x$ | $\hat{y}$ and a 95% confidence interval | 95% posterior credible interval for $\beta_0 + \beta_1 x$ |
+| A single new $y$ at $x$ | 95% prediction interval | 95% posterior predictive interval |
+| How accurate? | RMSE and $R^2$ | `prediction_summary()` |
+| More variables | `lm(y ~ x1 + x2)` | `stan_glm(y ~ x1 + x2)`, one prior per slope |
+| New data | RMSE on testing data | `prediction_summary()` on testing data |
+
+: Evaluating frequentist and Bayesian regression models
+
+## Summary {.smaller}
+
+- Bayesian models are evaluated with the same three questions: how fair, how wrong, how accurate. The LINE assumptions are the same.
+- __Posterior predictive check:__ simulate data sets from plausible lines (rows of the posterior draws) and compare them with the real data: `pp_check()`.
+- The average $y$ at $x$ (95% posterior credible interval) vs. a single new $y$ (95% __posterior predictive interval__, which also includes $\sigma$).
+- __Accuracy:__ how many observations fall inside their posterior predictive intervals, and the typical prediction error: `prediction_summary()`.
+- Multiple linear regression: `stan_glm(y ~ x1 + x2, ...)` with one prior per slope, `prior = normal(c(...), c(...))`. Slopes are interpreted holding the other variables constant.
+- Training and testing: fit on the training data, then `prediction_summary(model, data = testing_data)`.
