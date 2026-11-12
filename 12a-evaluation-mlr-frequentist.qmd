@@ -22,6 +22,7 @@ format:
     transition: fade
     width: 1280
     height: 720
+    include-after-body: a11y-revealjs.html
     title-slide-attributes:
       data-background-image: "images/stat100-logo-rectangle.png"
       data-background-size: 10%
@@ -203,7 +204,7 @@ ggplot(model_g_aug, aes(x = .fitted, y = .resid)) +
 
 Each point is one baby: its fitted value $\hat{y}_i$ (x-axis) and its residual $e_i$ (y-axis). We want a __shapeless cloud__ around 0: no curve (**L**inearity) and the same spread everywhere (**E**qual variance).
 
-## Histogram of residuals, $e_i$
+## Histogram of residuals
 
 ```{r}
 #| fig-height: 4
@@ -399,7 +400,7 @@ $$\widehat{\text{brain}} = `r f1(e_l0)` \times \text{body}^{`r l1`}$$
 #| fig-height: 3.4
 #| fig-width: 10
 #| fig-align: center
-#| fig-alt: "Scatterplot of brain weight in grams against body weight in kilograms for the 62 mammals, with the curve brain = 8.4 times body to the power 0.75. The curve rises steeply at first and then more slowly, passing close to the small mammals and between the two elephants."
+#| fig-alt: "Scatterplot of brain weight in grams against body weight in kilograms for the 62 mammals, with the curve brain = 8.4 times body to the power 0.75. The curve rises steeply at first and then more slowly. It passes close to most mammals and to the largest elephant, at about 6,700 kilograms, and well below the other elephant, at about 2,500 kilograms and 4,600 grams."
 ggplot(mammals, aes(body_wt, brain_wt)) +
   geom_point() +
   geom_function(fun = function(x) e_l0 * x^l1, color = green, linewidth = 1.3, n = 1000) +
@@ -444,7 +445,7 @@ The residual is positive and large: men have a much bigger brain than expected f
 
 <small>Zoomed in to mammals up to 300 kg.</small>
 
-## Prediction in R
+## Prediction in R: the log scale
 
 `predict()` (from the {stats} package, which comes with R) plugs new values of $x$ into a fitted model.
 
@@ -463,7 +464,7 @@ pred_log_62 <- predict(model_log, newdata = tibble(log_body = log(62)))
 
 The model's response is `log_brain`, so this is the prediction on the __log__ scale: $\widehat{\log(\text{brain})} \approx `r f2(pred_log_62)`$.
 
-## Prediction in R
+## Prediction in R: back to grams
 
 `exp()` undoes `log()` and takes us back to grams:
 
@@ -524,7 +525,7 @@ r_g <- cor(babies$gestation, babies$bwt, use = "complete.obs")
 A correlation near 0 does not mean there is no relationship: there could be a strong *curved* relationship. Correlation only measures *linear* relationships. Always plot the data!
 :::
 
-## Where do $b_0$ and $b_1$ come from? {.smaller}
+## Where do b₀ and b₁ come from?
 
 The least squares estimates (the ones `lm()` gives) can be calculated from five summary statistics:
 
@@ -545,11 +546,13 @@ b1_hand <- r_g * st$sd_y / st$sd_x
 b0_hand <- st$mean_y - b1_hand * st$mean_x
 ```
 
-. . .
+## Calculating b₀ and b₁
 
-$$b_1 = `r f3(r_g)` \times \frac{`r f2(st$sd_y)`}{`r f2(st$sd_x)`} = `r f3(b1_hand)` \qquad b_0 = `r f2(st$mean_y)` - `r sprintf("%.4f", b1_hand)` \times `r f2(st$mean_x)` = `r f1(b0_hand)`$$
+$$b_1 = r \times \frac{s_y}{s_x} = `r f3(r_g)` \times \frac{`r f2(st$sd_y)`}{`r f2(st$sd_x)`} = `r f3(b1_hand)`$$
 
-These are the estimates from `tidy(model_g)` last Monday: $b_0 = -10.1$ and $b_1 = 0.464$.
+$$b_0 = \bar{y} - b_1 \bar{x} = `r f2(st$mean_y)` - `r sprintf("%.4f", b1_hand)` \times `r f2(st$mean_x)` = `r f1(b0_hand)`$$
+
+These are the estimates from `tidy(model_g)` last week: $b_0 = -10.1$ and $b_1 = 0.464$.
 
 ## What these formulas tell us
 
@@ -583,17 +586,17 @@ Our predictions of birth weight are typically off by about `r f1(rmse_g)` ounces
 #| fig-height: 4
 #| fig-width: 13
 #| fig-align: center
-#| fig-alt: "Two plots of birth weight against gestation. Left, labeled total variability: a horizontal line at the mean birth weight with vertical segments from each point to it. Right, labeled left over after the model: the regression line with vertical segments from each point to the line. The segments on the right are only a little shorter than on the left."
+#| fig-alt: "Two plots of birth weight against gestation for 60 randomly chosen babies. Left, labeled total variability: a horizontal line at the mean birth weight with vertical segments from each point to it. Right, labeled left over after the model: the regression line with vertical segments from each point to the line. The segments on the right are only a little shorter than on the left."
 set.seed(84735)
 few <- model_g_aug |> slice_sample(n = 60)
 ybar <- mean(babies$bwt)
 v1 <- ggplot(few, aes(gestation, bwt)) +
-  geom_segment(aes(xend = gestation, yend = ybar), color = pink, alpha = 0.7) +
+  geom_segment(aes(xend = gestation, yend = ybar), color = pink, linewidth = 0.9) +
   geom_hline(yintercept = ybar, color = "gray30", linewidth = 1) +
   geom_point() +
   labs(title = "Total variability: around the mean")
 v2 <- ggplot(few, aes(gestation, bwt)) +
-  geom_segment(aes(xend = gestation, yend = .fitted), color = pink, alpha = 0.7) +
+  geom_segment(aes(xend = gestation, yend = .fitted), color = pink, linewidth = 0.9) +
   geom_abline(intercept = coef(model_g)[1], slope = coef(model_g)[2], color = green, linewidth = 1) +
   geom_point() +
   labs(title = "Left over: around the line")
@@ -628,7 +631,7 @@ With all `r format(nrow(model_g_aug), big.mark = ",")` babies, square each segme
 
 The model explains the other `r 100 - round(100 * ss_left / ss_total)`%. This is $R^2$.
 
-## $R^2$
+## R²
 
 $$R^2 = 1 - \frac{\text{variability left over (around the line)}}{\text{total variability (around the mean)}} = 1 - \frac{\sum (y_i - \hat{y}_i)^2}{\sum (y_i - \bar{y})^2}$$
 
@@ -646,7 +649,7 @@ r2_g <- glance(model_g)$r.squared
 
 __Interpretation:__ `r round(100 * r2_g, 1)`% of the variability in birth weight is explained by gestation (with a linear model). For simple linear regression, $R^2 = r^2$: $`r f3(r_g)`^2 = `r f3(r_g^2)`$.
 
-## $R^2$ is between 0 and 1
+## R² is between 0 and 1
 
 ::: {.stat-callout .exercise}
 **Exercise**
@@ -688,7 +691,7 @@ pi_280 <- predict(model_g, newdata = tibble(gestation = 280), interval = "predic
 
 We saw `predict()` with the mammals model. With `interval =`, it also gives an interval.
 
-## An average baby vs. a single baby
+## Confidence vs. prediction intervals
 
 - 95% __confidence interval__ (`r f1(ci_280[2])` to `r f1(ci_280[3])` oz): for the __average__ birth weight of all babies born after 280 days.
 - 95% __prediction interval__ (`r f1(pi_280[2])` to `r f1(pi_280[3])` oz): for the birth weight of __one__ baby born after 280 days. It is much wider because single babies vary around the line.
@@ -698,7 +701,7 @@ We saw `predict()` with the mammals model. With `interval =`, it also gives an i
 #| fig-height: 3.6
 #| fig-width: 11
 #| fig-align: center
-#| fig-alt: "Scatterplot of birth weight against gestation with the regression line. A narrow dark green band around the line shows the 95% confidence intervals for the average birth weight. A much wider light pink band shows the 95% prediction intervals for a single baby; it covers most of the points."
+#| fig-alt: "Scatterplot of birth weight against gestation with the regression line. A narrow dark green band around the line shows the 95% confidence intervals for the average birth weight. A much wider light pink band with dashed pink edges shows the 95% prediction intervals for a single baby; it covers most of the points. The bands are labeled confidence, the average, and prediction, one baby."
 grid_g <- tibble(gestation = seq(220, 340, by = 1))
 bands <- bind_cols(grid_g,
                    predict(model_g, grid_g, interval = "confidence") |> as_tibble() |> rename(c_lwr = lwr, c_upr = upr),
@@ -708,6 +711,12 @@ ggplot(babies, aes(gestation, bwt)) +
   geom_point(alpha = 0.25) +
   geom_ribbon(data = bands, aes(x = gestation, ymin = c_lwr, ymax = c_upr), inherit.aes = FALSE, fill = green, alpha = 0.7) +
   geom_line(data = bands, aes(gestation, fit), color = green, linewidth = 1) +
+  geom_line(data = bands, aes(gestation, p_lwr), color = pink, linewidth = 0.8, linetype = "dashed") +
+  geom_line(data = bands, aes(gestation, p_upr), color = pink, linewidth = 0.8, linetype = "dashed") +
+  annotate("label", x = 228, y = max(bands$p_upr[bands$gestation == 228]) + 8,
+           label = "prediction: one baby", hjust = 0, size = 6) +
+  annotate("label", x = 320, y = bands$fit[bands$gestation == 320] - 14,
+           label = "confidence: the average", hjust = 0.5, size = 6) +
   coord_cartesian(xlim = c(220, 340))
 ```
 
@@ -790,16 +799,19 @@ $$\widehat{\text{bwt}} = `r g0` + `r g1` \times \text{gestation} - `r abs(g2)` \
 #| fig-height: 3.6
 #| fig-width: 11
 #| fig-align: center
-#| fig-alt: !expr glue::glue("Scatterplot of birth weight against gestation, with points colored by whether the mother smoked. Two parallel lines are drawn; the green line for mothers who did not smoke is about {abs(g2)} ounces above the pink line for mothers who smoked.")
+#| fig-alt: !expr glue::glue("Scatterplot of birth weight against gestation, with points colored by whether the mother smoked. Babies of mothers who did not smoke are green dots; babies of mothers who smoked are pink crosses. Two parallel lines are drawn and labeled; the solid green line for mothers who did not smoke is about {abs(g2)} ounces above the dashed pink line for mothers who smoked.")
 babies |>
   mutate(smoke = factor(smoke, labels = c("did not smoke", "smoked"))) |>
-  ggplot(aes(gestation, bwt, color = smoke)) +
-  geom_point(alpha = 0.3) +
+  ggplot(aes(gestation, bwt, color = smoke, shape = smoke)) +
+  geom_point(alpha = 0.35) +
   geom_abline(intercept = g0, slope = g1, color = green, linewidth = 1.5) +
-  geom_abline(intercept = g0 + g2, slope = g1, color = pink, linewidth = 1.5) +
+  geom_abline(intercept = g0 + g2, slope = g1, color = pink, linewidth = 1.5, linetype = "dashed") +
+  annotate("label", x = 320, y = g0 + g1 * 320 + 14, label = "did not smoke", color = green, size = 6) +
+  annotate("label", x = 320, y = g0 + g2 + g1 * 320 - 14, label = "smoked", color = pink, size = 6) +
   scale_color_manual(values = c(green, pink)) +
+  scale_shape_manual(values = c(16, 4)) +
   coord_cartesian(xlim = c(220, 340)) +
-  labs(color = NULL)
+  theme(legend.position = "none")
 ```
 
 ## Interpreting the slopes
@@ -892,7 +904,7 @@ tidy(model_all)
 
 <small>`parity`: 0 for a first pregnancy, 1 otherwise. `age`: mother's age (years). `height`: mother's height (inches). `weight`: mother's pre-pregnancy weight (pounds).</small>
 
-## More explanatory variables
+## Interpreting the six-variable model
 
 ```{r}
 #| echo: false
@@ -906,7 +918,7 @@ a. Interpret the slope of `height` (`r f3(ht$estimate)`) in context.
 b. Which variable does not seem to be associated with birth weight, after taking the others into account?
 :::
 
-## $R^2$ never goes down
+## R² never goes down
 
 ```{r}
 #| echo: false
@@ -923,7 +935,7 @@ r2_tab <- tibble(model = c("gestation", "gestation + smoke",
          adj = map_dbl(fit, ~ glance(.x)$adj.r.squared))
 ```
 
-| Explanatory variables | $R^2$ |
+| Explanatory variables | R² |
 |---|---|
 | `r r2_tab$model[1]` | `r f3(r2_tab$r2[1])` |
 | `r r2_tab$model[2]` | `r f3(r2_tab$r2[2])` |
@@ -940,7 +952,7 @@ r2_tab <- tibble(model = c("gestation", "gestation + smoke",
 
 Adding a variable can never make $R^2$ smaller. So $R^2$ cannot tell us whether a variable is worth adding.
 
-## Adjusted $R^2$
+## Adjusted R²
 
 __Adjusted $R^2$__ has a penalty for each of the $k$ explanatory variables ($n$: number of observations):
 
@@ -953,9 +965,9 @@ glance(model_all) |>
 
 It goes up only if a new variable helps more than we would expect by chance. Use it to __compare__ models.
 
-## Adjusted $R^2$
+## R² vs. adjusted R²
 
-| Explanatory variables | $R^2$ | Adj. $R^2$ |
+| Explanatory variables | R² | Adjusted R² |
 |---|---|---|
 | `r r2_tab$model[1]` | `r f3(r2_tab$r2[1])` | `r f3(r2_tab$adj[1])` |
 | `r r2_tab$model[2]` | `r f3(r2_tab$r2[2])` | `r f3(r2_tab$adj[2])` |
@@ -996,7 +1008,7 @@ r2_tab <- r2_tab |>
   mutate(rmse = map_dbl(fit, ~ sqrt(mean(residuals(.x)^2))))
 ```
 
-| Explanatory variables | Adj. $R^2$ | RMSE (oz) |
+| Explanatory variables | Adjusted R² | RMSE (oz) |
 |---|---|---|
 | `r r2_tab$model[1]` | `r f3(r2_tab$adj[1])` | `r f2(r2_tab$rmse[1])` |
 | `r r2_tab$model[2]` | `r f3(r2_tab$adj[2])` | `r f2(r2_tab$rmse[2])` |
@@ -1024,7 +1036,7 @@ Why prefer a simpler model?
 
 ## Which model would you choose?
 
-| Explanatory variables | Adj. $R^2$ | RMSE (oz) |
+| Explanatory variables | Adjusted R² | RMSE (oz) |
 |---|---|---|
 | gestation + smoke | `r f3(r2_tab$adj[2])` | `r f2(r2_tab$rmse[2])` |
 | all six variables | `r f3(r2_tab$adj[3])` | `r f2(r2_tab$rmse[3])` |
@@ -1071,7 +1083,7 @@ __Testing:__ new people, not a good fit.
 :::
 :::
 
-## Overfitting
+## Overfitting: the 15 babies
 
 ```{r}
 #| echo: false
@@ -1114,7 +1126,7 @@ p_wig <- ggplot(small, aes(gestation, bwt)) +
 
 Which model looks better?
 
-## Overfitting
+## Overfitting: new babies
 
 Now we use both models to predict the __other `r format(nrow(rest), big.mark = ",")` babies__ (in the same range of gestation).
 
@@ -1123,15 +1135,15 @@ Now we use both models to predict the __other `r format(nrow(rest), big.mark = "
 #| fig-height: 4.4
 #| fig-width: 13
 #| fig-align: center
-#| fig-alt: !expr glue::glue("The same two models drawn over all the other babies, shown as light gray points. The straight line goes through the middle of the gray cloud. The wiggly curve swings far above and below the cloud. The testing RMSE is {f1(rmse(m_line, rest))} ounces for the line and {f1(rmse(m_wiggly, rest))} ounces for the wiggly curve.")
+#| fig-alt: !expr glue::glue("The same two models drawn over all the other babies, shown as gray points. The straight line goes through the middle of the gray cloud. The wiggly curve swings far above and below the cloud. The testing RMSE is {f1(rmse(m_line, rest))} ounces for the line and {f1(rmse(m_wiggly, rest))} ounces for the wiggly curve.")
 yl2 <- c(20, 220)
 p_line2 <- ggplot(rest, aes(gestation, bwt)) +
-  geom_point(color = "gray60", alpha = 0.4) +
+  geom_point(color = "gray40", alpha = 0.4) +
   geom_line(data = grid, aes(y = line), color = green, linewidth = 1.3) +
   coord_cartesian(ylim = yl2) +
   labs(title = paste0("Line: testing RMSE = ", f1(rmse(m_line, rest))))
 p_wig2 <- ggplot(rest, aes(gestation, bwt)) +
-  geom_point(color = "gray60", alpha = 0.4) +
+  geom_point(color = "gray40", alpha = 0.4) +
   geom_line(data = grid, aes(y = wiggly), color = pink, linewidth = 1.3) +
   coord_cartesian(ylim = yl2) +
   labs(title = paste0("Wiggly: testing RMSE = ", f1(rmse(m_wiggly, rest))))

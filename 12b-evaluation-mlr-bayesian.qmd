@@ -22,6 +22,7 @@ format:
     transition: fade
     width: 1280
     height: 720
+    include-after-body: a11y-revealjs.html
     title-slide-attributes:
       data-background-image: "images/stat100-logo-rectangle.png"
       data-background-size: 10%
@@ -258,10 +259,7 @@ Is our model reasonable? Is it perfect?
 
 ## And Bayesian estimates?
 
-On Monday, the least squares estimates had formulas. The posterior has no formula: `stan_glm()` __simulates__ it, combining
-
-- the __prior__ (what we believed before), and
-- the __data__ (through the likelihood).
+On Monday, the least squares estimates had formulas. The posterior has no formula: `stan_glm()` __simulates__ it, combining the __prior__ (what we believed before) and the __data__ (through the likelihood).
 
 . . .
 
@@ -271,16 +269,16 @@ bike_lm <- lm(rides ~ temp_feel, data = bikes)
 bike_draws <- as.data.frame(bike_model)
 ```
 
-| | Least squares (`lm()`) | Posterior mean (`stan_glm()`) |
+| Parameter | Least squares (`lm()`) | Posterior mean (`stan_glm()`) |
 |---|---|---|
-| $\beta_0$ | `r f1(coef(bike_lm)[1])` | `r f1(mean(bike_draws[["(Intercept)"]]))` |
-| $\beta_1$ | `r f2(coef(bike_lm)[2])` | `r f2(mean(bike_draws$temp_feel))` |
+| Intercept, β₀ | `r f1(coef(bike_lm)[1])` | `r f1(mean(bike_draws[["(Intercept)"]]))` |
+| Slope, β₁ | `r f2(coef(bike_lm)[2])` | `r f2(mean(bike_draws$temp_feel))` |
 
 : Bikeshare model estimates
 
 With 500 days of data, the data dominate the prior, and the two are close.
 
-## Bayesian: an average day vs. a single day {.smaller}
+## Bayesian: an average day vs. a single day
 
 On Monday: a confidence interval for the average baby vs. a prediction interval for a single baby. Bayesian version: last week, each row of `bike_draws` gave the __typical__ (average) number of rides on a 75 °F day: $\beta_0 + \beta_1 \times 75$.
 
@@ -293,24 +291,29 @@ predict_75 <- bike_draws |>
          single_day = rnorm(n(), mean = average_day, sd = sigma))
 ```
 
+## Simulated rides on a 75 °F day
+
 ```{r}
 #| echo: false
-#| fig-height: 2.8
+#| fig-height: 4.2
 #| fig-width: 11
 #| fig-align: center
-#| fig-alt: "Two histograms on the same axis of rides on a 75 degree day. Two side by side histograms of rides on a 75 degree day, on the same x-axis. The green histogram of the typical (average) number of rides is very narrow, near 4,000. The pink histogram of the number of rides on a single day is centered at the same place but much wider, from about 1,000 to 7,000."
+#| fig-alt: "Two side by side histograms of rides on a 75 degree day, on the same x-axis, labeled average day and single day. The green histogram of the typical (average) number of rides is very narrow, near 4,000. The pink histogram of the number of rides on a single day is centered at the same place but much wider, mostly between about 1,500 and 6,500."
 predict_75 |>
   select(average_day, single_day) |>
   pivot_longer(everything(), names_to = "type", values_to = "rides") |>
+  mutate(type = recode(type, average_day = "average day", single_day = "single day")) |>
   ggplot(aes(rides, fill = type)) +
   geom_histogram(bins = 60, color = "white") +
   facet_wrap(~type, ncol = 2, scales = "free_y") +
-  scale_fill_manual(values = c(average_day = green, single_day = pink), guide = "none") +
+  scale_fill_manual(values = c(`average day` = green, `single day` = pink), guide = "none") +
   scale_x_continuous(labels = scales::comma, breaks = c(0, 4000, 8000)) +
   theme(axis.text.y = element_blank(), strip.text = element_text(size = 20))
 ```
 
-## Bayesian: an average day vs. a single day
+The average day (left) is very certain. A single day (right) can have many more or many fewer rides.
+
+## Credible vs. posterior predictive intervals
 
 ```{r}
 predict_75 |>
@@ -373,8 +376,8 @@ We need a prior for each parameter. We keep the priors from last week:
 | Parameter | Prior |
 |---|---|
 | Centered intercept (an average temperature weekday) | $N(5000, 1000^2)$ |
-| $\beta_1$, `temp_feel` | $N(100, 40^2)$ |
-| $\beta_2$, `weekend` | $N(0, 1000^2)$ |
+| Slope of `temp_feel`, β₁ | $N(100, 40^2)$ |
+| Slope of `weekend`, β₂ | $N(0, 1000^2)$ |
 
 : Priors for the bikeshare model
 
@@ -404,21 +407,25 @@ Each row is one plausible set of $(\beta_0, \beta_1, \beta_2, \sigma)$.
 #| fig-height: 5
 #| fig-width: 12
 #| fig-align: center
-#| fig-alt: "Scatterplot of rides against temperature with points colored by weekday or weekend. Fifty pink posterior lines for weekdays sit above fifty green posterior lines for weekends; within each group the lines are close together and all go up with temperature."
+#| fig-alt: "Scatterplot of rides against temperature; weekdays are pink dots and weekends are green crosses. Fifty solid pink posterior lines for weekdays, labeled weekday, sit above fifty dashed green posterior lines for weekends, labeled weekend; within each group the lines are close together and all go up with temperature."
 set.seed(84735)
 lines_2 <- bike_draws_2 |> slice_sample(n = 50)
+b_week <- colMeans(bike_draws_2[, c("(Intercept)", "temp_feel", "weekendTRUE")])
 ggplot(bikes, aes(temp_feel, rides)) +
-  geom_point(aes(color = weekend), alpha = 0.4) +
+  geom_point(aes(color = weekend, shape = weekend), alpha = 0.5) +
   geom_abline(data = lines_2, aes(intercept = `(Intercept)`, slope = temp_feel),
               color = pink, alpha = 0.3) +
   geom_abline(data = lines_2, aes(intercept = `(Intercept)` + weekendTRUE, slope = temp_feel),
-              color = green, alpha = 0.3) +
-  scale_color_manual(values = c(`FALSE` = pink, `TRUE` = green),
-                     labels = c("weekday", "weekend"), name = NULL) +
-  scale_y_continuous(labels = scales::comma)
+              color = green, alpha = 0.3, linetype = "dashed") +
+  annotate("label", x = 55, y = b_week[1] + b_week[2] * 55 + 900, label = "weekday", color = pink, size = 6) +
+  annotate("label", x = 55, y = b_week[1] + b_week[3] + b_week[2] * 55 - 900, label = "weekend", color = green, size = 6) +
+  scale_color_manual(values = c(`FALSE` = pink, `TRUE` = green)) +
+  scale_shape_manual(values = c(`FALSE` = 16, `TRUE` = 4)) +
+  scale_y_continuous(labels = scales::comma) +
+  theme(legend.position = "none")
 ```
 
-Two sets of parallel lines: weekdays (pink) and weekends (green).
+Two sets of parallel lines: weekdays (pink, solid) and weekends (green, dashed).
 
 ## Posterior summaries
 
@@ -466,7 +473,7 @@ The same tools as on Monday. Each row of `bike_draws_2` gives a plausible line f
 #| fig-width: 10
 #| out-width: 85%
 #| fig-align: center
-#| fig-alt: "Posterior predictive check for the model of rides with temperature and weekend. A dark curve shows the distribution of the real rides; 50 light curves show the distributions of 50 simulated data sets. The light curves have about the same center and spread as the dark curve."
+#| fig-alt: "Posterior predictive check for the model of rides with temperature and weekend. A dark curve shows the distribution of the real rides; 50 light curves show the distributions of 50 simulated data sets. The light curves have about the same center and spread as the dark curve, but the dark curve has two bumps that the light curves smooth over."
 pp_check(bike_model_2)
 ```
 
@@ -507,7 +514,7 @@ prediction_summary(bike_train_2, data = bike_test)
 
 <small>`data = bike_test`: the model never saw these days.</small>
 
-## Training and testing: Bayesian
+## Comparing models on testing data
 
 ```{r}
 #| echo: false
@@ -532,12 +539,12 @@ Which model predicts new days better? Are the posterior predictive intervals abo
 
 ## Frequentist vs. Bayesian {.smaller}
 
-| | Frequentist (`lm()`) | Bayesian (`stan_glm()`) |
+| Question | Frequentist (`lm()`) | Bayesian (`stan_glm()`) |
 |---|---|---|
 | How wrong? | LINE: residual plots with `augment()` | LINE: residual plots and `pp_check()` |
-| The average $y$ at $x$ | $\hat{y}$ and a 95% confidence interval | 95% posterior credible interval for $\beta_0 + \beta_1 x$ |
-| A single new $y$ at $x$ | 95% prediction interval | 95% posterior predictive interval |
-| How accurate? | RMSE and $R^2$ | `prediction_summary()` |
+| The average y at a given x | $\hat{y}$ and a 95% confidence interval | 95% posterior credible interval for $\beta_0 + \beta_1 x$ |
+| A single new y at a given x | 95% prediction interval | 95% posterior predictive interval |
+| How accurate? | RMSE and R² | `prediction_summary()` |
 | More variables | `lm(y ~ x1 + x2)` | `stan_glm(y ~ x1 + x2)`, one prior per slope |
 | New data | RMSE on testing data | `prediction_summary()` on testing data |
 
