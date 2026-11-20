@@ -1,0 +1,43 @@
+---
+title: "Relative Card: Cousin Sam"
+subtitle: "Secret. Only the person playing Cousin Sam reads this page."
+metadata-files: [_13a-packet.yml]
+---
+
+::: secret
+**Relatives only.** If you are the explainer, close this tab. Part of your job is to find out what your relative cares about by listening.
+:::
+
+::: back-links
+[Back to the slides](13a-statistical-communication.html#/open-your-page) · [Guide](13a-tt-guide.html)
+:::
+
+**Play a real person, not a cartoon.**
+
+You play Cousin Sam in groups of 3 or 4. You sit at the same table as the explainer and the relative.
+
+## Who you are
+
+You're in your twenties, on the fence about most things, and a bit lost when people use big words. You're not against science. You just want it to make sense. You'd rather everyone stopped arguing so you can eat pie.
+
+## Your jobs
+
+1. **Ask at least once:** "Wait, what does that mean?" Ask it whenever you hear a word you wouldn't use at home.
+2. **Watch the relative.** When did they lean in? When did they cross their arms?
+
+## Things you might say
+
+- "Okay, but what does that mean for *me*?"
+- "Can you say that in one sentence?"
+- "Uncle Ray has a point though, doesn't he?"
+
+## After the round: your feedback
+
+After the relative gives feedback, you add:
+
+- **One moment the relative softened**, and what the explainer had just said.
+- **One word you didn't understand.**
+
+## When the activity ends
+
+Step out of the role: *"I'm not Cousin Sam. I'm ___."* On Zoom, rename yourself back.

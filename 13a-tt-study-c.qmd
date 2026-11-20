@@ -1,0 +1,110 @@
+---
+title: "Study Card C: The Mediterranean diet (PREDIMED)"
+subtitle: "For the explainer. Read this, then plan what you'll say."
+metadata-files: [_13a-packet.yml]
+---
+
+::: back-links
+[Back to the slides](13a-statistical-communication.html#/open-your-page) · [Guide](13a-tt-guide.html)
+:::
+
+## The study in one paragraph
+
+In Spain, **7,447 adults aged 55 to 80** who were likely to develop heart disease (for example, they had diabetes, smoked, or had high blood pressure) but did not have it yet were assigned to one of three diets: a Mediterranean diet with extra-virgin olive oil (the study gave them olive oil), a Mediterranean diet with nuts (the study gave them nuts), or a control diet with advice to cut down on fat. Researchers counted heart attacks, strokes, and deaths from heart disease over a median of **4.8 years**.
+
+The results were first published in 2013. Then problems were found in **how people were assigned** to diets at some sites. The 2013 paper was **retracted** and a corrected analysis was published in 2018.
+
+**Source:** Estruch, R., et al. (2018). Primary prevention of cardiovascular disease with a Mediterranean diet supplemented with extra-virgin olive oil or nuts. *New England Journal of Medicine, 378*, e34. [doi.org/10.1056/NEJMoa1800389](https://doi.org/10.1056/NEJMoa1800389)
+
+## Key facts
+
+| Question | Answer |
+|---|---|
+| Who was studied? | Adults in Spain, aged 55 to 80, who were likely to develop heart disease |
+| Explanatory variable | Diet (three groups) |
+| Response variable | Heart attack, stroke, or death from heart disease (yes or no) |
+| How were they found? | Recruited through health centers |
+| How many? | 7,447 |
+| Design | **Randomized experiment** (mostly; see below) |
+| What went wrong? | At some sites, people were not assigned one at a time. For example, people in the same household were put on the same diet, and at one site whole clinics were assigned the same diet. About 1,588 participants were affected. |
+
+: Key facts about Study C {.striped}
+
+## The numbers to explain
+
+**As counts of people** (over about 5 years):
+
+| Group | Out of every 1,000 people, about this many had a heart attack, stroke, or heart-disease death | Sample proportion |
+|---|---|---|
+| Control diet | **44** | 0.044 |
+| Mediterranean + olive oil | **38** | 0.038 |
+| Mediterranean + nuts | **34** | 0.034 |
+
+: Events per 1,000 people in each group {.striped}
+
+**Comparing two groups.** The researchers compared how often these events happened in the olive-oil group with how often they happened in the control group. They report the comparison as a **ratio**:
+
+> rate of events in the **olive-oil** group ÷ rate of events in the **control** group = **0.69**
+>
+> 95% confidence interval: **0.53 to 0.91**
+
+(Nuts compared with control: 0.72, 95% confidence interval 0.54 to 0.95.)
+
+How to read it, using what you know:
+
+- **A ratio of 1 means "no difference"** between the groups. (For a slope, the "no relationship" value was 0. For a ratio, it is 1.)
+- 0.69 means the rate of events in the olive-oil group was about **31% lower** than in the control group.
+- **The whole 95% confidence interval is below 1.** So the result is **statistically significant**: we reject the null hypothesis that the two diets have the same rate.
+- The ratio **holds other variables constant** and accounts for how long each person was followed, like the slopes in multiple regression. That is why it is not simply 38 ÷ 44. Use the counts to help your relative *picture* the result, and the ratio as the researchers' best estimate.
+- **Is it practically significant?** About 6 fewer events per 1,000 people over five years. That's for you and Grandma to discuss.
+
+::: say
+"Out of every 1,000 people on the regular low-fat advice, about 44 had a heart attack or stroke over five years. With the Mediterranean diet and olive oil, it was about 38. The researchers' best estimate is about 30% lower, and the whole range of answers that fit the data is below 'no difference.'"
+:::
+
+**But a p-value can't fix a broken design.** A p-value assumes the groups were formed by chance. Where the random assignment didn't follow the plan, that assumption fails. So the researchers re-analyzed the data with methods that don't rely only on that assumption, and also checked the results without the 1,588 affected people. The results were similar.
+
+<small>In the paper, this ratio is called a *hazard ratio*. We have not used that term in class, and you don't need it at the table.</small>
+
+## Plan before you talk
+
+Try to answer each question yourself, then open the box to check.
+
+**1. Your relative says "they keep changing their minds." What's a respectful, honest response?**
+
+<details>
+<summary>Check your thinking</summary>
+
+Agree first: nutrition advice really has changed a lot, and it's reasonable to be tired of it. Then explain *why* it changes: many nutrition headlines come from single observational studies, which can't separate diet from everything else people do. This one is an experiment, which is stronger. And this study is itself an example of science changing its mind in public: researchers found a problem, retracted the paper, and fixed it. That's the system working, not failing.
+
+</details>
+
+**2. Who can we generalize to?**
+
+<details>
+<summary>Check your thinking</summary>
+
+Older adults (55–80) in Spain who were likely to develop heart disease. It's less clear for younger people, healthier people, or people in places where the "usual" diet is very different from Spain's.
+
+</details>
+
+**3. What can't this study tell us?**
+
+<details>
+<summary>Check your thinking</summary>
+
+It compares a Mediterranean diet to *advice to eat less fat*, not to any diet. It can't tell us which single food did the work. And the assignment problems mean the result is a little less certain than a clean experiment would be.
+
+</details>
+
+## Jargon swaps
+
+| Instead of… | Try… |
+|---|---|
+| random assignment | "a coin flip decided which diet each person got" |
+| retracted | "the journal took the paper back because of a mistake" |
+| control group | "the people who just got the usual advice" |
+| statistically significant | "unlikely to be just chance" |
+| confidence interval | "the range of answers that fit the data" |
+
+: Jargon swaps for Study C {.striped}

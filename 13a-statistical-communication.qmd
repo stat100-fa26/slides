@@ -1,0 +1,561 @@
+---
+title: "Statistical Communication"
+subtitle: "The Thanksgiving Table: explaining one study to someone you love"
+author: "Mine Doğucu"
+filters:
+  - quarto
+  - a11y-tables.lua
+format:
+  revealjs:
+    menu:
+      openButton: false
+    footer: |
+      <span id="menu-toggle-box"></span> [stat-100.com](https://stat-100.com)
+    code-line-numbers: false
+    slide-number: true
+    incremental: false
+    theme: [default, style.scss]
+    logo:
+      path: images/00-stat100-logo-square.png
+      alt: "STAT 100 course square logo"
+    transition: fade
+    width: 1280
+    height: 720
+    include-after-body: a11y-revealjs.html
+    title-slide-attributes:
+      data-background-image: "images/00-stat100-logo-rectangle.png"
+      data-background-size: 10%
+      data-background-position: 50% 85%
+      data-aria-label: "STAT 100 course logo"
+---
+
+
+# Why statistical communication? {.inverse background-color="#A51C30"}
+
+## Statistics doesn't speak for itself
+
+A result only helps if the people who need it **understand** it.
+
+. . .
+
+- a patient deciding on a treatment
+- a manager deciding on a budget
+- a voter reading a poll
+- your family, deciding what to believe
+
+. . .
+
+Communicating a result is **part of doing statistics**, not an extra step at the end.
+
+
+## Same number, two stories
+
+In 1995, the UK Committee on Safety of Medicines warned that some newer birth control pills **doubled** the chance of dangerous blood clots.
+
+. . .
+
+::: columns
+::: {.column width="50%"}
+**As a ratio**
+
+"The chance doubles." (100% increase)
+:::
+
+::: {.column width="50%"}
+**As counts of people**
+
+From about **1 in 7,000** women to about **2 in 7,000**.
+:::
+:::
+
+. . .
+
+Many women stopped taking the pill. The following year there were an estimated **13,000 additional abortions** in England and Wales.
+
+Gigerenzer, G., Gaissmaier, W., Kurz-Milcke, E., Schwartz, L. M., & Woloshin, S. (2007). Helping doctors and patients make sense of health statistics. *Psychological Science in the Public Interest, 8*(2), 53–96.
+
+
+## Facts alone rarely change minds
+
+It's tempting to think people disagree with science because they're missing facts, so we just need to give them **more facts**.
+
+. . .
+
+But people also ask:
+
+- Do you **understand** my worry?
+- Do you **respect** me?
+- Are you **honest** about what you don't know?
+
+. . .
+
+If the answer is no, the facts don't get through.
+
+
+
+## Good statistical communication
+
+| Quality | What it sounds like |
+|---|---|
+| **Accurate** | Says what the study found, and no more. |
+| **Clear** | Plain words, one key message, counts of people. |
+| **Honest about uncertainty** | "Here's what this study can't tell us." |
+| **Respectful** | Starts with the other person's view. |
+
+: Four qualities of good statistical communication {.striped}
+
+
+
+# The Thanksgiving Table {.inverse background-color="#A51C30"}
+
+## Thursday {.center}
+
+::: r-fit-text
+Someone at the table will ask you about science.
+:::
+
+
+## Today's goal
+
+You will **not** win Thanksgiving. Nobody does.
+
+. . .
+
+The goal: leave the table with your relative
+
+- **understanding one study a little better**, and
+- **still wanting to talk to you.**
+
+. . .
+
+A relative who moves a little is a success.
+
+
+
+## What you'll practice
+
+::: columns
+::: {.column width="33%"}
+**Statistics**
+
+- who was sampled
+- experiment or observational
+- p-values and intervals
+- what generalizes
+- how evidence builds up
+:::
+
+::: {.column width="33%"}
+**Communication**
+
+- plain language
+- counts of people
+- one key message
+- checking for understanding
+:::
+
+::: {.column width="33%"}
+**Respect**
+
+- listen first
+- start from their view
+- find a shared value
+- admit what you don't know
+:::
+:::
+
+
+
+# How it works {.inverse background-color="#A51C30"}
+
+## The roles
+
+| Role | Your job |
+|---|---|
+| **Explainer** | Explain one real study to your relative. Use your **study card**. |
+| **Relative** | Play a family member with a real reason for their view. Use your **secret relative card**. |
+| **Cousin Sam** (groups of 3 or 4) | On the fence and a bit lost. Asks "What does that mean?" |
+
+: The three roles {.striped}
+
+
+## The conversation: five courses
+
+1. **Appetizer: listen first.** Ask, reflect back, name a shared value.
+2. **Who and how.** Who was in the sample? Experiment or observational?
+3. **What they found and how sure.** One count of people. The p-value or interval in plain words. One thing it is *not*.
+4. **Who it applies to.** What generalizes? One real limitation.
+5. **Dessert: one brick, door open.** One study is one brick. Summarize. "What's still bugging you?"
+
+
+## Course 1: listen first
+
+**You may not explain anything until you have done all three.**
+
+::: columns
+::: {.column width="33%"}
+**Ask**
+
+*"What worries you about it?"*
+
+*"Where did you hear that?"*
+:::
+
+::: {.column width="33%"}
+**Reflect back**
+
+*"So it sounds like you're worried that…"*
+:::
+
+::: {.column width="33%"}
+**Name a shared value**
+
+*"I want kids to be safe too."*
+
+*"I don't like being lied to either."*
+:::
+:::
+
+
+
+## Course 3: explaining a p-value
+
+::: {.stat-callout .note-tip}
+**Say it like this**
+
+"Suppose [the vaccine] did *nothing at all*. How surprising would results like these be, just by chance? The p-value measures that surprise. A small p-value means: *this would be pretty weird if nothing were going on.*"
+:::
+
+Two analogies: **coin flips** (9 heads out of 10 makes you suspicious of the coin) and the **courtroom** ("not guilty" is not "innocent").
+
+
+
+## Course 3: what a p-value is not
+
+**Say at least one of these:**
+
+1. It is **not** the chance that the result is true, or that the treatment works.
+2. **"Not significant" ≠ "proven: no effect."** It means there wasn't enough evidence to rule out chance.
+3. **"Significant" ≠ big or important.** A tiny effect can be significant in a big study.
+
+
+
+## Course 3: explaining an interval
+
+::: {.stat-callout .note-tip}
+**Say it like this**
+
+"Here's the range of effects that fit the data reasonably well."
+:::
+
+Then ask two questions out loud:
+
+- Does the range include **"no difference"**? (For a slope or a difference, that's 0. For a ratio, it's 1.)
+- Does the range **rule out a big effect**? Sometimes this is the more convincing part.
+
+
+
+## Course 3: use counts of people
+
+::: columns
+::: {.column width="50%"}
+**Hard to picture**
+
+"There were 95% fewer cases."
+
+"The sample proportion was 0.0088."
+:::
+
+::: {.column width="50%"}
+**Easy to picture**
+
+"Out of every 1,000 people who got the fake shot, about 9 got sick. Among those who got the vaccine, fewer than 1."
+:::
+:::
+
+. . .
+
+Counts of people are easier to understand than percentages, ratios, or probabilities.
+
+
+
+## You already know the statistics
+
+::: columns
+::: {.column width="50%"}
+**From STAT 100**
+
+- population, sample, sampling bias
+- observational study or experiment
+- random assignment, confounding variables
+- p-values, statistical and practical significance
+- confidence and credible intervals
+- holding other variables constant
+:::
+
+::: {.column width="50%"}
+**New today**
+
+Two cards compare groups with a **ratio**:
+
+- a ratio of **1** means no difference
+- below 1: less common in the first group
+- above 1: more common
+
+Your card explains it.
+:::
+:::
+
+
+
+## What the relatives are told
+
+::: columns
+::: {.column width="50%"}
+**Soften when you…**
+
+- feel heard
+- hear honest uncertainty or a real limitation
+- hear an example from your own life
+:::
+
+::: {.column width="50%"}
+**Dig in when you hear…**
+
+- unexplained jargon
+- "just trust the science"
+- a condescending tone
+- "that's been debunked" (no explanation)
+- a textbook definition, recited
+:::
+:::
+
+**Move only as much as a real person would.**
+
+
+
+## The studies
+
+| Card | Study | Design |
+|---|---|---|
+| **A** | MMR vaccine and autism (Denmark) | Observational |
+| **B** | Pfizer–BioNTech COVID-19 vaccine | Randomized experiment |
+| **C** | Mediterranean diet (Spain) | Randomized, with problems |
+| **D** | Quitting Facebook (US adults) | Randomized experiment |
+
+: The four study cards {.striped tbl-colwidths="[10,55,35]"}
+
+In your group, pair **A with D** or **B with C**.
+
+
+
+## Groups
+
+::: columns
+::: {.column width="33%"}
+**2 people**
+
+Round 1: One member explains, the other is the relative.
+
+Next round: swap.
+:::
+
+::: {.column width="33%"}
+**3 people**
+
+Add **Cousin Sam**.
+
+Rotate roles each round.
+:::
+
+::: {.column width="33%"}
+**4 people**
+
+**Tag-team siblings:** two explainers together, plus a relative and Cousin Sam.
+:::
+:::
+
+**One person alone?** Join a pair as Cousin Sam. **Five?** Split into 2 + 3.
+
+The full rotation tables are on your guide.
+
+
+
+## On Zoom
+
+- **Rename yourself** to your character when you play a relative ("Uncle Ray"). Rename back afterward.
+- Explainers and relatives: **cameras on**. Faces are part of listening.
+- Nods are hard to see on video. **Check for understanding more often.**
+- Need a pause to look at your notes? Say **"Pass the gravy."**
+- Breakout rooms are **not recorded**.
+
+
+
+## Open your page
+
+::: columns
+::: {.column width="50%"}
+**Everyone**
+
+- [Guide: the five courses, rotations, feedback](13a-tt-guide.html)
+
+**Explainers: your study card**
+
+- [Card A: MMR and autism](13a-tt-study-a.html)
+- [Card B: Pfizer–BioNTech trial](13a-tt-study-b.html)
+- [Card C: Mediterranean diet](13a-tt-study-c.html)
+- [Card D: Quitting Facebook](13a-tt-study-d.html)
+:::
+
+::: {.column width="50%"}
+**Relatives: open only your own card**
+
+- [Uncle Ray (goes with Card A)](13a-tt-relative-ray.html)
+- [Aunt Dee (goes with Card B)](13a-tt-relative-dee.html)
+- [Grandma Lou (goes with Card C)](13a-tt-relative-lou.html)
+- [Mom or Dad (goes with Card D)](13a-tt-relative-parent.html)
+- [Cousin Sam (groups of 3 or 4)](13a-tt-relative-cousin.html)
+:::
+:::
+
+
+
+## In your group: step by step
+
+::: {style="font-size: 0.74em"}
+**1. Assign roles** and pick study cards (A with D, or B with C). Links are on [Open your page](#open-your-page).
+
+| Step | Explainer | Relative | Cousin Sam |
+|---|---|---|---|
+| **2. Read** | your study card | your secret relative card | the Cousin card |
+| **3. Take notes** | key message, one count of people, one limitation | who you are, what you care about | words you wouldn't use at home |
+| **4. Talk** | listen first, then explain | ask your p-value question | ask "What does that mean?" |
+| **5. Feedback** | listen | go first: what moved you? | add what you noticed |
+
+: Steps 2 to 5 for each role {.striped tbl-colwidths="[18,30,28,24]"}
+
+**6. Switch roles** when I call it, and start again at step 2.
+:::
+
+
+## Round 1 {.center}
+
+::: r-fit-text
+Pass the (vegan) turkey. Start with course 1.
+:::
+
+
+## Feedback {.center}
+
+::: {.stat-callout .discussion}
+**Relative goes first**
+
+1. Did they ask about my view *before* explaining?
+2. Did I understand the p-value or interval explanation?
+3. Did they name something the study *can't* tell us?
+4. *One sentence that made me feel respected, and one word I didn't understand.*
+:::
+
+
+## Round 2 {.center}
+
+::: r-fit-text
+Switch roles. Same group.
+:::
+
+Back to [Open your page](#open-your-page) for your new card.
+
+
+## Another round {.center}
+
+::: r-fit-text
+Feedback, switch roles, go again.
+:::
+
+
+## Step out of the role {.center}
+
+::: r-fit-text
+"I'm not Uncle Ray. I'm ___."
+:::
+
+On Zoom: change your name back.
+
+
+# Debrief {.inverse background-color="#A51C30"}
+
+## What happened at your table?
+
+::: {.stat-callout .discussion}
+**Discussion**
+
+1. Relatives: what made you soften? What made you dig in?
+2. Which sentence worked best for explaining a p-value or interval?
+3. With Card D: how did it feel to tell a parent the evidence was *weaker* than they hoped?
+4. Did admitting a limitation make you look weaker or stronger?
+5. Did talking over video change how you showed respect or checked understanding?
+:::
+
+
+# Briefing {.inverse background-color="#A51C30"}
+
+## What we practiced
+
+| Idea | Say it like this |
+|---|---|
+| Sample | "Who was in the study? How were they found?" |
+| Random assignment | "A coin flip decided who got what." |
+| Sample proportion | "Out of every 1,000 people…" |
+| p-value | "If it did nothing, how surprising is this?" |
+| Interval | "The range of answers that fit the data." |
+| Generalization | "It can't tell us about…" |
+
+: Statistics ideas and plain-language versions {.striped tbl-colwidths="[32,68]"}
+
+
+
+## One brick
+
+A single study is **one brick**.
+
+. . .
+
+We trust an idea when **many studies**, by **different people**, with **different methods**, point the same way.
+
+. . .
+
+And when science gets something wrong, the fix often happens **in public**, like PREDIMED.
+
+
+## Your statistical communication checklist
+
+1. **Listen first.** Ask, reflect back, find a shared value.
+2. **One key message.**
+3. **Counts of people**, not only percentages or ratios.
+4. Say what the p-value or interval **means and doesn't mean**.
+5. **Name a limitation** before anyone asks.
+6. **Leave the door open.** "What's still bugging you?"
+
+
+## Exit ticket
+
+::: {.stat-callout .exercise}
+**Text your relative**
+
+Write a 3-sentence text message to your relative that
+
+1. summarizes the study,
+2. gives one number in plain language, and
+3. names *one thing the study can't tell us*.
+:::
+
+Submit at **[PollEv.com/minedogucu](https://pollev.com/minedogucu)**.
+
+
+## Happy Thanksgiving {.center}
+
+::: r-fit-text
+Listen first. One brick. Leave the door open.
+:::
+
+

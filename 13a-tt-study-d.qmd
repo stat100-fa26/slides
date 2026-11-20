@@ -1,0 +1,99 @@
+---
+title: "Study Card D: Quitting Facebook"
+subtitle: "For the explainer. Read this, then plan what you'll say."
+metadata-files: [_13a-packet.yml]
+---
+
+::: back-links
+[Back to the slides](13a-statistical-communication.html#/open-your-page) · [Guide](13a-tt-guide.html)
+:::
+
+## The study in one paragraph
+
+In 2018, researchers recruited US adults who used Facebook through **Facebook ads** offering a gift card for taking part in a study. People who agreed to stop using Facebook for four weeks in exchange for $102 were split into two groups by **random assignment**. The **treatment group** was paid to deactivate their Facebook accounts for **four weeks** (just before the 2018 midterm elections). The **control group** kept using Facebook as usual. Then researchers compared the two groups' mood, time use, news knowledge, and political views.
+
+**Source:** Allcott, H., Braghieri, L., Eichmeyer, S., & Gentzkow, M. (2020). The welfare effects of social media. *American Economic Review, 110*(3), 629–676. [doi.org/10.1257/aer.20190658](https://doi.org/10.1257/aer.20190658)
+
+## Key facts
+
+| Question | Answer |
+|---|---|
+| Who was studied? | US **adults** who use Facebook and were willing to quit for 4 weeks for $102. Volunteers, not a random sample. |
+| Explanatory variable | Deactivated Facebook for 4 weeks, or not |
+| Response variable | Well-being, from survey answers |
+| How were they found? | Facebook ads offering a gift card |
+| How many? | 2,743 got a payment offer; **1,661** were in the main comparison (580 treatment, 1,081 control) |
+| Design | **Randomized experiment** |
+| What was measured? | Mostly surveys people filled out about themselves: happiness, life satisfaction, depression, loneliness, anxiety, plus time use and news knowledge |
+| How long? | 4 weeks of deactivation |
+
+: Key facts about Study D {.striped}
+
+## The number to explain
+
+**Well-being improved by 0.09 standard deviations.** The authors report this as statistically significant.
+
+You know standard deviations and z-scores: this is like moving someone's z-score from 0 to 0.09. That's **small**. In class terms, the result is **statistically significant** but its **practical significance** is open to debate. A way to picture it:
+
+::: say
+"Imagine lining up 100 people from least happy to most happy. Someone right in the middle, at number 50, would move up to about number 54. It's a real improvement, but it's a small one."
+:::
+
+Other findings worth knowing:
+
+- After the experiment ended, the treatment group used the Facebook app about **11 minutes a day (22%) less** than the control group. Some people liked the break.
+- The treatment group also became **less informed about the news** and somewhat **less politically polarized**.
+
+## Why this card is different
+
+Your relative is **on "science's side" but overstating it.** They hear "significant" and think "huge, proven, case closed."
+
+Your job is to be just as kind and just as honest, and to say **the evidence is weaker and narrower than they think**:
+
+- **Statistical significance ≠ practical significance.** Here, "significant" means "probably not just chance," and the effect is small.
+- **Adults, not teens.** This study can't tell us about a 15-year-old.
+- **Facebook, not "phones."** It studied one app.
+- **Four weeks**, in 2018, mostly from surveys people filled out about themselves.
+
+## Plan before you talk
+
+Try to answer each question yourself, then open the box to check.
+
+**1. Who can we generalize to?**
+
+<details>
+<summary>Check your thinking</summary>
+
+US adult Facebook users who would quit for four weeks for $102 or less, around 2018. People who valued Facebook more weren't in the experiment. Teens, other apps (Instagram, TikTok), and phones in general were not studied.
+
+</details>
+
+**2. Can this study say Facebook *causes* lower well-being?**
+
+<details>
+<summary>Check your thinking</summary>
+
+For these adults over four weeks, yes, the random assignment lets us say deactivating *caused* a small improvement. That's stronger than most social media headlines, which come from observational studies. But "causes a small change for adults in four weeks" is very different from "is poison for teenagers."
+
+</details>
+
+**3. How can you start from your parent's point of view?**
+
+<details>
+<summary>Check your thinking</summary>
+
+Their worry comes from love: they want you to be okay. Start there. "I get why you're worried, and you're not wrong that this study found something." Then be honest about how big and how broad the finding is. You can also offer something real: a conversation about how *you* feel when you use your phone.
+
+</details>
+
+## Jargon swaps
+
+| Instead of… | Try… |
+|---|---|
+| standard deviation | "how spread out people's answers are" (or use the line-up picture above) |
+| statistically significant | "probably not just chance" |
+| practical significance | "is it big enough to matter in real life?" |
+| well-being | "how happy and satisfied people said they felt" |
+| treatment / control group | "the group that quit / the group that didn't" |
+
+: Jargon swaps for Study D {.striped}

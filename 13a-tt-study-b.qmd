@@ -1,0 +1,100 @@
+---
+title: "Study Card B: The Pfizer–BioNTech COVID-19 vaccine trial"
+subtitle: "For the explainer. Read this, then plan what you'll say."
+metadata-files: [_13a-packet.yml]
+---
+
+::: back-links
+[Back to the slides](13a-statistical-communication.html#/open-your-page) · [Guide](13a-tt-guide.html)
+:::
+
+## The study in one paragraph
+
+In 2020, **43,548 volunteers** aged 16 and older at 152 sites in 6 countries (mostly in the US) were **randomly assigned** to get either two doses of the Pfizer–BioNTech vaccine or two doses of a placebo (salt water). The volunteers did not know which shot they got, and neither did the staff who checked on them afterward. Researchers then counted who got COVID-19 with symptoms, starting 7 days after the second dose.
+
+**Source:** Polack, F. P., et al. (2020). Safety and efficacy of the BNT162b2 mRNA Covid-19 vaccine. *New England Journal of Medicine, 383*, 2603–2615. [doi.org/10.1056/NEJMoa2034577](https://doi.org/10.1056/NEJMoa2034577)
+
+## Key facts
+
+| Question | Answer |
+|---|---|
+| Who was studied? | Volunteers aged 16 and older (median age 52, range 16 to 91). Not a random sample. |
+| Explanatory variable | Vaccine or placebo |
+| Response variable | Got COVID-19 with symptoms (yes or no) |
+| How were they found? | They signed up at trial sites |
+| How many? | 43,548 randomly assigned; about 36,500 in the main analysis |
+| Design | **Randomized experiment** with a placebo group, blinded |
+| What was measured? | COVID-19 cases with symptoms, confirmed by a test |
+| Not included | Children under 16; pregnant people; people with weakened immune systems; people who had already had COVID-19 (for the main analysis) |
+
+: Key facts about Study B {.striped}
+
+## The numbers to explain
+
+**The raw counts are the clearest part.** The main analysis had about 18,200 people in the vaccine group and about 18,300 in the placebo group.
+
+| Group | COVID-19 cases | Sample proportion |
+|---|---|---|
+| Vaccine | **8** | about 0.0004 |
+| Placebo | **162** | about 0.0088 |
+
+: COVID-19 cases in each group {.striped}
+
+**As counts of people.** In the placebo group, about **9 out of every 1,000** people got COVID-19. In the vaccine group, it was **fewer than 1 out of every 1,000** (about 4 out of 10,000).
+
+**"95%": what is it 95% of?** It compares the two sample proportions:
+
+> 1 − (0.0004 ÷ 0.0088) ≈ **0.95**
+
+The vaccine group had about **95% fewer cases** than the placebo group. It does **not** mean that 95% of vaccinated people were protected, or that 5% got sick.
+
+**How sure are we?** This trial used a **Bayesian** analysis, so the paper reports a **95% credible interval: 90.3% to 97.6%.** As in class, that is the middle 95% of the posterior: given the data and the model, there is a 95% probability that the true reduction is between 90.3% and 97.6%.
+
+::: say
+"Out of about 18,000 people who got salt water, 162 got COVID. Out of about 18,000 who got the vaccine, 8 did. That's where '95%' comes from: about 95% fewer cases. And given the data, the true number is very likely somewhere between 90% and 98%."
+:::
+
+<small>The paper calls the 95% *vaccine efficacy*. We have not used that term in class; "95% fewer cases" says the same thing.</small>
+
+## Plan before you talk
+
+Try to answer each question yourself, then open the box to check.
+
+**1. Why does random assignment matter here?**
+
+<details>
+<summary>Check your thinking</summary>
+
+Because a coin flip, not the person, decided who got the vaccine, the two groups were alike in age, health, and behavior on average. So the big difference in cases is best explained by the vaccine itself. That's what lets us say the vaccine *caused* fewer cases.
+
+</details>
+
+**2. "They made it in a year." What can you honestly say about long-term effects?**
+
+<details>
+<summary>Check your thinking</summary>
+
+Be honest: this paper followed people for a median of about **2 months** after the second dose. It can't, on its own, tell us about long-term effects. That's a real limitation and it's fair to say so. What we know about the longer term comes from the **many later studies** and the monitoring of hundreds of millions of doses since then, which is the "one brick" idea. Also: the trial was fast because many steps ran at the same time and the virus was spreading widely (so cases piled up quickly), not because steps were skipped.
+
+</details>
+
+**3. Who can we generalize to? Who was missing?**
+
+<details>
+<summary>Check your thinking</summary>
+
+Adults and teens 16+ who are similar to the volunteers. At the time of this paper, it couldn't speak to young children, pregnant people, or people with weakened immune systems. Volunteers can also differ from the general public (for example, they may be more health-conscious).
+
+</details>
+
+## Jargon swaps
+
+| Instead of… | Try… |
+|---|---|
+| placebo | "a fake shot of salt water" |
+| random assignment | "a coin flip decided who got which" |
+| blind | "nobody knew who got the real shot, not even the people checking on them" |
+| sample proportion | "how many out of every 1,000" |
+| credible interval | "given the data, the true number is very likely in this range" |
+
+: Jargon swaps for Study B {.striped}

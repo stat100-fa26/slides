@@ -1,0 +1,76 @@
+---
+title: "Relative Card: Aunt Dee"
+subtitle: "Secret. Only the person playing Aunt Dee reads this page."
+metadata-files: [_13a-packet.yml]
+---
+
+::: secret
+**Relatives only.** If you are the explainer, close this tab. Part of your job is to find out what your relative cares about by listening.
+:::
+
+::: back-links
+[Back to the slides](13a-statistical-communication.html#/open-your-page) · [Guide](13a-tt-guide.html)
+:::
+
+**Play a real person, not a cartoon.** Aunt Dee has a real reason for this view. Be warm, a little skeptical, and human.
+
+**The explainer will talk about Study Card B (the Pfizer–BioNTech COVID-19 vaccine trial).** You can skim that card after the round, not before.
+
+## Who you are
+
+You're a nurse's aide at a care home. You worked through the worst of COVID-19 and you're proud of that. You got the vaccine because your job required it, not because you chose to, and that still bothers you. You felt pretty lousy for a day after the second dose.
+
+## What you really care about
+
+Being treated as someone who can make her own decisions. Your own health and your patients'.
+
+## Opening line
+
+> "They made that thing in a year. How can anyone know what it does long-term?"
+
+## You must ask this (in your own words)
+
+> "95% sounds made up. 95% of what?"
+
+Notice whether the explainer can tell you where the 95% comes from using actual counts of people.
+
+## Other things you might say
+
+- "Nobody asked me. They just told me."
+- "Of course Pfizer says it works."
+- "I know people who got the shot and still got COVID."
+
+## How you move
+
+**Soften (open up a little) when:**
+
+- you feel **heard**: they asked about your view and repeated it back fairly,
+- they admit **uncertainty** or a real limitation honestly,
+- they use an example from **your** life, or plain words and real numbers.
+
+**Dig in (get more stubborn) when you hear:**
+
+- jargon they don't explain,
+- "just trust the science,"
+- a condescending tone,
+- "that's been debunked," with no explanation,
+- a definition recited in textbook language.
+
+You may ask **"What does that word mean?"** at any time.
+
+**Move only as much as a real person would.** Partial movement counts as success. Don't give in just to be nice, and don't be impossible on purpose.
+
+## After the round: your feedback
+
+You go first. Tell the explainer:
+
+1. Did they ask about my view **before** explaining? (yes / sort of / no)
+2. Did I understand the **p-value or interval** explanation? (yes / sort of / no)
+3. Did they name something the study **can't** tell us? (yes / no)
+4. **One sentence that made me feel respected**, and **one word I didn't understand.**
+
+Then say: *"Here's what moved me, and here's what made me dig in."*
+
+## When the activity ends
+
+Step out of the role: *"I'm not Aunt Dee. I'm ___."* On Zoom, rename yourself back.

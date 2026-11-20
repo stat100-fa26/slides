@@ -1,0 +1,138 @@
+---
+title: "The Thanksgiving Table: Guide"
+metadata-files: [_13a-packet.yml]
+---
+
+::: back-links
+[Back to the slides](13a-statistical-communication.html#/open-your-page) · Study cards: [A](13a-tt-study-a.html) · [B](13a-tt-study-b.html) · [C](13a-tt-study-c.html) · [D](13a-tt-study-d.html)
+:::
+
+## The goal
+
+You will not win Thanksgiving. Nobody does.
+
+The goal is to leave the table with your relative **understanding one study a little better** and **still wanting to talk to you**. A relative who moves a little is a success.
+
+## The roles
+
+| Role | Your job |
+|---|---|
+| **Explainer** | You explain one real study to a relative. Use your **study card**. |
+| **Relative** | You play a family member with a real reason for their view. Use your **secret relative card**. Don't show it to the explainer. |
+| **Cousin Sam** (groups of 3 or 4) | You're on the fence and a little lost. Ask "Wait, what does that mean?" at least once. Use the [Cousin card](13a-tt-relative-cousin.html). |
+
+: The three roles {.striped}
+
+## The conversation: five courses
+
+Every explainer follows the same five courses, in this order.
+
+### 1. Appetizer: listen first
+
+**You may not explain anything until you have done all three:**
+
+- Ask an open question: *"What worries you about it?"* or *"Where did you hear that?"*
+- Reflect back what you heard: *"So it sounds like you're worried that…"*
+- Name a value you share: protecting kids, not being lied to, staying healthy, spending money wisely.
+
+### 2. Who and how: sampling and design
+
+- **Who was studied?** How many people, and how were they found? (Volunteers? Everyone in a national registry? Patients at certain clinics?)
+- **What did the researchers do?** Was it an **experiment** (researchers decided who got what) or an **observational study** (researchers watched what people already did)?
+- If it was an experiment: what does **random assignment** buy you? Try: *"It's like shuffling a deck and dealing the cards: the two groups end up alike in every way except the one thing we changed."*
+
+### 3. What they found and how sure we are
+
+- Give **one number** as a **count of people**: *"Out of every 1,000 people in the placebo group, about 9 got sick."* A sample proportion of 0.009 is the same information, but "9 out of 1,000" is much easier to picture.
+- Explain the **p-value** or the **interval** in plain language (see the box below).
+- Say **one thing it is not** (see below).
+
+### 4. Who this applies to
+
+- **Generalization:** Who can we reasonably extend this to? Who was not in the study?
+- **Cause or association?** Can this study say *A causes B*, or only *A goes with B*?
+- Name **one real limitation** without being asked. Admitting a limitation builds trust.
+
+### 5. Dessert: one brick, and leave the door open
+
+- **One study is one brick.** We trust an idea when many studies, by different people with different methods, point the same way. Science also corrects itself, sometimes in public.
+- **Summarize in one sentence.**
+- **Check, don't demand:** *"Does that make sense? What's still bugging you?"*
+
+## Explaining a p-value
+
+::: say
+"Suppose [the vaccine / the diet / quitting Facebook] did **nothing at all**. How surprising would results like these be, just by chance? The p-value measures that surprise. A **small** p-value means: *this would be pretty weird if nothing were going on.*"
+:::
+
+**In class terms:** the p-value is the probability of a sample statistic as extreme as ours, or more extreme, *if the null hypothesis were true*. The sentence above says the same thing without the words "null hypothesis."
+
+**Three things a p-value is NOT** (say at least one):
+
+1. It is **not** the chance that the result is true or that the treatment works. (It is not the probability that the null hypothesis is true.)
+2. **"Not significant" does not mean "proven: no effect."** It means there wasn't enough evidence to rule out chance.
+3. **"Significant" does not mean big or important.** A tiny effect can be statistically significant in a big study. That's the difference between statistical and **practical** significance.
+
+**Two analogies you can borrow:**
+
+- **Coin flips.** If your cousin flips 9 heads out of 10, you start to suspect the coin. A p-value tells you how suspicious to be.
+- **Courtroom.** "Not guilty" isn't the same as "innocent." It means the evidence wasn't strong enough.
+
+## Explaining an interval
+
+::: say
+"Here's the range of effects that fit the data reasonably well."
+:::
+
+Then ask two questions out loud:
+
+- **Does the range include "no difference"?** (For a slope or a difference, "no difference" is 0. Two of the study cards compare groups with a **ratio**; for a ratio, "no difference" is 1.)
+- **Does the range rule out a big effect?** Sometimes this is the more convincing part.
+
+Two kinds of intervals appear on the study cards:
+
+- A **confidence interval** (frequentist): if we repeated the study many times, 95% of intervals made this way would capture the true value.
+- A **credible interval** (Bayesian): the middle 95% of the posterior. Given the data and the model, there's a 95% probability the true value is in this range.
+
+## Plain-language tips
+
+- **One key message.** If your relative remembers one sentence, what should it be?
+- **Swap the jargon.** See the table below. Your study card has more swaps.
+- **Use their words** and examples from their life.
+- **Short sentences.** Then pause.
+- **No "just trust the science"** and no "that's been debunked." Explain instead.
+
+## Words from STAT 100, and how to say them at the table
+
+You know these terms. Your relative doesn't. Use the idea, not the word.
+
+| Class term | At the table |
+|---|---|
+| population and sample | "who they wanted to learn about" and "who was actually in the study" |
+| representative sample | "the people in the study look like the people we care about" |
+| observational study | "they watched what people already did" |
+| experiment with random assignment | "a coin flip decided who got what" |
+| confounding variable | "something else that's different between the two groups" |
+| placebo | "a fake treatment, like a shot of salt water" |
+| null hypothesis | "suppose it did nothing at all" |
+| p-value | "how surprising the results would be if it did nothing" |
+| statistically significant | "unlikely to be just chance" |
+| practical significance | "big enough to matter in real life" |
+| confidence or credible interval | "the range of answers that fit the data" |
+| holding other variables constant | "comparing people who are alike in other ways" |
+
+: Class terms and plain-language versions {.striped}
+
+The papers also use a few statistics we have **not** covered in class. Your study card rewrites them as proportions, counts of people, and ratios. You don't need any term that isn't on your card.
+
+
+## After each round: relative feedback
+
+The relative (and Cousin Sam, if you have one) tells the explainer:
+
+1. Did they ask about my view **before** explaining? (yes / sort of / no)
+2. Did I understand the **p-value or interval** explanation? (yes / sort of / no)
+3. Did they name something the study **can't** tell us? (yes / no)
+4. **One sentence that made me feel respected.** And **one word I didn't understand.**
+
+Relative goes first: *"Here's what moved me, and here's what made me dig in."

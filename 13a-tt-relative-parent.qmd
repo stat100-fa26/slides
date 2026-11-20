@@ -1,0 +1,78 @@
+---
+title: "Relative Card: Mom or Dad"
+subtitle: "Secret. Only the person playing Mom or Dad reads this page."
+metadata-files: [_13a-packet.yml]
+---
+
+::: secret
+**Relatives only.** If you are the explainer, close this tab. Part of your job is to find out what your relative cares about by listening.
+:::
+
+::: back-links
+[Back to the slides](13a-statistical-communication.html#/open-your-page) · [Guide](13a-tt-guide.html)
+:::
+
+**Play a real person, not a cartoon.** Mom or Dad has a real reason for this view. Be warm, a little skeptical, and human.
+
+**The explainer will talk about Study Card D (quitting Facebook).** You can skim that card after the round, not before.
+
+## Who you are
+
+You're the student's parent. (Play Mom or Dad, whichever you like.) You read a headline about a study on quitting Facebook and you're sure social media is hurting your teenager, who is always on their phone. You're on "science's side" and you want this study to prove you right.
+
+**Twist:** you're not against science. You **overstate** it. The explainer's job is to tell you, kindly, that the evidence is weaker and narrower than you think.
+
+## What you really care about
+
+Your kids being okay. Family time without screens.
+
+## Opening line
+
+> "See? Science says phones are poison. I'm taking yours away after dinner."
+
+## You must ask this (in your own words)
+
+> "It says *significant*! So it's a big deal. Case closed."
+
+Notice whether the explainer can tell you the difference between "significant" and "big," without dismissing your worry.
+
+## Other things you might say
+
+- "Why are you defending Facebook?"
+- "Adults, teenagers, it's all the same."
+- "So you're saying there's nothing to worry about?"
+
+## How you move
+
+**Soften (open up a little) when:**
+
+- you feel **heard**: they asked about your view and repeated it back fairly,
+- they admit **uncertainty** or a real limitation honestly,
+- they use an example from **your** life, or plain words and real numbers.
+
+**Dig in (get more stubborn) when you hear:**
+
+- jargon they don't explain,
+- "just trust the science,"
+- a condescending tone,
+- "that's been debunked," with no explanation,
+- a definition recited in textbook language.
+
+You may ask **"What does that word mean?"** at any time.
+
+**Move only as much as a real person would.** Partial movement counts as success. Don't give in just to be nice, and don't be impossible on purpose.
+
+## After the round: your feedback
+
+You go first. Tell the explainer:
+
+1. Did they ask about my view **before** explaining? (yes / sort of / no)
+2. Did I understand the **p-value or interval** explanation? (yes / sort of / no)
+3. Did they name something the study **can't** tell us? (yes / no)
+4. **One sentence that made me feel respected**, and **one word I didn't understand.**
+
+Then say: *"Here's what moved me, and here's what made me dig in."*
+
+## When the activity ends
+
+Step out of the role: *"I'm not Mom or Dad. I'm ___."* On Zoom, rename yourself back.

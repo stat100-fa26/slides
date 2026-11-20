@@ -1,0 +1,733 @@
+---
+title: "Logistic Regression"
+subtitle: "Modeling a yes or no outcome"
+author: "Mine Doğucu"
+filters:
+  - quarto
+  - a11y-tables.lua
+execute:
+  echo: true
+format:
+  revealjs:
+    menu:
+      openButton: false
+    footer: |
+      <span id="menu-toggle-box"></span> [stat-100.com](https://stat-100.com)
+    code-line-numbers: false
+    slide-number: true
+    incremental: false
+    theme: [default, style.scss]
+    logo:
+      path: images/00-stat100-logo-square.png
+      alt: "STAT 100 course square logo"
+    transition: fade
+    width: 1280
+    height: 720
+    include-after-body: a11y-revealjs.html
+    title-slide-attributes:
+      data-background-image: "images/00-stat100-logo-rectangle.png"
+      data-background-size: 10%
+      data-background-position: 50% 85%
+      data-aria-label: "STAT 100 course logo"
+---
+
+<!--
+Lecture 14A (Monday after Thanksgiving week): logistic regression in one
+lecture (75 min). One deck: frequentist first, Bayesian briefly at the end.
+Same frame as 12A/12B: fair, wrong, accurate. Data: weather_perth from
+bayesrules (1,000 days in Perth).
+
+Timing plan:
+  A yes or no outcome (lm fails)          10 min
+  Odds and log-odds                       10 min
+  The logistic model in R                 15 min
+  Fair, wrong                             10 min
+  Accurate: classification                15 min
+  Bayesian logistic regression            10 min
+  Summary and bridge to 14B                5 min
+-->
+
+```{r}
+#| echo: false
+#| message: false
+library(tidyverse)
+library(broom)
+library(rstanarm)
+library(bayesrules)
+library(rsample)
+options(scipen = 999)
+
+source("R/plot-normal.R")
+
+green <- hds_colors[["green"]]
+pink <- hds_colors[["pink"]]
+
+theme_set(theme_minimal(base_size = 22))
+bayesplot::bayesplot_theme_set(theme_minimal(base_size = 22))
+
+f1 <- function(x) sprintf("%.1f", x)
+f2 <- function(x) sprintf("%.2f", x)
+f3 <- function(x) sprintf("%.3f", x)
+
+perth <- weather_perth |>
+  mutate(rain = as.numeric(raintomorrow == "Yes"))
+```
+
+```{r}
+#| echo: false
+#| cache: true
+# Models (Bayesian model cached: it takes a while)
+rain_model <- glm(raintomorrow ~ humidity3pm, data = weather_perth,
+                  family = binomial)
+
+rain_bayes <- stan_glm(raintomorrow ~ humidity3pm, data = weather_perth,
+                       family = binomial,
+                       prior_intercept = normal(-1.4, 0.7),
+                       prior = normal(0, 0.2),
+                       chains = 4, iter = 5000 * 2,
+                       seed = 84735, refresh = 0)
+
+set.seed(84735)
+rain_split <- initial_split(weather_perth, prop = 0.8)
+rain_train <- training(rain_split)
+rain_test <- testing(rain_split)
+rain_train_model <- glm(raintomorrow ~ humidity3pm, data = rain_train,
+                        family = binomial)
+```
+
+## Where we are
+
+So far, every outcome $y$ was a __number__ on a scale: baby weight in ounces, bike rides in a day, brain weight.
+
+. . .
+
+Many questions have a __yes or no__ outcome.
+
+- Will it rain tomorrow?
+- Will this email be spam?
+- Will this patient's test come back positive?
+- Will a student pass the course?
+
+. . .
+
+Today: a model for a yes or no outcome, and the same three questions: __how fair, how wrong, how accurate?__
+
+# A yes or no outcome {.inverse background-color="#A51C30"}
+
+## Will it rain tomorrow?
+
+The `weather_perth` data (in the `bayesrules` package) has 1,000 days in Perth, Australia. For each day we know the weather and whether it rained the __next__ day.
+
+- `humidity3pm`: humidity (%) at 3 pm today
+- `raintoday`, `raintomorrow`: did it rain today? Tomorrow? (`"Yes"` or `"No"`)
+
+## The data
+
+```{r}
+weather_perth |>
+  select(humidity3pm, raintoday, raintomorrow) |>
+  head()
+```
+
+## How often does it rain?
+
+```{r}
+weather_perth |>
+  count(raintomorrow) |>
+  mutate(proportion = n / sum(n))
+```
+
+. . .
+
+It rained the next day on `r sum(weather_perth$raintomorrow == "Yes")` of the 1,000 days.
+
+. . .
+
+__Question:__ how does today's humidity at 3 pm change the chance of rain tomorrow?
+
+## Humidity and rain
+
+```{r}
+#| echo: false
+#| fig-alt: "Two strips of points. Each point is a day in Perth, placed horizontally by humidity at 3 pm, from about 10 to 100 percent. The top strip shows the days when it rained the next day, and the bottom strip shows the days when it did not. The days with rain tomorrow have higher humidity on average."
+#| fig-width: 10
+#| fig-height: 4.5
+#| out-width: "100%"
+ggplot(weather_perth, aes(x = humidity3pm, y = raintomorrow, shape = raintomorrow)) +
+  geom_jitter(height = 0.2, alpha = 0.5, size = 2.5, color = "gray30") +
+  scale_shape_manual(values = c(No = 16, Yes = 4)) +
+  labs(x = "Humidity at 3 pm (%)", y = "Rain tomorrow?") +
+  theme(legend.position = "none")
+```
+
+## Idea: use what we know
+
+Code rain as a number: `1` if it rained tomorrow, `0` if not. Then fit a line with `lm()`.
+
+```{r}
+perth <- weather_perth |>
+  mutate(rain = as.numeric(raintomorrow == "Yes"))
+
+lm_rain <- lm(rain ~ humidity3pm, data = perth)
+tidy(lm_rain)
+```
+
+## A line for a yes or no outcome
+
+```{r}
+#| echo: false
+#| fig-alt: "Same days as before, now plotted at height 0 for no rain tomorrow and height 1 for rain tomorrow, with a straight line going up from left to right. At low humidity the line drops below 0, which is not a possible value for a probability."
+#| fig-width: 10
+#| fig-height: 4.5
+#| out-width: "100%"
+ggplot(perth, aes(x = humidity3pm, y = rain)) +
+  geom_jitter(height = 0.03, alpha = 0.4, size = 2.5, color = "gray30") +
+  geom_smooth(method = "lm", se = FALSE, color = green, linewidth = 1.5) +
+  geom_hline(yintercept = c(0, 1), linetype = "dashed") +
+  labs(x = "Humidity at 3 pm (%)", y = "Rain tomorrow (1 = yes)")
+```
+
+## What goes wrong?
+
+The fitted line gives a "probability of rain" for each day.
+
+```{r}
+lm_fitted <- predict(lm_rain)
+sum(lm_fitted < 0)
+range(lm_fitted)
+```
+
+. . .
+
+__`r sum(lm_fitted < 0)` days__ get a "probability" below 0. A probability can never be negative, and it can never be above 1.
+
+## Residuals for a yes or no outcome
+
+::: {.stat-callout .discussion}
+**Discussion**
+
+The outcome is only ever 0 or 1. What would the residuals look like around a straight line? Does the "equal variance" part of LINE seem plausible?
+:::
+
+## What we need
+
+A model whose predictions
+
+- stay between 0 and 1, and
+- bend, so that very low humidity gives a probability near 0, and very high humidity gives a probability near 1.
+
+. . .
+
+The trick: do not model the probability directly. Model a __transformation__ of the probability that can take any value, then transform back.
+
+# Probability, odds, and log-odds {.inverse background-color="#A51C30"}
+
+## Odds
+
+If the probability of rain is $p$, the __odds__ of rain are
+
+$$\text{odds} = \frac{p}{1 - p}.$$
+
+. . .
+
+If $p = 0.2$, the odds are $0.2 / 0.8 = 0.25$: "1 to 4".
+If $p = 0.5$, the odds are $1$: "1 to 1".
+If $p = 0.8$, the odds are $4$: "4 to 1".
+
+. . .
+
+Odds go from 0 up to infinity. The __log-odds__ (natural log of the odds) go from minus infinity to plus infinity.
+
+## Probability, odds, log-odds
+
+```{r}
+tibble(probability = c(0.01, 0.10, 0.20, 0.50, 0.80, 0.90, 0.99)) |>
+  mutate(odds = probability / (1 - probability),
+         log_odds = log(odds))
+```
+
+. . .
+
+- A probability of 0.5 is odds of 1 and log-odds of 0.
+- Probabilities below 0.5 have negative log-odds. Above 0.5, positive.
+- The log-odds can be any number. That is what a line can predict.
+
+## The logistic regression model
+
+__Linear regression__
+
+$$y = \beta_0 + \beta_1 x + \epsilon$$
+
+. . .
+
+__Logistic regression__
+
+$$\log\left(\frac{p}{1-p}\right) = \beta_0 + \beta_1 x$$
+
+$p$ is the probability that the outcome is a "yes" (here, rain tomorrow). The right side is a line, exactly like before.
+
+## Solving for $p$
+
+Solving the logistic regression model for $p$ gives the S-shaped curve:
+
+$$p = \frac{1}{1 + e^{-(\beta_0 + \beta_1 x)}}$$
+
+## The S-shaped curve
+
+```{r}
+#| echo: false
+#| fig-alt: "The same days as before, now with an S-shaped curve instead of a straight line. The curve starts near 0 at low humidity, rises through the middle, and approaches but never reaches 1 at the highest humidity. Dashed horizontal lines mark 0 and 1."
+#| fig-width: 10
+#| fig-height: 4.5
+#| out-width: "100%"
+ggplot(perth, aes(x = humidity3pm, y = rain)) +
+  geom_jitter(height = 0.03, alpha = 0.4, size = 2.5, color = "gray30") +
+  geom_smooth(method = "glm", method.args = list(family = binomial),
+              se = FALSE, color = green, linewidth = 1.5) +
+  geom_hline(yintercept = c(0, 1), linetype = "dashed") +
+  labs(x = "Humidity at 3 pm (%)", y = "Rain tomorrow (1 = yes)")
+```
+
+<small>The curve never goes below 0 or above 1.</small>
+
+# Fitting the model {.inverse background-color="#A51C30"}
+
+## Logistic regression in R
+
+```{r}
+rain_model <- glm(raintomorrow ~ humidity3pm, data = weather_perth,
+                  family = binomial)
+tidy(rain_model)
+```
+
+. . .
+
+<small>`glm()` stands for generalized linear model and loads automatically with R (`stats` package). `family = binomial` says the outcome is yes or no. `tidy()` is from the `broom` package.</small>
+
+## The fitted model
+
+```{r}
+#| echo: false
+b0 <- unname(coef(rain_model)[1])
+b1 <- unname(coef(rain_model)[2])
+```
+
+$$\log\left(\frac{\hat{p}}{1-\hat{p}}\right) = `r f2(b0)` + `r f3(b1)` \times \text{humidity3pm}$$
+
+. . .
+
+The slope is on the __log-odds__ scale: for each additional percentage point of humidity at 3 pm, the log-odds of rain tomorrow go up by `r f3(b1)`.
+
+. . .
+
+Log-odds are hard to think about. Undo the log with `exp()`.
+
+## Odds ratios
+
+```{r}
+exp(coef(rain_model))
+```
+
+. . .
+
+For each additional percentage point of humidity, the __odds__ of rain tomorrow are multiplied by `r f3(exp(b1))`: about `r f1((exp(b1) - 1) * 100)`% higher.
+
+. . .
+
+A 10-point increase in humidity multiplies the odds by $`r f3(exp(b1))`^{10} \approx `r f2(exp(10 * b1))`$. The odds more than double.
+
+. . .
+
+<small>The intercept `r f2(b0)` is the log-odds of rain when humidity is 0%. We never see 0% humidity here, so we do not interpret it.</small>
+
+## From log-odds to probability
+
+For a day with 75% humidity at 3 pm:
+
+```{r}
+log_odds <- b0 + b1 * 75
+log_odds
+odds <- exp(log_odds)
+odds
+odds / (1 + odds)
+```
+
+. . .
+
+The model says the probability of rain tomorrow is about `r f2(odds / (1 + odds))`.
+
+## Prediction in R
+
+```{r}
+new_days <- tibble(humidity3pm = c(30, 50, 75, 90))
+predict(rain_model, newdata = new_days, type = "response")
+```
+
+. . .
+
+`type = "response"` gives probabilities. Without it, `predict()` gives log-odds.
+
+## Predictions on the curve
+
+```{r}
+#| echo: false
+#| fig-alt: "Line chart of the model's predicted probability of rain tomorrow against humidity at 3 pm. The curve is S-shaped. Four points with labels mark the predictions at 30, 50, 75 and 90 percent humidity: about 0.03, 0.16, 0.64 and 0.87."
+#| fig-width: 10
+#| fig-height: 3.6
+#| out-width: "100%"
+pred_days <- new_days |>
+  mutate(p = predict(rain_model, newdata = new_days, type = "response"))
+grid <- tibble(humidity3pm = seq(8, 99, by = 1)) |>
+  mutate(p = predict(rain_model, newdata = pick(everything()), type = "response"))
+ggplot(grid, aes(x = humidity3pm, y = p)) +
+  geom_line(color = green, linewidth = 1.5) +
+  geom_point(data = pred_days, size = 4, shape = 17, color = pink) +
+  geom_text(data = pred_days, aes(label = f2(p)), vjust = -1, size = 7) +
+  labs(x = "Humidity at 3 pm (%)", y = "Predicted probability") +
+  scale_y_continuous(expand = expansion(mult = c(0.05, 0.2)))
+```
+
+## Inference: confidence interval
+
+```{r}
+confint(rain_model)
+exp(confint(rain_model))
+```
+
+. . .
+
+A 95% confidence interval for the odds multiplier of one more point of humidity: `r f3(exp(confint(rain_model)[2, 1]))` to `r f3(exp(confint(rain_model)[2, 2]))`. The interval does not include 1 (no change in odds).
+
+. . .
+
+<small>For `glm()`, `confint()` uses the profile likelihood and prints a short message while it works.</small>
+
+## More variables
+
+Add whether it rained __today__. Slopes are interpreted __holding the other variables constant__, just like multiple linear regression.
+
+```{r}
+rain_model_2 <- glm(raintomorrow ~ humidity3pm + raintoday,
+                    data = weather_perth, family = binomial)
+tidy(rain_model_2)
+```
+
+. . .
+
+Holding humidity constant, if it rained today the odds of rain tomorrow are multiplied by `r f2(exp(coef(rain_model_2)[3]))`.
+
+## Still not causal
+
+::: {.stat-callout .discussion}
+**Discussion**
+
+Higher humidity goes with higher odds of rain tomorrow. Does humidity at 3 pm *cause* rain tomorrow? What else could be going on?
+:::
+
+. . .
+
+A logistic regression with observational data describes association, as every regression this semester has.
+
+# How fair, how wrong, how accurate? {.inverse background-color="#A51C30"}
+
+## How fair is the model?
+
+::: {.stat-callout .discussion}
+**Discussion**
+
+- Who collected these weather data, and where? Whose weather is missing?
+- Who could be hurt by a wrong forecast? Is it the same people for a wrong "rain" as for a wrong "no rain"?
+- If a model like this decided whether to cancel an outdoor event, who decides and who pays?
+:::
+
+. . .
+
+The same questions we asked about every model, because they apply to every model.
+
+## How wrong? Assumptions
+
+__Logistic regression assumes__
+
+- __Binary outcome:__ each day is a yes or no.
+- __Independence:__ one day's outcome gives no information about another day's outcome, beyond what the model includes.
+- __Linearity:__ the log-odds are a line in $x$.
+
+. . .
+
+__No longer needed:__ normality and equal variance of residuals. A yes or no outcome cannot be normal, and its variance depends on $p$ by design.
+
+## Independence in the weather data
+
+::: {.stat-callout .discussion}
+**Discussion**
+
+These are 1,000 consecutive days, in one city. If it rained today, what does that tell us about tomorrow? What does that mean for the independence assumption?
+:::
+
+## Rain today, rain tomorrow
+
+```{r}
+weather_perth |>
+  count(raintoday, raintomorrow) |>
+  group_by(raintoday) |>
+  mutate(proportion = n / sum(n))
+```
+
+. . .
+
+Rain tomorrow is more common after a rainy day. Days are not independent, which is why adding `raintoday` helped. Time series models (more on Wednesday) handle this directly.
+
+## How wrong? Linearity of log-odds
+
+Group days into humidity bins and compare the __proportion__ of rainy next days to the model.
+
+```{r}
+#| echo: false
+#| fig-alt: "Chart of humidity bins on the horizontal axis and the proportion of days with rain the next day on the vertical axis. Triangles mark the observed proportions in each bin and a solid curve marks the model's predicted probabilities. The triangles follow the curve closely, with more scatter at the highest humidity where there are fewer days."
+#| fig-width: 10
+#| fig-height: 4
+#| out-width: "100%"
+bins <- weather_perth |>
+  mutate(bin = cut(humidity3pm, breaks = seq(0, 100, by = 10))) |>
+  group_by(bin) |>
+  summarize(humidity3pm = mean(humidity3pm),
+            observed = mean(raintomorrow == "Yes"),
+            n = n())
+ggplot(grid, aes(x = humidity3pm, y = p)) +
+  geom_line(color = green, linewidth = 1.5) +
+  geom_point(data = bins, aes(y = observed), size = 4, shape = 17, color = "gray20") +
+  labs(x = "Humidity at 3 pm (%)", y = "Proportion rainy next day")
+```
+
+<small>Triangles: observed proportion in each 10-point bin. Curve: model.</small>
+
+## How accurate? Probabilities to classifications
+
+The model gives a __probability__. To classify a day as "rain" or "no rain" we choose a __cutoff__:
+
+- predicted probability $\geq$ cutoff: predict "rain"
+- predicted probability $<$ cutoff: predict "no rain"
+
+. . .
+
+Same plan as in 12A: train on training data, test on testing data, and count the mistakes.
+
+. . .
+
+__Split the data first.__ The model for the rest of the lecture is fitted on training data (80% of days) and evaluated on testing data (20%).
+
+## Confusion matrix, cutoff 0.5
+
+```{r}
+#| echo: false
+cm <- function(cutoff) {
+  p <- predict(rain_train_model, newdata = rain_test, type = "response")
+  predicted <- factor(ifelse(p >= cutoff, "Yes", "No"), levels = c("No", "Yes"))
+  table(actual = rain_test$raintomorrow, predicted = predicted)
+}
+```
+
+```{r}
+test_prob <- predict(rain_train_model, newdata = rain_test, type = "response")
+predicted <- ifelse(test_prob >= 0.5, "Yes", "No")
+table(actual = rain_test$raintomorrow, predicted = predicted)
+```
+
+. . .
+
+```{r}
+#| echo: false
+m5 <- cm(0.5)
+acc5 <- sum(diag(m5)) / sum(m5)
+```
+
+__Accuracy:__ (`r m5[1, 1]` + `r m5[2, 2]`) / `r sum(m5)` = `r f3(acc5)`.
+
+## Accuracy is not the whole story
+
+```{r}
+mean(rain_test$raintomorrow == "No")
+```
+
+A "model" that always predicts "no rain" would be right `r f3(mean(rain_test$raintomorrow == "No"))` of the time. Our model is only a little better.
+
+. . .
+
+Rain is the less common outcome, so we need more than accuracy.
+
+- __Sensitivity:__ of the days it __did__ rain, the proportion we predicted rain.
+- __Specificity:__ of the days it did __not__ rain, the proportion we predicted no rain.
+
+## Sensitivity and specificity
+
+```{r}
+#| echo: false
+sens5 <- m5[2, 2] / sum(m5[2, ])
+spec5 <- m5[1, 1] / sum(m5[1, ])
+```
+
+With cutoff 0.5:
+
+- Sensitivity: `r m5[2, 2]` / `r sum(m5[2, ])` = `r f2(sens5)`
+- Specificity: `r m5[1, 1]` / `r sum(m5[1, ])` = `r f2(spec5)`
+
+. . .
+
+::: {.stat-callout .discussion}
+**Discussion**
+
+Our model misses most of the rainy days. When would this be an acceptable mistake? When would it be a serious one?
+:::
+
+## Changing the cutoff
+
+```{r}
+#| echo: false
+metrics <- function(cutoff) {
+  m <- cm(cutoff)
+  tibble(cutoff = cutoff,
+         accuracy = f2(sum(diag(m)) / sum(m)),
+         sensitivity = f2(m[2, 2] / sum(m[2, ])),
+         specificity = f2(m[1, 1] / sum(m[1, ])))
+}
+map(c(0.5, 0.3, 0.2), metrics) |>
+  list_rbind() |>
+  knitr::kable()
+```
+
+. . .
+
+A lower cutoff catches more rainy days (higher sensitivity) but raises more false alarms (lower specificity). There is no single best cutoff. It depends on which mistake costs more.
+
+## Choosing the cutoff
+
+::: {.stat-callout .discussion}
+**Discussion**
+
+Pick a cutoff for each use. Which mistake is worse, and what does that say about the cutoff?
+
+- Deciding whether to bring an umbrella.
+- Deciding whether to postpone a wedding that is outdoors.
+- A medical test for a serious but treatable disease.
+:::
+
+# Bayesian logistic regression {.inverse background-color="#A51C30"}
+
+## Same model, Bayesian
+
+```{r}
+#| eval: false
+rain_bayes <- stan_glm(raintomorrow ~ humidity3pm, data = weather_perth,
+                       family = binomial,
+                       prior_intercept = normal(-1.4, 0.7),
+                       prior = normal(0, 0.2),
+                       chains = 4, iter = 5000 * 2,
+                       seed = 84735, refresh = 0)
+```
+
+. . .
+
+- `family = binomial`: the same change as `glm()`.
+- Intercept prior: about 20% of days are rainy, which is log-odds of $\log(0.2/0.8) = -1.4$.
+- Slope prior: centered at 0 (no relationship), allowing slopes like those we saw before.
+
+## Posterior credible intervals
+
+```{r}
+posterior_interval(rain_bayes, prob = 0.95)
+```
+
+. . .
+
+```{r}
+#| echo: false
+draws <- as.data.frame(rain_bayes)
+or_int <- quantile(exp(draws$humidity3pm), c(0.025, 0.975))
+```
+
+On the odds scale, one more point of humidity multiplies the odds of rain tomorrow by a number between `r f3(or_int[1])` and `r f3(or_int[2])`, with 95% posterior probability.
+
+## Frequentist and Bayesian
+
+```{r}
+#| echo: false
+fi <- confint(rain_model)
+pi <- posterior_interval(rain_bayes, prob = 0.95)
+tibble(
+  Estimate = c("Intercept", "Slope of humidity3pm"),
+  Frequentist = f3(coef(rain_model)),
+  `95% confidence interval` = c(
+    sprintf("%.2f to %.2f", fi[1, 1], fi[1, 2]),
+    sprintf("%.3f to %.3f", fi[2, 1], fi[2, 2])),
+  Bayesian = f3(colMeans(draws[, 1:2])),
+  `95% credible interval` = c(
+    sprintf("%.2f to %.2f", pi[1, 1], pi[1, 2]),
+    sprintf("%.3f to %.3f", pi[2, 1], pi[2, 2]))
+) |>
+  knitr::kable()
+```
+
+. . .
+
+With 1,000 days and weak priors, the two answers agree. The interpretations differ: a confidence interval is about the method; a credible interval is a probability statement about the parameter.
+
+## Probability of rain at 75% humidity
+
+```{r}
+new_day <- tibble(humidity3pm = 75)
+epred <- posterior_epred(rain_bayes, newdata = new_day)
+quantile(epred, c(0.025, 0.5, 0.975))
+```
+
+. . .
+
+```{r}
+#| echo: false
+#| fig-alt: "Histogram of 20,000 posterior values of the probability of rain tomorrow on a day with 75 percent humidity at 3 pm. The values are centered near 0.64 and range from about 0.55 to 0.73."
+#| fig-width: 10
+#| fig-height: 3.4
+#| out-width: "100%"
+ggplot(tibble(p = as.numeric(epred)), aes(x = p)) +
+  geom_histogram(bins = 40, fill = green, color = "white") +
+  labs(x = "Probability of rain tomorrow, given 75% humidity", y = "Count")
+```
+
+## Probability vs. one day
+
+The probability of rain on a 75% humidity day, and what happens on __one__ such day, are different.
+
+```{r}
+set.seed(84735)
+simulated <- posterior_predict(rain_bayes, newdata = new_day)
+mean(simulated)
+head(simulated[, 1], 10)
+```
+
+. . .
+
+Each simulated day is a `0` (no rain) or a `1` (rain). The proportion of simulated rainy days matches the probability. This is the Bayesian version of the average vs. single idea from 12B.
+
+## Evaluating the Bayesian model
+
+Everything from before still applies.
+
+- __Fair:__ who and what are in the data? How will the model be used?
+- __Wrong:__ binary outcome, independence, linearity of log-odds. Posterior predictive checks work here too.
+- __Accurate:__ confusion matrix, sensitivity, specificity, with a cutoff. `bayesrules::classification_summary()` does this for `stan_glm()` models.
+- __Training and testing:__ split first.
+
+## Summary {.smaller}
+
+- A yes or no outcome needs a different model than a number outcome. A straight line predicts impossible probabilities.
+- __Logistic regression__ models the __log-odds__: $\log\left(\frac{p}{1-p}\right) = \beta_0 + \beta_1 x$.
+- __Interpretation:__ `exp(slope)` is the factor by which the odds change for one more unit of $x$. Use `predict(..., type = "response")` for probabilities.
+- Fit with `glm(family = binomial)` (frequentist) or `stan_glm(family = binomial)` (Bayesian).
+- __Fair, wrong, accurate__ still apply. Check independence and linearity of log-odds.
+- __Accuracy__ needs a baseline. __Sensitivity__ and __specificity__ describe each mistake. The __cutoff__ is a choice with consequences.
+- Observational data: association, not causation.
+
+## Wednesday
+
+__Wednesday__ is the last lecture. There is no model to fit and no code to run.
+
+I will tell you about everything I have __not__ taught you in STAT 100: where each topic we saw goes next, how to learn more, and how you can keep engaging with statistics.

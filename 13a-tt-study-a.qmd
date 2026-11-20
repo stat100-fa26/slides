@@ -1,0 +1,98 @@
+---
+title: "Study Card A: The MMR vaccine and autism"
+subtitle: "For the explainer. Read this, then plan what you'll say."
+metadata-files: [_13a-packet.yml]
+---
+
+::: back-links
+[Back to the slides](13a-statistical-communication.html#/open-your-page) · [Guide](13a-tt-guide.html)
+:::
+
+## The study in one paragraph
+
+Researchers in Denmark used national health registries to follow **657,461 children** born in Denmark from 1999 through 2010. They compared children who got the MMR (measles, mumps, rubella) vaccine with children who did not, and counted how many were later diagnosed with autism. Children were followed from age 1 until August 2013.
+
+**Source:** Hviid, A., Hansen, J. V., Frisch, M., & Melbye, M. (2019). Measles, mumps, rubella vaccination and autism: A nationwide cohort study. *Annals of Internal Medicine, 170*(8), 513–520. [doi.org/10.7326/M18-2101](https://doi.org/10.7326/M18-2101)
+
+## Key facts
+
+| Question | Answer |
+|---|---|
+| Population | Children in Denmark |
+| Sample | Nearly every child born in Denmark from 1999 through 2010: 657,461 children (close to a census) |
+| How were they found? | National health records (not volunteers) |
+| Design | **Observational study.** Families chose whether to vaccinate; researchers did not assign it. |
+| Explanatory variable | MMR vaccine (yes or no) |
+| Response variable | Autism diagnosis (yes or no) |
+| How many autism diagnoses? | 6,517 |
+
+: Key facts about Study A {.striped}
+
+## The numbers to explain
+
+**A count of people.** About **1 in every 100 children** in the study were diagnosed with autism (6,517 out of 657,461, a sample proportion of about 0.01).
+
+**Comparing the two groups.** The researchers compared how often autism was diagnosed among vaccinated children with how often it was diagnosed among unvaccinated children. They report the comparison as a **ratio**:
+
+> rate of diagnoses among **vaccinated** children ÷ rate of diagnoses among **unvaccinated** children = **0.93**
+>
+> 95% confidence interval: **0.85 to 1.02**
+
+How to read it, using what you know:
+
+- **A ratio of 1 means "no difference"** between the groups. (For a slope, the "no relationship" value was 0. For a ratio, it is 1.)
+- In the sample the ratio was 0.93: diagnoses were slightly *less* common among vaccinated children.
+- **The 95% confidence interval includes 1.** So the result is **not statistically significant**: we fail to reject the null hypothesis that the two groups have the same rate.
+- **The interval stops at 1.02.** A rate more than about 2% higher among vaccinated children does not fit the data.
+- The comparison **holds other variables constant** (such as birth year, sex, and whether a sibling has autism), like the slopes in multiple regression. This is how the researchers dealt with possible **confounding variables**.
+
+::: say
+"If the vaccine led to autism, diagnoses would be clearly more common among vaccinated kids. They weren't. The range of answers that fit the data runs from a bit less common to at most about 2% more common. So a big increase is ruled out."
+:::
+
+The last sentence matters most. "Not significant" alone sounds like "we couldn't prove it." The interval says something stronger: **a large increase doesn't fit the data.**
+
+<small>In the paper, this ratio is called a *hazard ratio*. We have not used that term in class, and you don't need it at the table.</small>
+
+## Plan before you talk
+
+Try to answer each question yourself, then open the box to check.
+
+**1. Why might someone see autism "right after the shots"?**
+
+<details>
+<summary>Check your thinking</summary>
+
+Children usually get MMR in their second year of life, which is also when signs of autism often become noticeable to parents. Two things that happen at the same age will often happen close together in time, even when one does not cause the other. This is a respectful thing to say: the timing your relative noticed is real.
+
+</details>
+
+**2. What's good about the sample? What can we generalize to?**
+
+<details>
+<summary>Check your thinking</summary>
+
+It's almost a whole country's children, not volunteers, so there is little self-selection into the study. It's reasonable to generalize to children in similar countries getting the same vaccine. Denmark is not the US, but the vaccine and the biology are the same.
+
+</details>
+
+**3. What can't this study tell us?**
+
+<details>
+<summary>Check your thinking</summary>
+
+It is **observational**, not an experiment. Families who don't vaccinate may differ in other ways. The researchers held many variables constant, but there could still be **confounding variables** they didn't measure. On its own, one observational study can't prove there is zero effect. That's why the **body of evidence** matters: many studies in many countries, with different designs, have found the same thing.
+
+</details>
+
+## Jargon swaps
+
+| Instead of… | Try… |
+|---|---|
+| observational study | "they looked at what families already chose; nobody was told what to do" |
+| confounding variable | "something else that's different about families who don't vaccinate" |
+| confidence interval | "the range of answers that fit the data" |
+| not statistically significant | "the difference is small enough to be just chance" |
+| holding other variables constant | "they made fair comparisons, like comparing kids born the same year" |
+
+: Jargon swaps for Study A {.striped}

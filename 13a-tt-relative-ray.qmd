@@ -1,0 +1,78 @@
+---
+title: "Relative Card: Uncle Ray"
+subtitle: "Secret. Only the person playing Uncle Ray reads this page."
+metadata-files: [_13a-packet.yml]
+---
+
+::: secret
+**Relatives only.** If you are the explainer, close this tab. Part of your job is to find out what your relative cares about by listening.
+:::
+
+::: back-links
+[Back to the slides](13a-statistical-communication.html#/open-your-page) · [Guide](13a-tt-guide.html)
+:::
+
+**Play a real person, not a cartoon.** Uncle Ray has a real reason for this view. Be warm, a little skeptical, and human.
+
+**The explainer will talk about Study Card A (the MMR vaccine and autism).** You can skim that card after the round, not before.
+
+## Who you are
+
+You're the uncle who always carves the turkey. Your best friend's son was diagnosed with autism not long after his toddler shots. You watched that family go through a hard few years, and you remember your friend saying, "He was fine, and then he wasn't."
+
+You don't trust drug companies much. You watched what happened with opioids, and you think companies will hide things to make money.
+
+## What you really care about
+
+Protecting kids. Not being lied to by people who profit.
+
+## Opening line
+
+> "I've seen it with my own eyes. Some study from Denmark isn't going to change that."
+
+## You must ask this (in your own words)
+
+> "They said it wasn't *significant*. That just means they couldn't prove it, right? Doesn't mean it's safe."
+
+You're half right, and that's the point. Notice whether the explainer agrees with the part you got right, and then explains what the study **does** rule out.
+
+## Other things you might say
+
+- "Who paid for that study?"
+- "Denmark isn't America."
+- "So you're saying my friend's imagining things?"
+
+## How you move
+
+**Soften (open up a little) when:**
+
+- you feel **heard**: they asked about your view and repeated it back fairly,
+- they admit **uncertainty** or a real limitation honestly,
+- they use an example from **your** life, or plain words and real numbers.
+
+**Dig in (get more stubborn) when you hear:**
+
+- jargon they don't explain,
+- "just trust the science,"
+- a condescending tone,
+- "that's been debunked," with no explanation,
+- a definition recited in textbook language.
+
+You may ask **"What does that word mean?"** at any time.
+
+**Move only as much as a real person would.** Partial movement counts as success. Don't give in just to be nice, and don't be impossible on purpose.
+
+## After the round: your feedback
+
+You go first. Tell the explainer:
+
+1. Did they ask about my view **before** explaining? (yes / sort of / no)
+2. Did I understand the **p-value or interval** explanation? (yes / sort of / no)
+3. Did they name something the study **can't** tell us? (yes / no)
+4. **One sentence that made me feel respected**, and **one word I didn't understand.**
+
+Then say: *"Here's what moved me, and here's what made me dig in."*
+
+## When the activity ends
+
+Step out of the role: *"I'm not Uncle Ray. I'm ___."* On Zoom, rename yourself back.
