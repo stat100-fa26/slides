@@ -203,11 +203,23 @@ __`r sum(lm_fitted < 0)` days__ get a "probability" below 0. A probability can n
 
 ## Residuals for a yes or no outcome
 
-::: {.stat-callout .discussion}
-**Discussion**
+```{r}
+#| echo: false
+#| fig-alt: "Residual plot for the straight-line model. Fitted values are on the horizontal axis and residuals on the vertical axis, with a dashed horizontal line at 0. The points form two straight, parallel, downward-sloping bands: an upper band for the days it rained the next day and a lower band for the days it did not. There is no random scatter around 0."
+#| fig-width: 10
+#| fig-height: 4.2
+#| out-width: "100%"
+augment(lm_rain) |>
+  mutate(raintomorrow = if_else(rain == 1, "Rain tomorrow", "No rain tomorrow")) |>
+  ggplot(aes(x = .fitted, y = .resid, shape = raintomorrow)) +
+  geom_point(alpha = 0.5, size = 2.5, color = "gray30") +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  scale_shape_manual(values = c("No rain tomorrow" = 16, "Rain tomorrow" = 4)) +
+  labs(x = "Fitted values", y = "Residuals", shape = NULL) +
+  theme(legend.position = "top")
+```
 
-The outcome is only ever 0 or 1. What would the residuals look like around a straight line? Does the "equal variance" part of LINE seem plausible?
-:::
+The outcome is only ever 0 or 1, so the residuals fall on __two lines__, not a random scatter around 0. Normality and equal variance cannot hold.
 
 ## What we need
 
@@ -224,15 +236,15 @@ The trick: do not model the probability directly. Model a __transformation__ of 
 
 ## Odds
 
-If the probability of rain is $p$, the __odds__ of rain are
+If the probability of rain is $\pi$, the __odds__ of rain are
 
-$$\text{odds} = \frac{p}{1 - p}.$$
+$$\text{odds} = \frac{\pi}{1 - \pi}.$$
 
 . . .
 
-If $p = 0.2$, the odds are $0.2 / 0.8 = 0.25$: "1 to 4".
-If $p = 0.5$, the odds are $1$: "1 to 1".
-If $p = 0.8$, the odds are $4$: "4 to 1".
+If $\pi = 0.2$, the odds are $0.2 / 0.8 = 0.25$: "1 to 4".
+If $\pi = 0.5$, the odds are $1$: "1 to 1".
+If $\pi = 0.8$, the odds are $4$: "4 to 1".
 
 . . .
 
@@ -262,15 +274,15 @@ $$y = \beta_0 + \beta_1 x + \epsilon$$
 
 __Logistic regression__
 
-$$\log\left(\frac{p}{1-p}\right) = \beta_0 + \beta_1 x$$
+$$\log\left(\frac{\pi}{1-\pi}\right) = \beta_0 + \beta_1 x$$
 
-$p$ is the probability that the outcome is a "yes" (here, rain tomorrow). The right side is a line, exactly like before.
+$\pi$ is the probability that the outcome is a "yes" (here, rain tomorrow). The right side is a line, exactly like before.
 
-## Solving for $p$
+## Solving for π
 
-Solving the logistic regression model for $p$ gives the S-shaped curve:
+Solving the logistic regression model for $\pi$ gives the S-shaped curve:
 
-$$p = \frac{1}{1 + e^{-(\beta_0 + \beta_1 x)}}$$
+$$\pi = \frac{1}{1 + e^{-(\beta_0 + \beta_1 x)}}$$
 
 ## The S-shaped curve
 
@@ -312,7 +324,7 @@ b0 <- unname(coef(rain_model)[1])
 b1 <- unname(coef(rain_model)[2])
 ```
 
-$$\log\left(\frac{\hat{p}}{1-\hat{p}}\right) = `r f2(b0)` + `r f3(b1)` \times \text{humidity3pm}$$
+$$\log\left(\frac{\hat{\pi}}{1-\hat{\pi}}\right) = `r f2(b0)` + `r f3(b1)` \times \text{humidity3pm}$$
 
 . . .
 
@@ -454,7 +466,7 @@ __Logistic regression assumes__
 
 . . .
 
-__No longer needed:__ normality and equal variance of residuals. A yes or no outcome cannot be normal, and its variance depends on $p$ by design.
+__No longer needed:__ normality and equal variance of residuals. A yes or no outcome cannot be normal, and its variance depends on $\pi$ by design.
 
 ## Independence in the weather data
 
@@ -719,15 +731,9 @@ Everything from before still applies.
 ## Summary {.smaller}
 
 - A yes or no outcome needs a different model than a number outcome. A straight line predicts impossible probabilities.
-- __Logistic regression__ models the __log-odds__: $\log\left(\frac{p}{1-p}\right) = \beta_0 + \beta_1 x$.
+- __Logistic regression__ models the __log-odds__: $\log\left(\frac{\pi}{1-\pi}\right) = \beta_0 + \beta_1 x$.
 - __Interpretation:__ `exp(slope)` is the factor by which the odds change for one more unit of $x$. Use `predict(..., type = "response")` for probabilities.
 - Fit with `glm(family = binomial)` (frequentist) or `stan_glm(family = binomial)` (Bayesian).
 - __Fair, wrong, accurate__ still apply. Check independence and linearity of log-odds.
 - __Accuracy__ needs a baseline. __Sensitivity__ and __specificity__ describe each mistake. The __cutoff__ is a choice with consequences.
 - Observational data: association, not causation.
-
-## Wednesday
-
-__Wednesday__ is the last lecture. There is no model to fit and no code to run.
-
-I will tell you about everything I have __not__ taught you in STAT 100: where each topic we saw goes next, how to learn more, and how you can keep engaging with statistics.
