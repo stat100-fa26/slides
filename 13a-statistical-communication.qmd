@@ -235,7 +235,7 @@ Two analogies: **coin flips** (9 heads out of 10 makes you suspicious of the coi
 **Say at least one of these:**
 
 1. It is **not** the chance that the result is true, or that the treatment works.
-2. **"Not significant" ≠ "proven: no effect."** It means there wasn't enough evidence to rule out chance.
+2. **"Not significant" ≠ "proven: no effect."** It means results like these would not be unusual if there were no effect.
 3. **"Significant" ≠ big or important.** A tiny effect can be significant in a big study.
 
 

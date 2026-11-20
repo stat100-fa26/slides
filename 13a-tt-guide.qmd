@@ -39,7 +39,7 @@ Every explainer follows the same five courses, in this order.
 
 - **Who was studied?** How many people, and how were they found? (Volunteers? Everyone in a national registry? Patients at certain clinics?)
 - **What did the researchers do?** Was it an **experiment** (researchers decided who got what) or an **observational study** (researchers watched what people already did)?
-- If it was an experiment: what does **random assignment** buy you? Try: *"It's like shuffling a deck and dealing the cards: the two groups end up alike in every way except the one thing we changed."*
+- If it was an experiment: what does **random assignment** buy you? Try: *"It's like shuffling a deck and dealing the cards: the two groups end up alike on average, except for the one thing we changed."*
 
 ### 3. What they found and how sure we are
 
@@ -70,7 +70,7 @@ Every explainer follows the same five courses, in this order.
 **Three things a p-value is NOT** (say at least one):
 
 1. It is **not** the chance that the result is true or that the treatment works. (It is not the probability that the null hypothesis is true.)
-2. **"Not significant" does not mean "proven: no effect."** It means there wasn't enough evidence to rule out chance.
+2. **"Not significant" does not mean "proven: no effect."** It means results like these would not be unusual if there were no effect.
 3. **"Significant" does not mean big or important.** A tiny effect can be statistically significant in a big study. That's the difference between statistical and **practical** significance.
 
 **Two analogies you can borrow:**
@@ -116,7 +116,7 @@ You know these terms. Your relative doesn't. Use the idea, not the word.
 | placebo | "a fake treatment, like a shot of salt water" |
 | null hypothesis | "suppose it did nothing at all" |
 | p-value | "how surprising the results would be if it did nothing" |
-| statistically significant | "unlikely to be just chance" |
+| statistically significant | "would be unusual if there really were no effect" |
 | practical significance | "big enough to matter in real life" |
 | confidence or credible interval | "the range of answers that fit the data" |
 | holding other variables constant | "comparing people who are alike in other ways" |

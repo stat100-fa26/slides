@@ -43,14 +43,14 @@ How to read it, using what you know:
 - **A ratio of 1 means "no difference"** between the groups. (For a slope, the "no relationship" value was 0. For a ratio, it is 1.)
 - In the sample the ratio was 0.93: diagnoses were slightly *less* common among vaccinated children.
 - **The 95% confidence interval includes 1.** So the result is **not statistically significant**: we fail to reject the null hypothesis that the two groups have the same rate.
-- **The interval stops at 1.02.** A rate more than about 2% higher among vaccinated children does not fit the data.
+- **The interval stops at 1.02.** The data are inconsistent with a large increase in diagnoses among vaccinated children.
 - The comparison **holds other variables constant** (such as birth year, sex, and whether a sibling has autism), like the slopes in multiple regression. This is how the researchers dealt with possible **confounding variables**.
 
 ::: say
-"If the vaccine led to autism, diagnoses would be clearly more common among vaccinated kids. They weren't. The range of answers that fit the data runs from a bit less common to at most about 2% more common. So a big increase is ruled out."
+"If the vaccine led to autism, diagnoses would be clearly more common among vaccinated kids. They weren't. The range of answers that fit the data runs from a bit less common to about 2% more common. So the data don't support a big increase."
 :::
 
-The last sentence matters most. "Not significant" alone sounds like "we couldn't prove it." The interval says something stronger: **a large increase doesn't fit the data.**
+The last sentence matters most. "Not significant" alone sounds like "we couldn't prove it." The interval says something stronger: **the data are inconsistent with a large increase.**
 
 <small>In the paper, this ratio is called a *hazard ratio*. We have not used that term in class, and you don't need it at the table.</small>
 
@@ -92,7 +92,7 @@ It is **observational**, not an experiment. Families who don't vaccinate may dif
 | observational study | "they looked at what families already chose; nobody was told what to do" |
 | confounding variable | "something else that's different about families who don't vaccinate" |
 | confidence interval | "the range of answers that fit the data" |
-| not statistically significant | "the difference is small enough to be just chance" |
+| not statistically significant | "a difference this small would not be unusual if the vaccine made no difference" |
 | holding other variables constant | "they made fair comparisons, like comparing kids born the same year" |
 
 : Jargon swaps for Study A {.striped}

@@ -62,7 +62,7 @@ How to read it, using what you know:
 "Out of every 1,000 people on the regular low-fat advice, about 44 had a heart attack or stroke over five years. With the Mediterranean diet and olive oil, it was about 38. The researchers' best estimate is about 30% lower, and the whole range of answers that fit the data is below 'no difference.'"
 :::
 
-**But a p-value can't fix a broken design.** A p-value assumes the groups were formed by chance. Where the random assignment didn't follow the plan, that assumption fails. So the researchers re-analyzed the data with methods that don't rely only on that assumption, and also checked the results without the 1,588 affected people. The results were similar.
+**But statistics can't repair a broken design.** The analysis of an experiment relies on random assignment to make the groups comparable. Where the assignment didn't follow the plan, the researchers had to reconsider their original analysis. They re-analyzed the data with methods that don't rely only on random assignment, and also checked the results without the 1,588 affected people. The results were similar.
 
 <small>In the paper, this ratio is called a *hazard ratio*. We have not used that term in class, and you don't need it at the table.</small>
 
@@ -101,10 +101,10 @@ It compares a Mediterranean diet to *advice to eat less fat*, not to any diet. I
 
 | Instead of… | Try… |
 |---|---|
-| random assignment | "a coin flip decided which diet each person got" |
+| random assignment | "for most people, a coin flip decided which diet they got" |
 | retracted | "the journal took the paper back because of a mistake" |
 | control group | "the people who just got the usual advice" |
-| statistically significant | "unlikely to be just chance" |
+| statistically significant | "would be unusual if the diet made no difference" |
 | confidence interval | "the range of answers that fit the data" |
 
 : Jargon swaps for Study C {.striped}

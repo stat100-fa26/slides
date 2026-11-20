@@ -33,10 +33,10 @@ In 2018, researchers recruited US adults who used Facebook through **Facebook ad
 
 **Well-being improved by 0.09 standard deviations.** The authors report this as statistically significant.
 
-You know standard deviations and z-scores: this is like moving someone's z-score from 0 to 0.09. That's **small**. In class terms, the result is **statistically significant** but its **practical significance** is open to debate. A way to picture it:
+You know standard deviations: on average, the group that quit scored about one-tenth of a standard deviation higher on well-being than the group that didn't. That's **small**. In class terms, the result is **statistically significant** but its **practical significance** is open to debate. A way to picture it:
 
 ::: say
-"Imagine lining up 100 people from least happy to most happy. Someone right in the middle, at number 50, would move up to about number 54. It's a real improvement, but it's a small one."
+"Imagine lining up 100 people who kept using Facebook, from least happy to most happy. The average person who quit would stand at about number 54 instead of number 50. So on average, the group that quit felt a little better, but only a little."
 :::
 
 Other findings worth knowing:
@@ -50,7 +50,7 @@ Your relative is **on "science's side" but overstating it.** They hear "signific
 
 Your job is to be just as kind and just as honest, and to say **the evidence is weaker and narrower than they think**:
 
-- **Statistical significance ≠ practical significance.** Here, "significant" means "probably not just chance," and the effect is small.
+- **Statistical significance ≠ practical significance.** Here, "significant" means the result would be unusual if quitting made no difference. The effect itself is small.
 - **Adults, not teens.** This study can't tell us about a 15-year-old.
 - **Facebook, not "phones."** It studied one app.
 - **Four weeks**, in 2018, mostly from surveys people filled out about themselves.
@@ -91,7 +91,7 @@ Their worry comes from love: they want you to be okay. Start there. "I get why y
 | Instead of… | Try… |
 |---|---|
 | standard deviation | "how spread out people's answers are" (or use the line-up picture above) |
-| statistically significant | "probably not just chance" |
+| statistically significant | "would be unusual if quitting made no difference" |
 | practical significance | "is it big enough to matter in real life?" |
 | well-being | "how happy and satisfied people said they felt" |
 | treatment / control group | "the group that quit / the group that didn't" |
