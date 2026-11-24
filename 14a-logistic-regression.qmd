@@ -540,18 +540,50 @@ cm <- function(cutoff) {
 ```
 
 ```{r}
+#| echo: false
+m5 <- cm(0.5)
+acc5 <- sum(diag(m5)) / sum(m5)
+cell <- function(n, label, ok) {
+  bg <- if (ok) "#DDF0E4" else "#FBE3E6"
+  fg <- if (ok) "#0F4022" else "#7A1424"
+  sprintf('<td style="background:%s;color:%s;text-align:center;padding:14px 22px;"><span style="font-size:1.6em;font-weight:bold;">%d</span><br>%s</td>',
+          bg, fg, n, label)
+}
+```
+
+::: {.panel-tabset}
+
+### R output
+
+```{r}
 test_prob <- predict(rain_train_model, newdata = rain_test, type = "response")
 predicted <- ifelse(test_prob >= 0.5, "Yes", "No")
 table(actual = rain_test$raintomorrow, predicted = predicted)
 ```
 
-. . .
+### Table
 
 ```{r}
 #| echo: false
-m5 <- cm(0.5)
-acc5 <- sum(diag(m5)) / sum(m5)
+#| results: asis
+cat(paste0(
+  '<table class="no-row-headers">',
+  '<caption>Confusion matrix at cutoff 0.5: counts of test days by what happened and what the model predicted. Correct decisions are in green.</caption>',
+  '<thead><tr><td></td><th scope="col" style="text-align:center;">Predicted: no rain</th>',
+  '<th scope="col" style="text-align:center;">Predicted: rain</th></tr></thead>',
+  '<tbody>',
+  '<tr><th scope="row">Actual: no rain</th>',
+  cell(m5[1, 1], "Correct: true negative", TRUE),
+  cell(m5[1, 2], "Mistake: false alarm", FALSE), '</tr>',
+  '<tr><th scope="row">Actual: rain</th>',
+  cell(m5[2, 1], "Mistake: missed rain", FALSE),
+  cell(m5[2, 2], "Correct: true positive", TRUE), '</tr>',
+  '</tbody></table>'))
 ```
+
+:::
+
+. . .
 
 __Accuracy:__ (`r m5[1, 1]` + `r m5[2, 2]`) / `r sum(m5)` = `r f3(acc5)`.
 
